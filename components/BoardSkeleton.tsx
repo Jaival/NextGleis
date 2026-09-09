@@ -1,8 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { colors, radii, spacing } from '../lib/theme';
+import { radii, spacing } from '../lib/theme';
+import { useThemeColors } from '../lib/useThemeColors';
 
-function SkeletonRow({ opacity }: { opacity: Animated.Value }) {
+function SkeletonRow({
+  opacity,
+  styles,
+}: {
+  opacity: Animated.Value;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
     <View style={styles.row}>
       <Animated.View style={[styles.lineBadge, { opacity }]} />
@@ -19,6 +26,8 @@ function SkeletonRow({ opacity }: { opacity: Animated.Value }) {
 }
 
 export function BoardSkeleton() {
+  const { colors } = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const opacity = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
@@ -35,30 +44,32 @@ export function BoardSkeleton() {
   return (
     <View accessible accessibilityLabel="Loading departures" style={styles.container}>
       {Array.from({ length: 6 }).map((_, i) => (
-        <SkeletonRow key={i} opacity={opacity} />
+        <SkeletonRow key={i} opacity={opacity} styles={styles} />
       ))}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { paddingTop: spacing.xs },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  lineBadge: { width: 64, height: 28, borderRadius: radii.sm, backgroundColor: colors.border },
-  middle: { flex: 1, gap: spacing.xs },
-  bar: { height: 12, borderRadius: 4, backgroundColor: colors.border },
-  directionBar: { width: '60%' },
-  platformBar: { width: '35%' },
-  right: { alignItems: 'flex-end', gap: spacing.xs },
-  timeBar: { width: 40 },
-  badgeBar: { width: 56, height: 16 },
-});
+function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+  return StyleSheet.create({
+    container: { paddingTop: spacing.xs },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    lineBadge: { width: 64, height: 28, borderRadius: radii.sm, backgroundColor: colors.border },
+    middle: { flex: 1, gap: spacing.xs },
+    bar: { height: 12, borderRadius: radii.pill, backgroundColor: colors.border },
+    directionBar: { width: '60%' },
+    platformBar: { width: '35%' },
+    right: { alignItems: 'flex-end', gap: spacing.xs },
+    timeBar: { width: 40 },
+    badgeBar: { width: 56, height: 16 },
+  });
+}

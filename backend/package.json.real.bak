@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "vercel dev --local --listen 3000",
+    "dev": "vercel dev",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

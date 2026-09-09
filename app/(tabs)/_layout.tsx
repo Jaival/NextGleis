@@ -1,10 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { colors } from '../../lib/theme';
+import { useThemeColors } from '../../lib/useThemeColors';
 
 export default function TabsLayout() {
+  const { colors } = useThemeColors();
+
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: colors.primary }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.textPrimary,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
@@ -20,12 +31,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="about"
+        name="routes"
         options={{
-          title: 'About',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="information-circle" color={color} size={size} />
-          ),
+          title: 'Routes',
+          tabBarIcon: ({ color, size }) => <Ionicons name="git-network" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />
     </Tabs>

@@ -1,19 +1,28 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../lib/theme';
+import { delayBadgeSpec } from '../lib/delay';
+import { radii, spacing, type } from '../lib/theme';
+import { useThemeColors } from '../lib/useThemeColors';
 import type { DepartureRow } from '../types';
 
-type BadgeSpec = { label: string; bg: string; fg: string };
-
-function badgeSpecFor(row: DepartureRow): BadgeSpec {
-  if (row.cancelled) return { label: 'Cancelled', bg: colors.cancelledSoft, fg: colors.cancelled };
-  if (row.delayMinutes && row.delayMinutes > 0) {
-    return { label: `+${row.delayMinutes} min`, bg: colors.delaySoft, fg: colors.delay };
-  }
-  return { label: 'On time', bg: colors.onTimeSoft, fg: colors.onTime };
-}
-
 export function DelayBadge({ row }: { row: DepartureRow }) {
-  const spec = badgeSpecFor(row);
+  const { colors } = useThemeColors();
+  const spec = delayBadgeSpec(row, colors);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        badge: {
+          paddingHorizontal: spacing.sm,
+          paddingVertical: 2,
+          borderRadius: radii.sm,
+          alignSelf: 'flex-end',
+        },
+        text: { ...type.captionBold },
+      }),
+    [],
+  );
+
   return (
     <View
       style={[styles.badge, { backgroundColor: spec.bg }]}
@@ -24,13 +33,3 @@ export function DelayBadge({ row }: { row: DepartureRow }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radii.sm,
-    alignSelf: 'flex-end',
-  },
-  text: { fontSize: 12, fontWeight: '700' },
-});

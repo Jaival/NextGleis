@@ -19,3 +19,18 @@ export type StationSearchResult = {
   evaNo: string;
   name: string;
 };
+
+export type FavoriteRoute = {
+  id: string; // `${fromEva}-${toEva}`
+  fromEva: string;
+  fromName: string;
+  toEva: string;
+  toName: string;
+  order: number;
+};
+
+export type ThemeMode = 'system' | 'light' | 'dark';
+
+export type AppSettings = {
+  themeMode: ThemeMode;
+};
