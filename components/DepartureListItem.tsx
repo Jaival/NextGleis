@@ -1,10 +1,45 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { DelayBadge } from './DelayBadge';
 import { formatTime } from '../lib/time';
-import { colors, radii, spacing } from '../lib/theme';
+import { radii, spacing, type } from '../lib/theme';
+import { useThemeColors } from '../lib/useThemeColors';
 import type { DepartureRow } from '../types';
 
 export function DepartureListItem({ row }: { row: DepartureRow }) {
+  const { colors } = useThemeColors();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        row: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.md,
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.surface,
+        },
+        lineBadge: {
+          backgroundColor: colors.primarySoft,
+          borderRadius: radii.sm,
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.xs,
+          minWidth: 64,
+          alignItems: 'center',
+        },
+        lineText: { ...type.footnoteBold, color: colors.primary },
+        middle: { flex: 1 },
+        direction: { ...type.subheadMedium, color: colors.textPrimary },
+        platform: { ...type.caption, color: colors.textSecondary, marginTop: 2 },
+        right: { alignItems: 'flex-end', gap: spacing.xs },
+        time: { ...type.subheadBold, color: colors.textPrimary },
+        timeCancelled: { textDecorationLine: 'line-through', color: colors.textSecondary },
+      }),
+    [colors],
+  );
+
   const statusLabel = row.cancelled
     ? 'cancelled'
     : row.delayMinutes && row.delayMinutes > 0
@@ -43,31 +78,3 @@ export function DepartureListItem({ row }: { row: DepartureRow }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  lineBadge: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    minWidth: 64,
-    alignItems: 'center',
-  },
-  lineText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  middle: { flex: 1 },
-  direction: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  platform: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  right: { alignItems: 'flex-end', gap: spacing.xs },
-  time: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  timeCancelled: { textDecorationLine: 'line-through', color: colors.textSecondary },
-});

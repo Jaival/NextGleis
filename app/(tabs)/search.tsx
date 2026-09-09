@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { StationResultItem } from '../../components/StationResultItem';
 import { searchStations } from '../../lib/api';
-import { colors, radii, spacing } from '../../lib/theme';
+import { radii, spacing, type } from '../../lib/theme';
+import { useThemeColors } from '../../lib/useThemeColors';
 
 export default function SearchScreen() {
+  const { colors } = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [input, setInput] = useState('');
   const [debounced, setDebounced] = useState('');
 
@@ -72,21 +75,23 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { padding: spacing.lg, paddingBottom: spacing.sm },
-  title: { fontSize: 28, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  loading: { marginTop: spacing.sm },
-  list: { paddingBottom: spacing.xl, flexGrow: 1 },
-  empty: { paddingTop: spacing.xl, paddingHorizontal: spacing.xl, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-});
+function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+  return StyleSheet.create({
+    header: { padding: spacing.lg, paddingBottom: spacing.sm },
+    title: { ...type.title, color: colors.textPrimary, marginBottom: spacing.md },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      ...type.input,
+      color: colors.textPrimary,
+    },
+    loading: { marginTop: spacing.sm },
+    list: { paddingBottom: spacing.xl, flexGrow: 1 },
+    empty: { paddingTop: spacing.xl, paddingHorizontal: spacing.xl, alignItems: 'center' },
+    emptyText: { ...type.body, color: colors.textSecondary, textAlign: 'center' },
+  });
+}

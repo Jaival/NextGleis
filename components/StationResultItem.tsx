@@ -1,11 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors, spacing } from '../lib/theme';
+import { spacing, type } from '../lib/theme';
+import { useThemeColors } from '../lib/useThemeColors';
 import type { StationSearchResult } from '../types';
 
 type Props = { station: StationSearchResult; onPress: () => void };
 
 export function StationResultItem({ station, onPress }: Props) {
+  const { colors } = useThemeColors();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        row: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.surface,
+        },
+        name: { flex: 1, ...type.subhead, color: colors.textPrimary },
+      }),
+    [colors],
+  );
+
   return (
     <Pressable
       style={styles.row}
@@ -21,17 +42,3 @@ export function StationResultItem({ station, onPress }: Props) {
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  name: { flex: 1, fontSize: 15, fontWeight: '500', color: colors.textPrimary },
-});

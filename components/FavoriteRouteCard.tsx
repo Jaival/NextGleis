@@ -3,17 +3,17 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, type } from '../lib/theme';
 import { useThemeColors } from '../lib/useThemeColors';
-import type { FavoriteStation } from '../types';
+import type { FavoriteRoute } from '../types';
 
 type Props = {
-  favorite: FavoriteStation;
+  favorite: FavoriteRoute;
   onPress: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onRemove: () => void;
 };
 
-export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, onRemove }: Props) {
+export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onRemove }: Props) {
   const { colors } = useThemeColors();
   const styles = useMemo(
     () =>
@@ -30,12 +30,15 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
           marginBottom: spacing.sm,
         },
         main: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-        name: { ...type.headlineMedium, color: colors.textPrimary, flexShrink: 1 },
+        names: { flexShrink: 1 },
+        name: { ...type.subheadMedium, color: colors.textPrimary },
         actions: { flexDirection: 'row', gap: spacing.xs },
         iconButton: { padding: spacing.xs },
       }),
     [colors],
   );
+
+  const label = `${favorite.fromName} to ${favorite.toName}`;
 
   return (
     <View style={styles.card}>
@@ -43,19 +46,24 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
         style={styles.main}
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`Open departure board for ${favorite.name}`}
+        accessibilityLabel={`Find routes from ${label}`}
       >
-        <Ionicons name="train" size={20} color={colors.primary} />
-        <Text style={styles.name} numberOfLines={1}>
-          {favorite.name}
-        </Text>
+        <Ionicons name="git-network" size={20} color={colors.primary} />
+        <View style={styles.names}>
+          <Text style={styles.name} numberOfLines={1}>
+            {favorite.fromName}
+          </Text>
+          <Text style={styles.name} numberOfLines={1}>
+            → {favorite.toName}
+          </Text>
+        </View>
       </Pressable>
       <View style={styles.actions}>
         <Pressable
           onPress={onMoveUp}
           disabled={!onMoveUp}
           accessibilityRole="button"
-          accessibilityLabel={`Move ${favorite.name} up`}
+          accessibilityLabel={`Move ${label} up`}
           hitSlop={8}
           style={styles.iconButton}
         >
@@ -65,7 +73,7 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
           onPress={onMoveDown}
           disabled={!onMoveDown}
           accessibilityRole="button"
-          accessibilityLabel={`Move ${favorite.name} down`}
+          accessibilityLabel={`Move ${label} down`}
           hitSlop={8}
           style={styles.iconButton}
         >
@@ -74,7 +82,7 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
         <Pressable
           onPress={onRemove}
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${favorite.name} from favorites`}
+          accessibilityLabel={`Remove ${label} from favorites`}
           hitSlop={8}
           style={styles.iconButton}
         >

@@ -17,9 +17,12 @@ import { DepartureListItem } from '../../components/DepartureListItem';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { getBoard } from '../../lib/api';
 import { useFavoritesStore } from '../../lib/favoritesStore';
-import { colors, spacing } from '../../lib/theme';
+import { spacing, type } from '../../lib/theme';
+import { useThemeColors } from '../../lib/useThemeColors';
 
 export default function BoardScreen() {
+  const { colors } = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { evaNo, name } = useLocalSearchParams<{ evaNo: string; name?: string }>();
   const favorites = useFavoritesStore((s) => s.favorites);
   const addFavorite = useFavoritesStore((s) => s.addFavorite);
@@ -146,15 +149,17 @@ export default function BoardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  chipRow: {
-    maxHeight: 48,
-    flexGrow: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  chipRowContent: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, alignItems: 'center' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-  emptyText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-});
+function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+  return StyleSheet.create({
+    chipRow: {
+      maxHeight: 48,
+      flexGrow: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    chipRowContent: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, alignItems: 'center' },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+    emptyText: { ...type.body, color: colors.textSecondary, textAlign: 'center' },
+  });
+}

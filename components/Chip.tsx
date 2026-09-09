@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radii, spacing } from '../lib/theme';
+import { radii, spacing, type } from '../lib/theme';
+import { useThemeColors } from '../lib/useThemeColors';
 
 type ChipProps = {
   label: string;
@@ -9,6 +11,24 @@ type ChipProps = {
 };
 
 export function Chip({ label, active, onPress, accessibilityLabel }: ChipProps) {
+  const { colors } = useThemeColors();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        chip: {
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.xs,
+          borderRadius: radii.pill,
+          marginRight: spacing.xs,
+        },
+        chipActive: { backgroundColor: colors.chipBgActive },
+        chipInactive: { backgroundColor: colors.chipBg },
+        text: { ...type.footnoteMedium, color: colors.chipText },
+        textActive: { ...type.footnoteMedium, color: colors.chipTextActive },
+      }),
+    [colors],
+  );
+
   return (
     <Pressable
       onPress={onPress}
@@ -21,16 +41,3 @@ export function Chip({ label, active, onPress, accessibilityLabel }: ChipProps) 
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.pill,
-    marginRight: spacing.xs,
-  },
-  chipActive: { backgroundColor: colors.chipBgActive },
-  chipInactive: { backgroundColor: colors.chipBg },
-  text: { color: colors.chipText, fontWeight: '600', fontSize: 13 },
-  textActive: { color: colors.chipTextActive, fontWeight: '600', fontSize: 13 },
-});
