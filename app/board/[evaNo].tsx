@@ -2,29 +2,33 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BoardSkeleton } from '@/components/BoardSkeleton';
 import { Chip } from '@/components/Chip';
 import { DepartureListItem } from '@/components/DepartureListItem';
+import { EmptyState } from '@/components/EmptyState';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { getBoard } from '@/lib/api';
 import { useFavoritesStore } from '@/lib/favoritesStore';
-import { spacing, type } from '@/lib/theme';
+import { tap } from '@/lib/haptics';
+import { duration, easing, spring } from '@/lib/motion';
+import { spacing } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
 export default function BoardScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const reduced = useReducedMotion();
   const { evaNo, name } = useLocalSearchParams<{ evaNo: string; name?: string }>();
   const favorites = useFavoritesStore((s) => s.favorites);
   const addFavorite = useFavoritesStore((s) => s.addFavorite);
@@ -66,7 +70,22 @@ export default function BoardScreen() {
     }
   };
 
+  // Starring a station is a rare, deliberate act — the tier where a bit of
+  // delight is affordable. The overshoot is what makes it read as "caught",
+  // and the haptic fires on the same frame as the icon fills.
+  const starScale = useSharedValue(1);
+  const starStyle = useAnimatedStyle(() => ({ transform: [{ scale: starScale.get() }] }));
+
   const toggleFavorite = () => {
+    tap.light();
+    if (!reduced) {
+      starScale.set(
+        withSequence(
+          withTiming(1.3, { duration: duration.press, easing: easing.out }),
+          withSpring(1, spring.pop),
+        ),
+      );
+    }
     if (isFavorite) {
       removeFavorite(evaNo);
     } else {
@@ -83,18 +102,21 @@ export default function BoardScreen() {
             <Pressable
               onPress={toggleFavorite}
               accessibilityRole="button"
+              accessibilityState={{ selected: isFavorite }}
               accessibilityLabel={
                 isFavorite
                   ? `Remove ${stationName} from favorites`
                   : `Add ${stationName} to favorites`
               }
-              hitSlop={8}
+              hitSlop={12}
             >
-              <Ionicons
-                name={isFavorite ? 'star' : 'star-outline'}
-                size={22}
-                color={colors.primary}
-              />
+              <Animated.View style={starStyle}>
+                <Ionicons
+                  name={isFavorite ? 'star' : 'star-outline'}
+                  size={22}
+                  color={isFavorite ? colors.primary : colors.textSecondary}
+                />
+              </Animated.View>
             </Pressable>
           ),
         }}
@@ -120,12 +142,16 @@ export default function BoardScreen() {
       ) : null}
 
       {isLoading && isOffline ? (
-        <View style={styles.center} accessibilityLiveRegion="polite">
-          <Text style={styles.emptyText}>
-            You&apos;re offline. Connect to the internet to load this board.
-          </Text>
-        </View>
+        <EmptyState
+          fill
+          icon="cloud-offline-outline"
+          title="You're offline"
+          message="Connect to the internet to load this board."
+        />
       ) : isLoading ? (
+        // No crossfade here on purpose: BoardSkeleton mirrors the row geometry
+        // exactly, so real departures land where the placeholders were and the
+        // swap needs no motion to cover a jump.
         <BoardSkeleton />
       ) : (
         <FlatList
@@ -146,17 +172,35 @@ export default function BoardScreen() {
             />
           }
           ListEmptyComponent={
-            <View style={styles.center} accessibilityLiveRegion="polite">
-              <Text style={styles.emptyText}>
-                {isOffline
-                  ? "You're offline. Departures will update once you're back online."
-                  : isError
-                    ? 'Could not load this board. Pull to refresh to try again.'
-                    : hiddenLines.length > 0
-                      ? 'All departures are hidden by your line filters.'
-                      : 'No departures in the next couple of hours.'}
-              </Text>
-            </View>
+            isOffline ? (
+              <EmptyState
+                fill
+                icon="cloud-offline-outline"
+                title="You're offline"
+                message="Departures will update once you're back online."
+              />
+            ) : isError ? (
+              <EmptyState
+                fill
+                icon="alert-circle-outline"
+                title="Could not load this board"
+                message="Pull down to refresh and try again."
+              />
+            ) : hiddenLines.length > 0 ? (
+              <EmptyState
+                fill
+                icon="filter-outline"
+                title="Everything is filtered out"
+                message="Tap a line above to bring its departures back."
+              />
+            ) : (
+              <EmptyState
+                fill
+                icon="time-outline"
+                title="Nothing scheduled"
+                message="No departures from this station in the next couple of hours."
+              />
+            )
           }
         />
       )}
@@ -167,18 +211,15 @@ export default function BoardScreen() {
 function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
   return StyleSheet.create({
     chipRow: {
-      maxHeight: 48,
       flexGrow: 0,
-      borderBottomWidth: 1,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.background,
     },
     chipRowContent: {
-      paddingHorizontal: spacing.md,
+      paddingHorizontal: spacing.lg,
       paddingVertical: spacing.sm,
       alignItems: 'center',
     },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-    emptyText: { ...type.body, color: colors.textSecondary, textAlign: 'center' },
   });
 }

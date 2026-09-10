@@ -1,5 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { useMemo } from 'react';
+import { useMemo, type ComponentProps, type ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SegmentedControl } from '@/components/SegmentedControl';
@@ -8,24 +9,55 @@ import { useSettingsStore } from '@/lib/settingsStore';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
+type Styles = ReturnType<typeof createStyles>;
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+function Card({
+  icon,
+  title,
+  children,
+  styles,
+  colors,
+}: {
+  icon: IconName;
+  title: string;
+  children: ReactNode;
+  styles: Styles;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+}) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={styles.cardIcon}>
+          <Ionicons name={icon} size={15} color={colors.primary} />
+        </View>
+        <Text style={styles.cardTitle}>{title}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
 function LinkRow({
   label,
   url,
   styles,
+  colors,
 }: {
   label: string;
   url: string;
-  styles: ReturnType<typeof createStyles>;
+  styles: Styles;
+  colors: ReturnType<typeof useThemeColors>['colors'];
 }) {
   return (
     <Pressable
       onPress={() => Linking.openURL(url)}
       accessibilityRole="link"
       accessibilityLabel={label}
-      style={styles.linkRow}
+      style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
     >
       <Text style={styles.linkText}>{label}</Text>
-      <Text style={styles.linkChevron}>›</Text>
+      <Ionicons name="open-outline" size={16} color={colors.primary} />
     </Pressable>
   );
 }
@@ -39,55 +71,62 @@ export default function SettingsScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Settings</Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
-          <SegmentedControl
-            accessibilityLabel="Appearance"
-            value={themeMode}
-            onChange={setThemeMode}
-            options={[
-              { value: 'system', label: 'System' },
-              { value: 'light', label: 'Light' },
-              { value: 'dark', label: 'Dark' },
-            ]}
-          />
-        </View>
+        <Card icon="contrast-outline" title="Appearance" styles={styles} colors={colors}>
+          <View style={styles.cardBody}>
+            <SegmentedControl
+              accessibilityLabel="Appearance"
+              value={themeMode}
+              onChange={setThemeMode}
+              options={[
+                { value: 'system', label: 'System' },
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+              ]}
+            />
+          </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data source</Text>
-          <Text style={styles.paragraph}>
-            Departure data is provided by Deutsche Bahn AG / DB InfraGO AG via the DB API
-            Marketplace &quot;Timetables&quot; product, licensed under Creative Commons Attribution
-            4.0 (CC BY 4.0).
-          </Text>
+        <Card icon="server-outline" title="Data source" styles={styles} colors={colors}>
+          <View style={styles.cardBody}>
+            <Text style={styles.paragraph}>
+              Departure data is provided by Deutsche Bahn AG / DB InfraGO AG via the DB API
+              Marketplace &quot;Timetables&quot; product, licensed under Creative Commons
+              Attribution 4.0 (CC BY 4.0).
+            </Text>
+          </View>
           <LinkRow
             label="CC BY 4.0 license"
             url="https://creativecommons.org/licenses/by/4.0/"
             styles={styles}
+            colors={colors}
           />
           <LinkRow
             label="DB terms of use"
             url="https://data.deutschebahn.com/nutzungsbedingungen.html"
             styles={styles}
+            colors={colors}
           />
-        </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Privacy</Text>
-          <Text style={styles.paragraph}>
-            No account is required. Favorite stations, favorite routes, and preferences are stored
-            only on this device.
-          </Text>
-          <LinkRow label="Privacy policy" url={PRIVACY_POLICY_URL} styles={styles} />
-        </View>
+        <Card icon="lock-closed-outline" title="Privacy" styles={styles} colors={colors}>
+          <View style={styles.cardBody}>
+            <Text style={styles.paragraph}>
+              No account is required. Favorite stations, favorite routes, and preferences are stored
+              only on this device.
+            </Text>
+          </View>
+          <LinkRow
+            label="Privacy policy"
+            url={PRIVACY_POLICY_URL}
+            styles={styles}
+            colors={colors}
+          />
+        </Card>
 
-        <View style={styles.row}>
-          <Text style={styles.label}>Version</Text>
-          <Text style={styles.value}>{version}</Text>
-        </View>
+        <Text style={styles.version}>NextGleis {version}</Text>
       </ScrollView>
     </ScreenContainer>
   );
@@ -95,30 +134,57 @@ export default function SettingsScreen() {
 
 function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
   return StyleSheet.create({
-    container: { padding: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },
-    title: { ...type.title, color: colors.textPrimary, marginBottom: spacing.xs },
-    section: {
-      backgroundColor: colors.surface,
-      borderRadius: radii.md,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: spacing.md,
-      gap: spacing.sm,
+    container: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xxl,
+      gap: spacing.md,
     },
-    sectionTitle: { ...type.headline, color: colors.textPrimary },
+    title: { ...type.largeTitle, color: colors.textPrimary, marginBottom: spacing.xs },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      boxShadow: colors.shadowCard,
+      overflow: 'hidden',
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.sm,
+    },
+    cardIcon: {
+      width: 26,
+      height: 26,
+      borderRadius: radii.pill,
+      backgroundColor: colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cardTitle: { ...type.headline, color: colors.textPrimary },
+    cardBody: { paddingHorizontal: spacing.md, paddingBottom: spacing.md, gap: spacing.sm },
     paragraph: { ...type.body, color: colors.textSecondary, lineHeight: 20 },
     linkRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: spacing.sm,
-      borderTopWidth: 1,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
     },
+    linkRowPressed: { backgroundColor: colors.surfaceMuted },
     linkText: { ...type.calloutMedium, color: colors.primary },
-    linkChevron: { fontSize: 18, color: colors.primary }, // glyph size, not body text
-    row: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xs },
-    label: { fontWeight: '600', color: colors.textPrimary },
-    value: { color: colors.textSecondary },
+    version: {
+      ...type.caption,
+      color: colors.textTertiary,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
   });
 }

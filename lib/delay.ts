@@ -1,15 +1,36 @@
 import type { ThemeColors } from './theme';
 
-export type DelayBadgeSpec = { label: string; bg: string; fg: string };
+export type DepartureStatusKind = 'onTime' | 'delayed' | 'cancelled';
 
-export function delayBadgeSpec(
+export type DepartureStatus = {
+  kind: DepartureStatusKind;
+  /** Short caption under the departure time. */
+  label: string;
+  /** Foreground for the caption, and for the time itself when delayed. */
+  fg: string;
+  /** Tint behind the caption. Only used where the status needs to shout. */
+  bg: string;
+};
+
+export function departureStatus(
   status: { cancelled: boolean; delayMinutes?: number },
   colors: ThemeColors,
-): DelayBadgeSpec {
-  if (status.cancelled)
-    return { label: 'Cancelled', bg: colors.cancelledSoft, fg: colors.cancelled };
-  if (status.delayMinutes && status.delayMinutes > 0) {
-    return { label: `+${status.delayMinutes} min`, bg: colors.delaySoft, fg: colors.delay };
+): DepartureStatus {
+  if (status.cancelled) {
+    return {
+      kind: 'cancelled',
+      label: 'Cancelled',
+      fg: colors.cancelled,
+      bg: colors.cancelledSoft,
+    };
   }
-  return { label: 'On time', bg: colors.onTimeSoft, fg: colors.onTime };
+  if (status.delayMinutes && status.delayMinutes > 0) {
+    return {
+      kind: 'delayed',
+      label: `+${status.delayMinutes} min`,
+      fg: colors.delay,
+      bg: colors.delaySoft,
+    };
+  }
+  return { kind: 'onTime', label: 'On time', fg: colors.onTime, bg: colors.onTimeSoft };
 }
