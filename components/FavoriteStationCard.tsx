@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, type } from '@/lib/theme';
+import { StyleSheet, Text } from 'react-native';
+import { FavoriteCard } from './FavoriteCard';
+import { type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 import type { FavoriteStation } from '@/types';
 
@@ -15,80 +15,34 @@ type Props = {
 
 export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, onRemove }: Props) {
   const { colors } = useThemeColors();
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        card: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: colors.surface,
-          borderRadius: radii.md,
-          borderWidth: 1,
-          borderColor: colors.border,
-          padding: spacing.md,
-          marginBottom: spacing.sm,
-        },
-        main: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-        name: { ...type.headlineMedium, color: colors.textPrimary, flexShrink: 1 },
-        actions: { flexDirection: 'row', gap: spacing.xs },
-        iconButton: { padding: spacing.xs },
-      }),
-    [colors],
-  );
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const hiddenCount = favorite.hiddenLines.length;
 
   return (
-    <View style={styles.card}>
-      <Pressable
-        style={styles.main}
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={`Open departure board for ${favorite.name}`}
-      >
-        <Ionicons name="train" size={20} color={colors.primary} />
-        <Text style={styles.name} numberOfLines={1}>
-          {favorite.name}
+    <FavoriteCard
+      icon="train"
+      itemLabel={favorite.name}
+      openLabel={`Open departure board for ${favorite.name}`}
+      onPress={onPress}
+      onMoveUp={onMoveUp}
+      onMoveDown={onMoveDown}
+      onRemove={onRemove}
+    >
+      <Text style={styles.name} numberOfLines={1}>
+        {favorite.name}
+      </Text>
+      {hiddenCount > 0 ? (
+        <Text style={styles.meta}>
+          {hiddenCount} line{hiddenCount === 1 ? '' : 's'} hidden
         </Text>
-      </Pressable>
-      <View style={styles.actions}>
-        <Pressable
-          onPress={onMoveUp}
-          disabled={!onMoveUp}
-          accessibilityRole="button"
-          accessibilityLabel={`Move ${favorite.name} up`}
-          hitSlop={8}
-          style={styles.iconButton}
-        >
-          <Ionicons
-            name="chevron-up"
-            size={18}
-            color={onMoveUp ? colors.textSecondary : colors.border}
-          />
-        </Pressable>
-        <Pressable
-          onPress={onMoveDown}
-          disabled={!onMoveDown}
-          accessibilityRole="button"
-          accessibilityLabel={`Move ${favorite.name} down`}
-          hitSlop={8}
-          style={styles.iconButton}
-        >
-          <Ionicons
-            name="chevron-down"
-            size={18}
-            color={onMoveDown ? colors.textSecondary : colors.border}
-          />
-        </Pressable>
-        <Pressable
-          onPress={onRemove}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove ${favorite.name} from favorites`}
-          hitSlop={8}
-          style={styles.iconButton}
-        >
-          <Ionicons name="close" size={18} color={colors.textSecondary} />
-        </Pressable>
-      </View>
-    </View>
+      ) : null}
+    </FavoriteCard>
   );
+}
+
+function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+  return StyleSheet.create({
+    name: { ...type.headlineMedium, color: colors.textPrimary },
+    meta: { ...type.caption, color: colors.textTertiary },
+  });
 }

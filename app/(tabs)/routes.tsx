@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { EmptyState } from '@/components/EmptyState';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
@@ -12,28 +13,30 @@ export default function RoutesScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const params = useLocalSearchParams<{ fromName?: string; toName?: string }>();
+  const route = params.fromName && params.toName ? `${params.fromName} → ${params.toName}` : null;
 
   return (
     <ScreenContainer>
       <View style={styles.header}>
         <Text style={styles.title}>Routes</Text>
       </View>
-      <View style={styles.empty} accessibilityLiveRegion="polite">
-        <Text style={styles.emptyText}>
-          {params.fromName && params.toName
-            ? `Route search for ${params.fromName} → ${params.toName} is temporarily unavailable.`
-            : 'Route search is temporarily unavailable.'}
-        </Text>
-      </View>
+      <EmptyState
+        fill
+        icon="construct-outline"
+        title="Not available yet"
+        message={
+          route
+            ? `Route search for ${route} is temporarily unavailable. Open the stations' boards in the meantime.`
+            : 'Route search is temporarily unavailable. Departure boards for individual stations still work.'
+        }
+      />
     </ScreenContainer>
   );
 }
 
 function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
   return StyleSheet.create({
-    header: { padding: spacing.lg, paddingBottom: spacing.md },
-    title: { ...type.title, color: colors.textPrimary },
-    empty: { paddingTop: spacing.xl, paddingHorizontal: spacing.xl, alignItems: 'center' },
-    emptyText: { ...type.body, color: colors.textSecondary, textAlign: 'center' },
+    header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md },
+    title: { ...type.largeTitle, color: colors.textPrimary },
   });
 }

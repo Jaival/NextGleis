@@ -5,8 +5,13 @@ import type { AppSettings, ThemeMode } from '@/types';
 
 // Makes native-rendered chrome (dialogs, keyboard, etc.) follow the in-app
 // theme override instead of only the OS-level system setting.
+//
+// react-native-web has no `setColorScheme`, and calling it there threw out of
+// `hydrate()` as an unhandled rejection on every web start. The in-app theme
+// is driven by `useThemeColors`, not by this call, so skipping it costs the
+// web build nothing.
 function applyColorScheme(mode: ThemeMode) {
-  Appearance.setColorScheme(mode === 'system' ? 'unspecified' : mode);
+  Appearance.setColorScheme?.(mode === 'system' ? 'unspecified' : mode);
 }
 
 type SettingsState = AppSettings & {

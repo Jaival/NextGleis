@@ -1,80 +1,128 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { DelayBadge } from './DelayBadge';
+import { departureStatus } from '@/lib/delay';
+import { productKind } from '@/lib/product';
 import { formatTime } from '@/lib/time';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 import type { DepartureRow } from '@/types';
 
-export function DepartureListItem({ row }: { row: DepartureRow }) {
+// A board is scanned, not read. The three columns are ordered by what the eye
+// goes for first: which service it is, where it goes, when it leaves — and the
+// only colour in a row is the line badge (which product) and the status
+// caption (whether to worry).
+function DepartureListItemBase({ row }: { row: DepartureRow }) {
   const { colors } = useThemeColors();
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        row: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: spacing.md,
-          paddingVertical: spacing.md,
-          paddingHorizontal: spacing.lg,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-          backgroundColor: colors.surface,
-        },
-        lineBadge: {
-          backgroundColor: colors.primarySoft,
-          borderRadius: radii.sm,
-          paddingHorizontal: spacing.sm,
-          paddingVertical: spacing.xs,
-          minWidth: 64,
-          alignItems: 'center',
-        },
-        lineText: { ...type.footnoteBold, color: colors.primary },
-        middle: { flex: 1 },
-        direction: { ...type.subheadMedium, color: colors.textPrimary },
-        platform: { ...type.caption, color: colors.textSecondary, marginTop: 2 },
-        right: { alignItems: 'flex-end', gap: spacing.xs },
-        time: { ...type.subheadBold, color: colors.textPrimary },
-        timeCancelled: { textDecorationLine: 'line-through', color: colors.textSecondary },
-      }),
-    [colors],
-  );
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const statusLabel = row.cancelled
-    ? 'cancelled'
-    : row.delayMinutes && row.delayMinutes > 0
-      ? `delayed ${row.delayMinutes} minutes`
-      : 'on time';
+  const status = departureStatus(row, colors);
+  const product = colors.product[productKind(row.line)];
+  const scheduled = formatTime(row.scheduledTime);
+  // A delayed departure's headline time is when it will *actually* leave; the
+  // scheduled one drops to a struck-through footnote beside the delta.
+  const headlineTime =
+    status.kind === 'delayed' && row.actualTime ? formatTime(row.actualTime) : scheduled;
 
   const a11yLabel = [
     row.line || 'Unlabelled line',
     `to ${row.direction || 'unknown direction'}`,
-    `departs ${formatTime(row.scheduledTime)}`,
-    statusLabel,
+    `departs ${scheduled}`,
+    status.kind === 'delayed' ? `delayed ${row.delayMinutes} minutes` : status.label.toLowerCase(),
     row.platform ? `platform ${row.platform}` : null,
   ]
     .filter(Boolean)
     .join(', ');
 
   return (
-    <View style={styles.row} accessible accessibilityLabel={a11yLabel}>
-      <View style={styles.lineBadge}>
-        <Text style={styles.lineText} numberOfLines={1}>
+    <View
+      style={[styles.row, status.kind === 'cancelled' && styles.rowCancelled]}
+      accessible
+      accessibilityLabel={a11yLabel}
+    >
+      <View style={[styles.lineBadge, { backgroundColor: product.bg }]}>
+        <Text style={[styles.lineText, { color: product.fg }]} numberOfLines={1}>
           {row.line || '—'}
         </Text>
       </View>
+
       <View style={styles.middle}>
         <Text style={styles.direction} numberOfLines={1}>
           {row.direction || 'Unknown direction'}
         </Text>
-        {row.platform ? <Text style={styles.platform}>Platform {row.platform}</Text> : null}
+        {row.platform ? (
+          <View style={styles.platform}>
+            <Text style={styles.platformText}>Platform {row.platform}</Text>
+          </View>
+        ) : null}
       </View>
+
       <View style={styles.right}>
-        <Text style={[styles.time, row.cancelled && styles.timeCancelled]}>
-          {formatTime(row.scheduledTime)}
+        <Text
+          style={[
+            styles.time,
+            status.kind === 'delayed' && { color: status.fg },
+            status.kind === 'cancelled' && styles.timeCancelled,
+          ]}
+        >
+          {headlineTime}
         </Text>
-        <DelayBadge row={row} />
+        <View style={styles.statusLine}>
+          {status.kind === 'delayed' ? (
+            <Text style={styles.scheduledStruck}>{scheduled}</Text>
+          ) : null}
+          <Text style={[styles.statusLabel, { color: status.fg }]}>{status.label}</Text>
+        </View>
       </View>
     </View>
   );
+}
+
+// Boards refetch every 30s and a busy station returns well over a hundred rows;
+// without this every poll re-renders all of them even when nothing changed.
+export const DepartureListItem = memo(DepartureListItemBase);
+
+function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    rowCancelled: { opacity: 0.7 },
+    lineBadge: {
+      borderRadius: radii.sm,
+      borderCurve: 'continuous',
+      paddingHorizontal: spacing.sm,
+      height: 30,
+      minWidth: 62,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    lineText: { ...type.footnoteBold },
+    middle: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
+    direction: { ...type.subheadMedium, color: colors.textPrimary },
+    platform: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radii.sm,
+      borderCurve: 'continuous',
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+    },
+    platformText: { ...type.micro, color: colors.textSecondary },
+    right: { alignItems: 'flex-end', gap: 2 },
+    time: { ...type.time, color: colors.textPrimary },
+    timeCancelled: { textDecorationLine: 'line-through', color: colors.textSecondary },
+    statusLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    scheduledStruck: {
+      ...type.timeSmall,
+      color: colors.textTertiary,
+      textDecorationLine: 'line-through',
+    },
+    statusLabel: { ...type.captionBold },
+  });
 }

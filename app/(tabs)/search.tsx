@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { EmptyState } from '@/components/EmptyState';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { SearchField } from '@/components/SearchField';
 import { StationResultItem } from '@/components/StationResultItem';
 import { searchStations } from '@/lib/api';
-import { radii, spacing, type } from '@/lib/theme';
+import { spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
 export default function SearchScreen() {
@@ -34,19 +36,21 @@ export default function SearchScreen() {
     <ScreenContainer>
       <View style={styles.header}>
         <Text style={styles.title}>Search</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Station name, e.g. Frankfurt Hbf"
-          placeholderTextColor={colors.textSecondary}
+        <SearchField
           value={input}
           onChangeText={setInput}
-          autoCapitalize="words"
-          autoCorrect={false}
+          placeholder="Station name, e.g. Frankfurt Hbf"
           accessibilityLabel="Station name search"
-          returnKeyType="search"
         />
       </View>
-      {isFetching ? <ActivityIndicator style={styles.loading} color={colors.primary} /> : null}
+
+      {/* Fixed-height slot: the spinner appears and disappears on every
+          keystroke, and letting it push the results list would make the whole
+          screen twitch while typing. */}
+      <View style={styles.status}>
+        {isFetching ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+      </View>
+
       <FlatList
         data={data ?? []}
         keyExtractor={(item) => item.evaNo}
@@ -57,19 +61,31 @@ export default function SearchScreen() {
           <StationResultItem station={item} onPress={() => openBoard(item.evaNo, item.name)} />
         )}
         ListEmptyComponent={
-          !isFetching ? (
-            <View style={styles.empty} accessibilityLiveRegion="polite">
-              <Text style={styles.emptyText}>
-                {debounced.length < 2
-                  ? 'Type at least 2 letters of a station name.'
-                  : isOffline
-                    ? "You're offline. Connect to the internet to search stations."
-                    : isError
-                      ? 'Could not load results. Check your connection and try again.'
-                      : 'No stations matched your search.'}
-              </Text>
-            </View>
-          ) : null
+          isFetching ? null : debounced.length < 2 ? (
+            <EmptyState
+              icon="search-outline"
+              title="Find a station"
+              message="Type at least two letters of a station name to see its departures."
+            />
+          ) : isOffline ? (
+            <EmptyState
+              icon="cloud-offline-outline"
+              title="You're offline"
+              message="Connect to the internet to search for stations."
+            />
+          ) : isError ? (
+            <EmptyState
+              icon="alert-circle-outline"
+              title="Something went wrong"
+              message="Could not load results. Check your connection and try again."
+            />
+          ) : (
+            <EmptyState
+              icon="search-outline"
+              title="No matches"
+              message={`Nothing matched "${debounced}". Try a different spelling.`}
+            />
+          )
         }
       />
     </ScreenContainer>
@@ -78,21 +94,9 @@ export default function SearchScreen() {
 
 function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
   return StyleSheet.create({
-    header: { padding: spacing.lg, paddingBottom: spacing.sm },
-    title: { ...type.title, color: colors.textPrimary, marginBottom: spacing.md },
-    input: {
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radii.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      ...type.input,
-      color: colors.textPrimary,
-    },
-    loading: { marginTop: spacing.sm },
-    list: { paddingBottom: spacing.xl, flexGrow: 1 },
-    empty: { paddingTop: spacing.xl, paddingHorizontal: spacing.xl, alignItems: 'center' },
-    emptyText: { ...type.body, color: colors.textSecondary, textAlign: 'center' },
+    header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.md },
+    title: { ...type.largeTitle, color: colors.textPrimary },
+    status: { height: 28, alignItems: 'center', justifyContent: 'center' },
+    list: { paddingBottom: spacing.xxl, flexGrow: 1 },
   });
 }

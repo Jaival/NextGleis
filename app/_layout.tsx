@@ -6,7 +6,9 @@ import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { type } from '@/lib/theme';
 import { useFavoritesStore } from '@/lib/favoritesStore';
 import { useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { useNavigationTheme } from '@/lib/navigationTheme';
@@ -24,6 +26,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { colors, isDark } = useThemeColors();
   const navigationTheme = useNavigationTheme();
+  const reducedMotion = useReducedMotion();
 
   const favoritesHydrated = useFavoritesStore((s) => s.hydrated);
   const routesHydrated = useFavoriteRoutesStore((s) => s.hydrated);
@@ -57,8 +60,17 @@ export default function RootLayout() {
             <Stack
               screenOptions={{
                 headerShown: false,
-                headerStyle: { backgroundColor: colors.surface },
+                // Flat header on the screen background rather than a raised
+                // `surface` bar: the board's filter row already draws the only
+                // separator that region needs, and two stacked bars read as the
+                // chrome-heavy style this design is moving away from.
+                headerStyle: { backgroundColor: colors.background },
+                headerShadowVisible: false,
                 headerTintColor: colors.textPrimary,
+                headerTitleStyle: { ...type.headline, color: colors.textPrimary },
+                // Screen transitions stay native — never rebuilt in JS — so the
+                // interactive back gesture and platform timing come for free.
+                animation: reducedMotion ? 'fade' : 'default',
               }}
             >
               <Stack.Screen name="(tabs)" />
