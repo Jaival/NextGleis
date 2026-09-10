@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, type } from '../lib/theme';
-import { useThemeColors } from '../lib/useThemeColors';
+import { radii, spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
 type Option<T extends string> = { value: T; label: string };
 
@@ -42,7 +42,11 @@ export function SegmentedControl<T extends string>({
   );
 
   return (
-    <View style={styles.container} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
+    <View
+      style={styles.container}
+      accessibilityRole="tablist"
+      accessibilityLabel={accessibilityLabel}
+    >
       {options.map((option) => {
         const active = option.value === value;
         return (

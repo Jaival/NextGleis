@@ -1,14 +1,22 @@
 import Constants from 'expo-constants';
 import { useMemo } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { ScreenContainer } from '../../components/ScreenContainer';
-import { SegmentedControl } from '../../components/SegmentedControl';
-import { PRIVACY_POLICY_URL } from '../../lib/api';
-import { useSettingsStore } from '../../lib/settingsStore';
-import { radii, spacing, type } from '../../lib/theme';
-import { useThemeColors } from '../../lib/useThemeColors';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { SegmentedControl } from '@/components/SegmentedControl';
+import { PRIVACY_POLICY_URL } from '@/lib/api';
+import { useSettingsStore } from '@/lib/settingsStore';
+import { radii, spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
-function LinkRow({ label, url, styles }: { label: string; url: string; styles: ReturnType<typeof createStyles> }) {
+function LinkRow({
+  label,
+  url,
+  styles,
+}: {
+  label: string;
+  url: string;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
     <Pressable
       onPress={() => Linking.openURL(url)}

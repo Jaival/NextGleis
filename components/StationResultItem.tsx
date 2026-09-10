@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { spacing, type } from '../lib/theme';
-import { useThemeColors } from '../lib/useThemeColors';
-import type { StationSearchResult } from '../types';
+import { spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
+import type { StationSearchResult } from '@/types';
 
 type Props = { station: StationSearchResult; onPress: () => void };
 

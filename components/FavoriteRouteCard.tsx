@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, type } from '../lib/theme';
-import { useThemeColors } from '../lib/useThemeColors';
-import type { FavoriteRoute } from '../types';
+import { radii, spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
+import type { FavoriteRoute } from '@/types';
 
 type Props = {
   favorite: FavoriteRoute;
@@ -67,7 +67,11 @@ export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onR
           hitSlop={8}
           style={styles.iconButton}
         >
-          <Ionicons name="chevron-up" size={18} color={onMoveUp ? colors.textSecondary : colors.border} />
+          <Ionicons
+            name="chevron-up"
+            size={18}
+            color={onMoveUp ? colors.textSecondary : colors.border}
+          />
         </Pressable>
         <Pressable
           onPress={onMoveDown}
@@ -77,7 +81,11 @@ export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onR
           hitSlop={8}
           style={styles.iconButton}
         >
-          <Ionicons name="chevron-down" size={18} color={onMoveDown ? colors.textSecondary : colors.border} />
+          <Ionicons
+            name="chevron-down"
+            size={18}
+            color={onMoveDown ? colors.textSecondary : colors.border}
+          />
         </Pressable>
         <Pressable
           onPress={onRemove}

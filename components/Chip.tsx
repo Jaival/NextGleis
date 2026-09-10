@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { radii, spacing, type } from '../lib/theme';
-import { useThemeColors } from '../lib/useThemeColors';
+import { radii, spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
 type ChipProps = {
   label: string;

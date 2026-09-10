@@ -43,3 +43,16 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# local build artifacts
+.build.log
+*.apk
+*.aab
+
+# stray backups
+*.bak

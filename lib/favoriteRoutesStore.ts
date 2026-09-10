@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { getFavoriteRoutes, saveFavoriteRoutes } from './storage';
-import type { FavoriteRoute } from '../types';
+import type { FavoriteRoute } from '@/types';
 
 type FavoriteRouteInput = { fromEva: string; fromName: string; toEva: string; toName: string };
 
@@ -23,8 +23,11 @@ export const useFavoriteRoutesStore = create<FavoriteRoutesState>((set, get) => 
   hydrated: false,
 
   hydrate: async () => {
-    const favoriteRoutes = await getFavoriteRoutes();
-    set({ favoriteRoutes, hydrated: true });
+    try {
+      set({ favoriteRoutes: await getFavoriteRoutes() });
+    } finally {
+      set({ hydrated: true });
+    }
   },
 
   isFavoriteRoute: (fromEva, toEva) => {
@@ -36,7 +39,10 @@ export const useFavoriteRoutesStore = create<FavoriteRoutesState>((set, get) => 
     const { favoriteRoutes } = get();
     const id = routeId(route.fromEva, route.toEva);
     if (favoriteRoutes.some((r) => r.id === id)) return;
-    const next: FavoriteRoute[] = [...favoriteRoutes, { id, ...route, order: favoriteRoutes.length }];
+    const next: FavoriteRoute[] = [
+      ...favoriteRoutes,
+      { id, ...route, order: favoriteRoutes.length },
+    ];
     set({ favoriteRoutes: next });
     await saveFavoriteRoutes(next);
   },

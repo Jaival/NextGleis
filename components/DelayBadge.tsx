@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { delayBadgeSpec } from '../lib/delay';
-import { radii, spacing, type } from '../lib/theme';
-import { useThemeColors } from '../lib/useThemeColors';
-import type { DepartureRow } from '../types';
+import { delayBadgeSpec } from '@/lib/delay';
+import { radii, spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
+import type { DepartureRow } from '@/types';
 
 export function DelayBadge({ row }: { row: DepartureRow }) {
   const { colors } = useThemeColors();

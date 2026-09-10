@@ -1,0 +1,15 @@
+# Normalize to LF in the repository so Prettier's `endOfLine: lf` agrees with
+# the checkout on Windows as well as CI.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.keystore binary
+*.jks binary
+
+# Windows-only helper scripts need CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf

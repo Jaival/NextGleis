@@ -11,18 +11,20 @@ import {
   Text,
   View,
 } from 'react-native';
-import { BoardSkeleton } from '../../components/BoardSkeleton';
-import { Chip } from '../../components/Chip';
-import { DepartureListItem } from '../../components/DepartureListItem';
-import { ScreenContainer } from '../../components/ScreenContainer';
-import { getBoard } from '../../lib/api';
-import { useFavoritesStore } from '../../lib/favoritesStore';
-import { spacing, type } from '../../lib/theme';
-import { useThemeColors } from '../../lib/useThemeColors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BoardSkeleton } from '@/components/BoardSkeleton';
+import { Chip } from '@/components/Chip';
+import { DepartureListItem } from '@/components/DepartureListItem';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { getBoard } from '@/lib/api';
+import { useFavoritesStore } from '@/lib/favoritesStore';
+import { spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
 export default function BoardScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const { evaNo, name } = useLocalSearchParams<{ evaNo: string; name?: string }>();
   const favorites = useFavoritesStore((s) => s.favorites);
   const addFavorite = useFavoritesStore((s) => s.addFavorite);
@@ -38,7 +40,7 @@ export default function BoardScreen() {
 
   const { data, isLoading, isError, isRefetching, refetch, fetchStatus } = useQuery({
     queryKey: ['board', evaNo],
-    queryFn: () => getBoard(evaNo),
+    queryFn: ({ signal }) => getBoard(evaNo, signal),
     refetchInterval: 30_000,
   });
   const isOffline = fetchStatus === 'paused';
@@ -58,7 +60,9 @@ export default function BoardScreen() {
     if (isFavorite) {
       toggleHiddenLine(evaNo, line);
     } else {
-      setSessionHidden((prev) => (prev.includes(line) ? prev.filter((l) => l !== line) : [...prev, line]));
+      setSessionHidden((prev) =>
+        prev.includes(line) ? prev.filter((l) => l !== line) : [...prev, line],
+      );
     }
   };
 
@@ -71,7 +75,7 @@ export default function BoardScreen() {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer edges={[]}>
       <Stack.Screen
         options={{
           title: stationName,
@@ -80,11 +84,17 @@ export default function BoardScreen() {
               onPress={toggleFavorite}
               accessibilityRole="button"
               accessibilityLabel={
-                isFavorite ? `Remove ${stationName} from favorites` : `Add ${stationName} to favorites`
+                isFavorite
+                  ? `Remove ${stationName} from favorites`
+                  : `Add ${stationName} to favorites`
               }
               hitSlop={8}
             >
-              <Ionicons name={isFavorite ? 'star' : 'star-outline'} size={22} color={colors.primary} />
+              <Ionicons
+                name={isFavorite ? 'star' : 'star-outline'}
+                size={22}
+                color={colors.primary}
+              />
             </Pressable>
           ),
         }}
@@ -122,6 +132,11 @@ export default function BoardScreen() {
           data={visibleRows}
           keyExtractor={(item, index) => `${item.line}-${item.scheduledTime}-${index}`}
           renderItem={({ item }) => <DepartureListItem row={item} />}
+          // Android is edge-to-edge, so the list draws behind the navigation
+          // bar. Padding the content (rather than insetting the container) lets
+          // rows scroll under it while the last row still clears it.
+          contentContainerStyle={{ paddingBottom: insets.bottom, flexGrow: 1 }}
+          scrollIndicatorInsets={{ bottom: insets.bottom }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -158,7 +173,11 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       borderBottomColor: colors.border,
       backgroundColor: colors.surface,
     },
-    chipRowContent: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, alignItems: 'center' },
+    chipRowContent: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      alignItems: 'center',
+    },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
     emptyText: { ...type.body, color: colors.textSecondary, textAlign: 'center' },
   });
