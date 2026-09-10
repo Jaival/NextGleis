@@ -2,11 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ScreenContainer } from '../../components/ScreenContainer';
-import { StationResultItem } from '../../components/StationResultItem';
-import { searchStations } from '../../lib/api';
-import { radii, spacing, type } from '../../lib/theme';
-import { useThemeColors } from '../../lib/useThemeColors';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { StationResultItem } from '@/components/StationResultItem';
+import { searchStations } from '@/lib/api';
+import { radii, spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
 export default function SearchScreen() {
   const { colors } = useThemeColors();
@@ -21,7 +21,7 @@ export default function SearchScreen() {
 
   const { data, isFetching, isError, fetchStatus } = useQuery({
     queryKey: ['stations', debounced],
-    queryFn: () => searchStations(debounced),
+    queryFn: ({ signal }) => searchStations(debounced, signal),
     enabled: debounced.length >= 2,
   });
   const isOffline = fetchStatus === 'paused';
@@ -52,6 +52,7 @@ export default function SearchScreen() {
         keyExtractor={(item) => item.evaNo}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         renderItem={({ item }) => (
           <StationResultItem station={item} onPress={() => openBoard(item.evaNo, item.name)} />
         )}

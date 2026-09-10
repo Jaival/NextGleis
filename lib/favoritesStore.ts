@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { getFavorites, saveFavorites } from './storage';
-import type { FavoriteStation } from '../types';
+import type { FavoriteStation } from '@/types';
 
 type FavoritesState = {
   favorites: FavoriteStation[];
@@ -17,8 +17,13 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   hydrated: false,
 
   hydrate: async () => {
-    const favorites = await getFavorites();
-    set({ favorites, hydrated: true });
+    try {
+      set({ favorites: await getFavorites() });
+    } finally {
+      // Always flip `hydrated`: the root layout holds the splash screen until
+      // every store reports in, so a failed read must not block startup.
+      set({ hydrated: true });
+    }
   },
 
   addFavorite: async (station) => {

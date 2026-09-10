@@ -1,7 +1,7 @@
 import { Appearance } from 'react-native';
 import { create } from 'zustand';
 import { getSettings, saveSettings } from './storage';
-import type { AppSettings, ThemeMode } from '../types';
+import type { AppSettings, ThemeMode } from '@/types';
 
 // Makes native-rendered chrome (dialogs, keyboard, etc.) follow the in-app
 // theme override instead of only the OS-level system setting.
@@ -20,9 +20,13 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   hydrated: false,
 
   hydrate: async () => {
-    const settings = await getSettings();
-    set({ ...settings, hydrated: true });
-    applyColorScheme(settings.themeMode);
+    try {
+      const settings = await getSettings();
+      set({ ...settings });
+      applyColorScheme(settings.themeMode);
+    } finally {
+      set({ hydrated: true });
+    }
   },
 
   setThemeMode: async (themeMode) => {

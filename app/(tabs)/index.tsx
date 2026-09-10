@@ -1,13 +1,14 @@
 import { useCallback, useMemo } from 'react';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { FavoriteRouteCard } from '../../components/FavoriteRouteCard';
-import { FavoriteStationCard } from '../../components/FavoriteStationCard';
-import { ScreenContainer } from '../../components/ScreenContainer';
-import { useFavoriteRoutesStore } from '../../lib/favoriteRoutesStore';
-import { useFavoritesStore } from '../../lib/favoritesStore';
-import { spacing, type } from '../../lib/theme';
-import { useThemeColors } from '../../lib/useThemeColors';
+import { FavoriteRouteCard } from '@/components/FavoriteRouteCard';
+import { FavoriteStationCard } from '@/components/FavoriteStationCard';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
+import { useFavoritesStore } from '@/lib/favoritesStore';
+import { moveItem } from '@/lib/reorder';
+import { spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
 export default function HomeScreen() {
   const { colors } = useThemeColors();
@@ -21,8 +22,14 @@ export default function HomeScreen() {
   const removeFavoriteRoute = useFavoriteRoutesStore((s) => s.removeFavoriteRoute);
   const reorderFavoriteRoutes = useFavoriteRoutesStore((s) => s.reorderFavoriteRoutes);
 
-  const sortedStations = [...favorites].sort((a, b) => a.order - b.order);
-  const sortedRoutes = [...favoriteRoutes].sort((a, b) => a.order - b.order);
+  const sortedStations = useMemo(
+    () => [...favorites].sort((a, b) => a.order - b.order),
+    [favorites],
+  );
+  const sortedRoutes = useMemo(
+    () => [...favoriteRoutes].sort((a, b) => a.order - b.order),
+    [favoriteRoutes],
+  );
 
   const openBoard = useCallback((evaNo: string, name: string) => {
     router.push({ pathname: '/board/[evaNo]', params: { evaNo, name } });
@@ -40,32 +47,24 @@ export default function HomeScreen() {
     });
   }, []);
 
-  const moveStationUp = (index: number) => {
-    if (index === 0) return;
-    const ids = sortedStations.map((f) => f.evaNo);
-    [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]];
-    reorderFavorites(ids);
+  const moveStation = (from: number, to: number) => {
+    reorderFavorites(
+      moveItem(
+        sortedStations.map((f) => f.evaNo),
+        from,
+        to,
+      ),
+    );
   };
 
-  const moveStationDown = (index: number) => {
-    if (index === sortedStations.length - 1) return;
-    const ids = sortedStations.map((f) => f.evaNo);
-    [ids[index + 1], ids[index]] = [ids[index], ids[index + 1]];
-    reorderFavorites(ids);
-  };
-
-  const moveRouteUp = (index: number) => {
-    if (index === 0) return;
-    const ids = sortedRoutes.map((r) => r.id);
-    [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]];
-    reorderFavoriteRoutes(ids);
-  };
-
-  const moveRouteDown = (index: number) => {
-    if (index === sortedRoutes.length - 1) return;
-    const ids = sortedRoutes.map((r) => r.id);
-    [ids[index + 1], ids[index]] = [ids[index], ids[index + 1]];
-    reorderFavoriteRoutes(ids);
+  const moveRoute = (from: number, to: number) => {
+    reorderFavoriteRoutes(
+      moveItem(
+        sortedRoutes.map((r) => r.id),
+        from,
+        to,
+      ),
+    );
   };
 
   return (
@@ -90,8 +89,10 @@ export default function HomeScreen() {
                 key={route.id}
                 favorite={route}
                 onPress={() => openRoute(route)}
-                onMoveUp={index > 0 ? () => moveRouteUp(index) : undefined}
-                onMoveDown={index < sortedRoutes.length - 1 ? () => moveRouteDown(index) : undefined}
+                onMoveUp={index > 0 ? () => moveRoute(index, index - 1) : undefined}
+                onMoveDown={
+                  index < sortedRoutes.length - 1 ? () => moveRoute(index, index + 1) : undefined
+                }
                 onRemove={() => removeFavoriteRoute(route.id)}
               />
             ))
@@ -112,8 +113,12 @@ export default function HomeScreen() {
                 key={station.evaNo}
                 favorite={station}
                 onPress={() => openBoard(station.evaNo, station.name)}
-                onMoveUp={index > 0 ? () => moveStationUp(index) : undefined}
-                onMoveDown={index < sortedStations.length - 1 ? () => moveStationDown(index) : undefined}
+                onMoveUp={index > 0 ? () => moveStation(index, index - 1) : undefined}
+                onMoveDown={
+                  index < sortedStations.length - 1
+                    ? () => moveStation(index, index + 1)
+                    : undefined
+                }
                 onRemove={() => removeFavorite(station.evaNo)}
               />
             ))

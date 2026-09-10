@@ -1,9 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { ScreenContainer } from '../../components/ScreenContainer';
-import { spacing, type } from '../../lib/theme';
-import { useThemeColors } from '../../lib/useThemeColors';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
 // Route/journey search needs a trip-planning API — DB's Timetables product only
 // returns single-station boards, no multi-leg journeys. Disabled until there's

@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { DelayBadge } from './DelayBadge';
-import { formatTime } from '../lib/time';
-import { radii, spacing, type } from '../lib/theme';
-import { useThemeColors } from '../lib/useThemeColors';
-import type { DepartureRow } from '../types';
+import { formatTime } from '@/lib/time';
+import { radii, spacing, type } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
+import type { DepartureRow } from '@/types';
 
 export function DepartureListItem({ row }: { row: DepartureRow }) {
   const { colors } = useThemeColors();

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { radii, spacing } from '../lib/theme';
-import { useThemeColors } from '../lib/useThemeColors';
+import { radii, spacing } from '@/lib/theme';
+import { useThemeColors } from '@/lib/useThemeColors';
 
 function SkeletonRow({
   opacity,
@@ -28,7 +28,10 @@ function SkeletonRow({
 export function BoardSkeleton() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const opacity = useRef(new Animated.Value(0.4)).current;
+  // Lazy `useState` initialiser rather than `useRef(...).current`: reading a
+  // ref during render is unsafe under concurrent rendering, and constructing
+  // the Animated.Value inline would allocate a fresh one every render.
+  const [opacity] = useState(() => new Animated.Value(0.4));
 
   useEffect(() => {
     const loop = Animated.loop(
