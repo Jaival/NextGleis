@@ -198,7 +198,7 @@ export default function BoardScreen() {
                 fill
                 icon="time-outline"
                 title="Nothing scheduled"
-                message="No departures from this station in the next couple of hours."
+                message="No departures from this stop in the next couple of hours."
               />
             )
           }

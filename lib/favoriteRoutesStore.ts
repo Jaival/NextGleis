@@ -4,7 +4,7 @@ import type { FavoriteRoute } from '@/types';
 
 type FavoriteRouteInput = { fromEva: string; fromName: string; toEva: string; toName: string };
 
-function routeId(fromEva: string, toEva: string): string {
+export function routeId(fromEva: string, toEva: string): string {
   return `${fromEva}-${toEva}`;
 }
 

@@ -22,7 +22,7 @@
 </head>
 <body>
   <h1>NextGleis — Privacy Policy</h1>
-  <p class="updated">Last updated: August 21, 2026</p>
+  <p class="updated">Last updated: September 11, 2026</p>
 
   <p>
     NextGleis is a departure-board app for German bus and train stops. This page explains what
@@ -37,24 +37,27 @@
 
   <h2>What's stored on your device</h2>
   <p>
-    Your favorite stations and any per-station line filters you set are stored locally on your
-    device only, using standard on-device storage (AsyncStorage). This data is never uploaded to
+    Your favorite stations and routes, and any per-station line filters you set, are stored
+    locally on your device only, using standard on-device storage (AsyncStorage). This data is never uploaded to
     us or to any third party. It stays on your device until you remove a favorite, clear the
     app's storage, or uninstall the app.
   </p>
 
   <h2>What's sent over the network</h2>
   <p>
-    When you search for a station or open a departure board, your device sends that request (the
-    station name you typed, or the station's ID) to NextGleis's own backend server, which relays
-    it to Deutsche Bahn's public Timetables API to fetch schedule and delay information, and
-    returns the result to the app. No account identifiers, device identifiers, or personal data
+    When you search for a stop, open a departure board, or look up a route, your device sends
+    that request (the stop name you typed, or the IDs of the stops involved) to NextGleis's own
+    backend server. The backend relays it to the public journey planners of German transport
+    networks (and, for stations saved in older versions of the app, possibly to Deutsche Bahn's
+    Timetables API) to fetch schedule and delay information, and returns the result to the
+    app. No account identifiers, device identifiers, or personal data
     are attached to these requests beyond what's technically necessary to make the network
     request (e.g. your IP address, as with any internet request).
   </p>
   <p>
-    NextGleis's backend does not log or store your search queries or station requests beyond a
-    short (under one minute) cache used to avoid overloading the upstream data source.
+    NextGleis's backend does not log or store your search queries or requests beyond a short
+    cache (at most a few minutes for searches, boards, and routes, and up to a day for the
+    position of a stop) used to avoid overloading the upstream data sources.
   </p>
 
   <h2>No analytics, no advertising, no tracking</h2>
@@ -63,9 +66,16 @@
     kind. If this ever changes in a future version, this policy will be updated first.
   </p>
 
-  <h2>Third-party data source</h2>
+  <h2>Third-party data sources</h2>
   <p>
-    Departure and delay data is provided by Deutsche Bahn AG / DB InfraGO AG via the DB API
+    Departure, route, and delay data comes from the HAFAS journey planners of German transport
+    networks and associations (RMV, NVV, VBB, VBN, VOS, VSN, NAH.SH, INSA, VMT, RSAG, AVV,
+    Saarfahrplan, S-Bahn München, and INVG), accessed with the open-source
+    <a href="https://github.com/public-transport/hafas-client">hafas-client</a> library.
+  </p>
+  <p>
+    For stations saved in older versions of the app, data may instead be provided by Deutsche
+    Bahn AG / DB InfraGO AG via the DB API
     Marketplace "Timetables" product, licensed under
     <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Use of that data is
     subject to

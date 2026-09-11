@@ -12,6 +12,10 @@ import { useThemeColors } from '@/lib/useThemeColors';
 type Styles = ReturnType<typeof createStyles>;
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
+// Mirrors NETWORKS in backend/lib/hafas/networks.ts.
+const HAFAS_NETWORKS =
+  'RMV, NVV, VBB, VBN, VOS, VSN, NAH.SH, INSA, VMT, RSAG, AVV, Saarfahrplan, S-Bahn München and INVG';
+
 function Card({
   icon,
   title,
@@ -89,14 +93,25 @@ export default function SettingsScreen() {
           </View>
         </Card>
 
-        <Card icon="server-outline" title="Data source" styles={styles} colors={colors}>
+        <Card icon="server-outline" title="Data sources" styles={styles} colors={colors}>
           <View style={styles.cardBody}>
             <Text style={styles.paragraph}>
-              Departure data is provided by Deutsche Bahn AG / DB InfraGO AG via the DB API
-              Marketplace &quot;Timetables&quot; product, licensed under Creative Commons
-              Attribution 4.0 (CC BY 4.0).
+              Departures and routes come from the journey planners of German transport networks —{' '}
+              {HAFAS_NETWORKS} — through the open-source hafas-client library. The timetable data
+              belongs to those networks and their operators.
+            </Text>
+            <Text style={styles.paragraph}>
+              Stations saved in earlier versions of the app may fall back to data from Deutsche Bahn
+              AG / DB InfraGO AG via the DB API Marketplace &quot;Timetables&quot; product, licensed
+              under Creative Commons Attribution 4.0 (CC BY 4.0).
             </Text>
           </View>
+          <LinkRow
+            label="hafas-client"
+            url="https://github.com/public-transport/hafas-client"
+            styles={styles}
+            colors={colors}
+          />
           <LinkRow
             label="CC BY 4.0 license"
             url="https://creativecommons.org/licenses/by/4.0/"

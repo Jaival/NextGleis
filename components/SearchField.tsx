@@ -11,6 +11,7 @@ type Props = {
   onChangeText: (value: string) => void;
   placeholder: string;
   accessibilityLabel: string;
+  autoFocus?: boolean;
 };
 
 const focusRing = css.create({
@@ -24,7 +25,13 @@ const focusRing = css.create({
 const CLEAR_IN = FadeIn.duration(durations.fast).easing(easing.out);
 const CLEAR_OUT = FadeOut.duration(durations.press).easing(easing.out);
 
-export function SearchField({ value, onChangeText, placeholder, accessibilityLabel }: Props) {
+export function SearchField({
+  value,
+  onChangeText,
+  placeholder,
+  accessibilityLabel,
+  autoFocus,
+}: Props) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
@@ -51,6 +58,7 @@ export function SearchField({ value, onChangeText, placeholder, accessibilityLab
         autoCapitalize="words"
         autoCorrect={false}
         accessibilityLabel={accessibilityLabel}
+        autoFocus={autoFocus}
         returnKeyType="search"
         selectionColor={colors.primary}
       />
