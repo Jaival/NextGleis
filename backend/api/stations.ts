@@ -1,35 +1,26 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { cached } from '../lib/cache';
-import { DbApiError, fetchDbXml } from '../lib/dbClient';
-import { parseStationSearch } from '../lib/xml';
-import type { StationSearchResult } from '../types';
+import { cached } from '../lib/cache.js';
+import { searchStops } from '../lib/hafas/search.js';
+import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
 
-// The DB endpoint already treats the pattern as a name prefix (or eva number,
-// or ds100 code, or explicit '*' wildcard) — no need to add wildcards here.
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+// Stop names barely change, and every search fans out to all networks — a few
+// minutes' cache spares them the same query from every user typing it.
+const SEARCH_TTL_MS = 5 * 60_000;
+
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  const rawQuery = req.query.query;
-  const query = (Array.isArray(rawQuery) ? rawQuery[0] : rawQuery)?.trim();
+  const query = queryParam(req, 'query');
   if (!query) {
     res.status(400).json({ error: 'Missing required "query" parameter' });
     return;
   }
 
   try {
-    const results = await cached<StationSearchResult[]>(`stations:${query.toLowerCase()}`, 20_000, async () => {
-      const xml = await fetchDbXml(`/station/${encodeURIComponent(query)}`);
-      const stations = parseStationSearch(xml);
-      return stations.map((s) => ({ evaNo: String(s.eva), name: s.name }));
-    });
-
+    const results = await cached(`stations:${query.toLowerCase()}`, SEARCH_TTL_MS, () =>
+      searchStops(query),
+    );
     res.status(200).json(results);
   } catch (err) {
-    if (err instanceof DbApiError) {
-      res.status(err.status >= 500 ? 502 : err.status).json({ error: err.message });
-      return;
-    }
-    console.error(err);
-    res.status(500).json({ error: 'Unexpected server error' });
+    sendError(res, err);
   }
 }

@@ -1,4 +1,4 @@
-import { DB_API_BASE_URL, getDbCredentials } from './env';
+import { DB_API_BASE_URL, getDbCredentials } from './env.js';
 
 export class DbApiError extends Error {
   status: number;

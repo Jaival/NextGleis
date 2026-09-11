@@ -50,6 +50,12 @@ export const lightColors = {
 
   skeleton: '#E3E7F0',
 
+  // The "DB" service pill (components/ServicePill.tsx). DB's brand red in both
+  // modes — it's a logo colour, not a status — and always a solid fill, so it
+  // can't be mistaken for the text-only red of a cancellation.
+  serviceDb: '#EC0016',
+  serviceDbOn: '#FFFFFF',
+
   // Per-product line badge colours. German networks already colour-code these
   // (S-Bahn green, U-Bahn blue), so following the convention makes a board
   // scannable at a glance instead of a wall of identical grey badges.
@@ -97,6 +103,9 @@ export const darkColors: typeof lightColors = {
   shadowRaised: '0px 6px 20px rgba(0, 0, 0, 0.55)',
 
   skeleton: '#232839',
+
+  serviceDb: '#EC0016',
+  serviceDbOn: '#FFFFFF',
 
   product: {
     highSpeed: { bg: '#21244A', fg: '#A5B4FC' },

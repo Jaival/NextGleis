@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { LineBadge } from './LineBadge';
+import { SERVICE_DESCRIPTIONS, ServicePill } from './ServicePill';
 import { departureStatus } from '@/lib/delay';
-import { productKind } from '@/lib/product';
 import { formatTime } from '@/lib/time';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
@@ -9,14 +10,13 @@ import type { DepartureRow } from '@/types';
 
 // A board is scanned, not read. The three columns are ordered by what the eye
 // goes for first: which service it is, where it goes, when it leaves — and the
-// only colour in a row is the line badge (which product) and the status
-// caption (whether to worry).
+// colour in a row is the line badge (which product), the DB pill (whose train)
+// and the status caption (whether to worry).
 function DepartureListItemBase({ row }: { row: DepartureRow }) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const status = departureStatus(row, colors);
-  const product = colors.product[productKind(row.line)];
   const scheduled = formatTime(row.scheduledTime);
   // A delayed departure's headline time is when it will *actually* leave; the
   // scheduled one drops to a struck-through footnote beside the delta.
@@ -25,6 +25,7 @@ function DepartureListItemBase({ row }: { row: DepartureRow }) {
 
   const a11yLabel = [
     row.line || 'Unlabelled line',
+    SERVICE_DESCRIPTIONS[row.kind],
     `to ${row.direction || 'unknown direction'}`,
     `departs ${scheduled}`,
     status.kind === 'delayed' ? `delayed ${row.delayMinutes} minutes` : status.label.toLowerCase(),
@@ -39,21 +40,20 @@ function DepartureListItemBase({ row }: { row: DepartureRow }) {
       accessible
       accessibilityLabel={a11yLabel}
     >
-      <View style={[styles.lineBadge, { backgroundColor: product.bg }]}>
-        <Text style={[styles.lineText, { color: product.fg }]} numberOfLines={1}>
-          {row.line || '—'}
-        </Text>
-      </View>
+      <LineBadge line={row.line} />
 
       <View style={styles.middle}>
         <Text style={styles.direction} numberOfLines={1}>
           {row.direction || 'Unknown direction'}
         </Text>
-        {row.platform ? (
-          <View style={styles.platform}>
-            <Text style={styles.platformText}>Platform {row.platform}</Text>
-          </View>
-        ) : null}
+        <View style={styles.meta}>
+          <ServicePill kind={row.kind} />
+          {row.platform ? (
+            <View style={styles.platform}>
+              <Text style={styles.platformText}>Platform {row.platform}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.right}>
@@ -94,18 +94,9 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       backgroundColor: colors.surface,
     },
     rowCancelled: { opacity: 0.7 },
-    lineBadge: {
-      borderRadius: radii.sm,
-      borderCurve: 'continuous',
-      paddingHorizontal: spacing.sm,
-      height: 30,
-      minWidth: 62,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    lineText: { ...type.footnoteBold },
     middle: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
     direction: { ...type.subheadMedium, color: colors.textPrimary },
+    meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
     platform: {
       backgroundColor: colors.surfaceMuted,
       borderRadius: radii.sm,

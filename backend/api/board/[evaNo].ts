@@ -1,61 +1,42 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { cached } from '../../lib/cache';
-import { DbApiError, fetchDbXml } from '../../lib/dbClient';
-import { buildDepartureRows } from '../../lib/merge';
-import { parseTimetable } from '../../lib/xml';
-import type { DbTimetable } from '../../types/db';
+import { cached } from '../../lib/cache.js';
+import { hasDbCredentials } from '../../lib/env.js';
+import { hafasBoard } from '../../lib/hafas/board.js';
+import { preferOwner, resolveEva } from '../../lib/hafas/resolve.js';
+import { parseStopId, type ParsedStopId } from '../../lib/hafas/stopId.js';
+import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../../lib/http.js';
+import { timetablesBoard } from '../../lib/timetables.js';
+import type { DepartureRow } from '../../types/index.js';
 
-function berlinDateHour(fromNow: Date): { date: string; hour: string } {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Europe/Berlin',
-    year: '2-digit',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(fromNow);
+async function loadBoard(stop: ParsedStopId): Promise<DepartureRow[]> {
+  if (stop.kind === 'hafas') return hafasBoard(await preferOwner(stop.ref));
 
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
-  return { date: `${get('year')}${get('month')}${get('day')}`, hour: get('hour') };
+  // A favorite saved under the old DB Timetables API. HAFAS is tried first so
+  // it gains local transit and the DB pill like everything else; the old
+  // source is the fallback for a station no network can place.
+  let resolved;
+  try {
+    resolved = await resolveEva(stop.eva);
+  } catch (err) {
+    if (hasDbCredentials()) return timetablesBoard(stop.eva);
+    throw err;
+  }
+  return hafasBoard(resolved);
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  const rawEvaNo = req.query.evaNo;
-  const evaNo = Array.isArray(rawEvaNo) ? rawEvaNo[0] : rawEvaNo;
-  if (!evaNo) {
-    res.status(400).json({ error: 'Missing evaNo' });
+  const stopId = queryParam(req, 'evaNo');
+  const stop = stopId ? parseStopId(stopId) : null;
+  if (!stopId || !stop) {
+    res.status(400).json({ error: 'Missing or malformed stop id' });
     return;
   }
 
   try {
-    const rows = await cached(`board:${evaNo}`, 25_000, async () => {
-      const now = new Date();
-      const current = berlinDateHour(now);
-      const next = berlinDateHour(new Date(now.getTime() + 3_600_000));
-
-      const [planCurrentXml, planNextXml, rchgXml] = await Promise.all([
-        fetchDbXml(`/plan/${evaNo}/${current.date}/${current.hour}`),
-        fetchDbXml(`/plan/${evaNo}/${next.date}/${next.hour}`),
-        fetchDbXml(`/rchg/${evaNo}`),
-      ]);
-
-      const planCurrent = parseTimetable(planCurrentXml);
-      const planNext = parseTimetable(planNextXml);
-      const rchg = parseTimetable(rchgXml);
-
-      const mergedPlan: DbTimetable = { s: [...(planCurrent.s ?? []), ...(planNext.s ?? [])] };
-      return buildDepartureRows(mergedPlan, rchg);
-    });
-
+    const rows = await cached(`board:${stopId}`, 25_000, () => loadBoard(stop));
     res.status(200).json(rows);
   } catch (err) {
-    if (err instanceof DbApiError) {
-      res.status(err.status >= 500 ? 502 : err.status).json({ error: err.message });
-      return;
-    }
-    console.error(err);
-    res.status(500).json({ error: 'Unexpected server error' });
+    sendError(res, err);
   }
 }

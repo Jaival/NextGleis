@@ -1,5 +1,6 @@
-import type { DbEvent, DbTimetable, DbTimetableStop, DbTripLabel } from '../types/db';
-import type { DepartureRow } from '../types';
+import type { DbEvent, DbTimetable, DbTimetableStop } from '../types/db.js';
+import type { DepartureRow } from '../types/index.js';
+import { classifyService, lineLabel } from './lines.js';
 
 // DB timestamps are YYMMddHHmm, Europe/Berlin local wall-clock time (not UTC).
 function toIsoBerlinLocal(raw: string): string {
@@ -23,30 +24,6 @@ function directionFromPath(dp: DbEvent): string {
   if (!path) return '';
   const stations = path.split('|');
   return stations[stations.length - 1] ?? '';
-}
-
-// `dp.l` is the line indicator and `tl.c` the category ("S", "RE", "ICE").
-// Neither identifies a service on its own, so the two are joined as
-// "<category> <number>". Without that a board mixes "3" and "ICE 4523" in the
-// same column, and the app can't tell which product a row is to colour it.
-//
-// The catch: `l` is sometimes bare ("7") and sometimes already carries the
-// category ("S7"), so it has to be stripped before joining or the label comes
-// out as "S S7".
-function lineLabel(tl: DbTripLabel | undefined, dpLine: string | undefined): string {
-  const category = tl?.c;
-  const number = dpLine ?? tl?.n;
-  if (!number) return category ?? '';
-  if (!category) {
-    // No category to join with — at least split a run-together "RB58" so the
-    // label matches the spacing of the rows that do have one.
-    return number.replace(/^(\p{Letter}+)\s*(\d)/u, '$1 $2');
-  }
-
-  const bare = number.toUpperCase().startsWith(category.toUpperCase())
-    ? number.slice(category.length).trim()
-    : number;
-  return bare ? `${category} ${bare}` : category;
 }
 
 function mergeEvent(planEvent?: DbEvent, changeEvent?: DbEvent): DbEvent | undefined {
@@ -88,11 +65,15 @@ export function buildDepartureRows(plan: DbTimetable, changes: DbTimetable): Dep
     const scheduled = dp.pt ?? dp.ct;
     if (!scheduled) continue;
 
+    // Timetables carries no operator name, so only the category can tell.
+    const kind = classifyService({ category: stop.tl?.c });
+    // `dp.l` is the line indicator and `tl.c` the category.
     const row: DepartureRow = {
-      line: lineLabel(stop.tl, dp.l),
+      line: lineLabel(stop.tl?.c, dp.l ?? stop.tl?.n, { rail: kind !== 'transit' }),
       direction: directionFromPath(dp),
       scheduledTime: toIsoBerlinLocal(scheduled),
       cancelled: dp.cs === 'c',
+      kind,
     };
 
     if (dp.ct && dp.pt) {

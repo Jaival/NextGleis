@@ -2,15 +2,19 @@
   "name": "nextgleis-backend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "vercel dev --local --listen 3000",
+    "start": "node --watch --env-file-if-exists=.env dev-server.mjs",
+    "start:vercel": "vercel dev --local --listen 3000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "fast-xml-parser": "^5.11.0"
+    "fast-xml-parser": "^5.11.0",
+    "hafas-client": "^6.3.6"
   },
   "devDependencies": {
-    "@vercel/node": "^5.10.2",
+    "@types/hafas-client": "^6.3.1",
+    "@types/node": "^22.20.2",
     "typescript": "^5.6.3"
   }
 }

@@ -2,8 +2,8 @@ import type { ThemeColors } from './theme';
 
 export type ProductKind = keyof ThemeColors['product'];
 
-// Line labels arrive as "<category> <number>" — "S 3", "RE 30", "ICE 4523"
-// (see backend/lib/merge.ts). Only the category decides the colour.
+// Line labels arrive as "<category> <number>" — "S 3", "RE 30", "ICE 4523",
+// "Tram 6" (see backend/lib/lines.ts). Only the category decides the colour.
 const CATEGORY_KIND: Record<string, ProductKind> = {
   // High-speed
   ICE: 'highSpeed',
@@ -23,11 +23,18 @@ const CATEGORY_KIND: Record<string, ProductKind> = {
   // City networks
   S: 'suburban',
   U: 'metro',
+  TRAM: 'tram',
   STR: 'tram',
   T: 'tram',
   M: 'tram',
+  RT: 'tram', // Kassel's RegioTram
   BUS: 'bus',
   SEV: 'bus',
+  // On-demand shared taxis standing in for a bus route
+  AST: 'bus',
+  ALT: 'bus',
+  RUF: 'bus',
+  FERRY: 'other',
 };
 
 /**
