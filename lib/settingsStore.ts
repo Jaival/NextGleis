@@ -1,7 +1,7 @@
 import { Appearance } from 'react-native';
 import { create } from 'zustand';
 import { getSettings, saveSettings } from './storage';
-import type { AppSettings, ThemeMode } from '@/types';
+import type { AppSettings, LanguageSetting, ThemeMode } from '@/types';
 
 // Makes native-rendered chrome (dialogs, keyboard, etc.) follow the in-app
 // theme override instead of only the OS-level system setting.
@@ -18,25 +18,42 @@ type SettingsState = AppSettings & {
   hydrated: boolean;
   hydrate: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
+  setLanguage: (language: LanguageSetting) => Promise<void>;
+  completeOnboarding: () => Promise<void>;
 };
 
-export const useSettingsStore = create<SettingsState>((set) => ({
-  themeMode: 'system',
-  hydrated: false,
+export const useSettingsStore = create<SettingsState>((set, get) => {
+  // Every setter persists the whole settings object, so adding a setting
+  // can't silently drop the others from storage.
+  const update = async (patch: Partial<AppSettings>) => {
+    set(patch);
+    const { themeMode, language, onboarded } = get();
+    await saveSettings({ themeMode, language, onboarded });
+  };
 
-  hydrate: async () => {
-    try {
-      const settings = await getSettings();
-      set({ ...settings });
-      applyColorScheme(settings.themeMode);
-    } finally {
-      set({ hydrated: true });
-    }
-  },
+  return {
+    themeMode: 'system',
+    language: 'system',
+    onboarded: false,
+    hydrated: false,
 
-  setThemeMode: async (themeMode) => {
-    set({ themeMode });
-    applyColorScheme(themeMode);
-    await saveSettings({ themeMode });
-  },
-}));
+    hydrate: async () => {
+      try {
+        const settings = await getSettings();
+        set({ ...settings });
+        applyColorScheme(settings.themeMode);
+      } finally {
+        set({ hydrated: true });
+      }
+    },
+
+    setThemeMode: async (themeMode) => {
+      applyColorScheme(themeMode);
+      await update({ themeMode });
+    },
+
+    setLanguage: (language) => update({ language }),
+
+    completeOnboarding: () => update({ onboarded: true }),
+  };
+});

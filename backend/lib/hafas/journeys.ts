@@ -29,7 +29,7 @@ export async function findJourneys(from: StopRef, to: StopRef): Promise<Journey[
         client.journeys(origin.id, destination.id, {
           results: JOURNEY_RESULTS,
           stopovers: false,
-          remarks: false,
+          remarks: true,
           tickets: false,
           polylines: false,
         }),

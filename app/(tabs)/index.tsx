@@ -1,15 +1,18 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { EmptyState } from '@/components/EmptyState';
 import { FavoriteRouteCard } from '@/components/FavoriteRouteCard';
 import { FavoriteStationCard } from '@/components/FavoriteStationCard';
+import { NearbySection } from '@/components/NearbySection';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { useFavoritesStore } from '@/lib/favoritesStore';
+import { useT } from '@/lib/i18n';
 import { duration, easing } from '@/lib/motion';
 import { moveItem } from '@/lib/reorder';
+import { useSettingsStore } from '@/lib/settingsStore';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
@@ -29,6 +32,8 @@ let launchRevealed = false;
 export default function HomeScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
+  const onboarded = useSettingsStore((s) => s.onboarded);
 
   const favorites = useFavoritesStore((s) => s.favorites);
   const removeFavorite = useFavoritesStore((s) => s.removeFavorite);
@@ -99,20 +104,29 @@ export default function HomeScreen() {
     );
   };
 
+  // First run only. Anyone upgrading with favorites already knows the app.
+  if (!onboarded && favorites.length === 0 && favoriteRoutes.length === 0) {
+    return <Redirect href="/onboarding" />;
+  }
+
   return (
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>NextGleis</Text>
-          <Text style={styles.subtitle}>Your boards and routes, one tap away</Text>
+          <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
         </View>
 
-        <Section title="Stations" count={sortedStations.length} styles={styles}>
+        <Section title={t('nearby.title')} count={0} styles={styles}>
+          <NearbySection onOpen={(stop) => openBoard(stop.evaNo, stop.name)} />
+        </Section>
+
+        <Section title={t('home.stations')} count={sortedStations.length} styles={styles}>
           {sortedStations.length === 0 ? (
             <EmptyState
               icon="train-outline"
-              title="No stations yet"
-              message="Search for a stop and star it to get one-tap access to its board."
+              title={t('home.noStations')}
+              message={t('home.noStationsMessage')}
             />
           ) : (
             sortedStations.map((station, index) => (
@@ -139,12 +153,12 @@ export default function HomeScreen() {
           )}
         </Section>
 
-        <Section title="Routes" count={sortedRoutes.length} styles={styles}>
+        <Section title={t('home.routes')} count={sortedRoutes.length} styles={styles}>
           {sortedRoutes.length === 0 ? (
             <EmptyState
               icon="git-network-outline"
-              title="No routes yet"
-              message="Find a route in the Routes tab and tap the star to save it here."
+              title={t('home.noRoutes')}
+              message={t('home.noRoutesMessage')}
             />
           ) : (
             sortedRoutes.map((route, index) => (

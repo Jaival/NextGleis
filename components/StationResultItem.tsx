@@ -22,7 +22,7 @@ export function StationResultItem({ station, onPress, accessibilityLabel }: Prop
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? `View departures for ${station.name}`}
+      accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
       <View style={styles.well}>

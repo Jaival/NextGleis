@@ -51,6 +51,8 @@ export async function saveFavoriteRoutes(routes: FavoriteRoute[]): Promise<void>
 
 const defaultSettings: AppSettings = {
   themeMode: 'system',
+  language: 'system',
+  onboarded: false,
 };
 
 export async function getSettings(): Promise<AppSettings> {

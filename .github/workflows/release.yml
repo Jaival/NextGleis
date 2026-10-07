@@ -1,0 +1,296 @@
+# Ships a release when a version tag is pushed:
+#
+#   npm version minor          # bumps package.json + app.json, commits, tags v1.1.0
+#   git push --follow-tags
+#
+# Steps: CI checks -> version check -> backend (deploy + smoke test) ->
+# Android builds on EAS -> Google Play internal track -> GitHub Release with
+# the .aab and an installable .apk attached.
+#
+# The backend goes first on purpose: the new app may call endpoints the old
+# backend doesn't have, while the new backend keeps serving old app versions.
+#
+# Setup (repo Settings -> Secrets and variables -> Actions): see
+# docs/DEVOPS.md, section 8.
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  # Re-run a release whose tag already exists, e.g. after fixing a secret.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, e.g. v1.1.0
+        required: true
+        type: string
+
+# Two runs for one tag would race to create the same release and upload
+# builds twice. Never cancel a running release halfway through.
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ inputs.tag || github.ref_name }}
+
+  prepare:
+    name: Verify version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      # The tag, package.json and app.json must agree, or the store listing,
+      # the release page and the app's own Settings screen show different
+      # versions. `npm version` keeps them in sync (scripts/sync-app-version.mjs).
+      - name: Tag matches app version
+        id: version
+        run: |
+          tag_version="${TAG#v}"
+          app_version=$(node -p "require('./app.json').expo.version")
+          package_version=$(node -p "require('./package.json').version")
+          if [ "$tag_version" != "$app_version" ] || [ "$tag_version" != "$package_version" ]; then
+            echo "::error::Tag $TAG doesn't match app.json ($app_version) and package.json ($package_version). Release with 'npm version <patch|minor|major>' so all three agree."
+            exit 1
+          fi
+          echo "version=$tag_version" >> "$GITHUB_OUTPUT"
+          # v1.2.0-beta.1 and the like are published as pre-releases.
+          if [[ "$tag_version" == *-* ]]; then echo "prerelease=true"; else echo "prerelease=false"; fi >> "$GITHUB_OUTPUT"
+
+  backend:
+    name: Backend
+    needs: [checks, prepare]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # Off unless DEPLOY_BACKEND is "true": if Vercel's GitHub integration
+      # already deploys main, deploying again here would be redundant.
+      - name: Deploy to Vercel
+        if: vars.DEPLOY_BACKEND == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm install --global vercel@latest
+          vercel deploy --prod --yes --token="$VERCEL_TOKEN"
+
+      # Whether or not this run deployed, the app being released depends on
+      # what's live, so check it answers the endpoints the app calls.
+      - name: Smoke test
+        if: vars.BACKEND_URL != ''
+        env:
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+        run: |
+          check() {
+            echo "GET $1"
+            curl --fail --silent --show-error --retry 4 --retry-all-errors --retry-delay 10 \
+              --max-time 30 "$BACKEND_URL$1" | jq -e "$2" > /dev/null
+          }
+          check "/api/stations?query=Alexanderplatz" 'length > 0'
+          check "/api/nearby?lat=50.107&lon=8.664" 'length > 0'
+          check "/api/board/rmv:3000010" 'type == "array"'
+          curl --fail --silent --show-error --max-time 30 "$BACKEND_URL/privacy-policy.html" > /dev/null
+          echo "Backend OK"
+
+  build:
+    name: Build ${{ matrix.profile }}
+    needs: [prepare, backend]
+    runs-on: ubuntu-latest
+    # EAS builds queue before they run; the free tier's queue can be long.
+    timeout-minutes: 120
+    strategy:
+      # One profile failing shouldn't throw away the other's finished build.
+      fail-fast: false
+      matrix:
+        include:
+          # The store build: an app bundle for Google Play.
+          - profile: production
+            extension: aab
+          # A release-mode APK for testers and sideloading, attached to the
+          # GitHub Release. Play doesn't accept APKs.
+          - profile: preview
+            extension: apk
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      # EXPO_PUBLIC_API_BASE_URL comes from the EAS environment named in the
+      # profile (eas.json), not from this runner: set it with `eas env:set`.
+      - name: Build on EAS
+        run: |
+          eas build --platform android --profile "${{ matrix.profile }}" \
+            --non-interactive --wait --json --message "$TAG" > build.json
+          cat build.json
+
+      - name: Download build
+        id: artifact
+        run: |
+          build_id=$(jq -r '.[0].id' build.json)
+          url=$(jq -r '.[0].artifacts.buildUrl // .[0].artifacts.applicationArchiveUrl // empty' build.json)
+          if [ -z "$url" ]; then
+            echo "::error::EAS build $build_id finished without a downloadable artifact."
+            exit 1
+          fi
+          suffix=$([ "${{ matrix.profile }}" = production ] && echo "" || echo "-${{ matrix.profile }}")
+          file="nextgleis-${{ needs.prepare.outputs.version }}${suffix}.${{ matrix.extension }}"
+          mkdir -p dist
+          curl --fail --location --silent --show-error --retry 3 "$url" --output "dist/$file"
+          echo "$build_id" > "dist/${{ matrix.profile }}.build-id"
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.profile }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  submit:
+    name: Submit to Google Play
+    needs: [build]
+    # Off until the Play Console app exists and the service account is set up.
+    if: vars.PLAY_SUBMIT == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: build-production
+          path: dist/
+
+      # eas.json's submit profile reads the key from this (gitignored) path.
+      - name: Write Google service account key
+        env:
+          KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::GOOGLE_SERVICE_ACCOUNT_JSON secret is not set."
+            exit 1
+          fi
+          printf '%s' "$KEY" > google-service-account.json
+
+      # Lands on the internal track (eas.json). Promote to production in Play
+      # Console after testing, ideally as a staged rollout.
+      - name: Submit
+        run: |
+          eas submit --platform android --profile production \
+            --id "$(cat dist/production.build-id)" --non-interactive --wait
+
+      - name: Remove key
+        if: always()
+        run: rm -f google-service-account.json
+
+  github-release:
+    name: GitHub Release
+    needs: [prepare, build, submit]
+    # Runs when submission succeeded or was switched off; not after a failed
+    # one, so a release page never claims a build that Play rejected.
+    if: always() && needs.build.result == 'success' && (needs.submit.result == 'success' || needs.submit.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: build-*
+          path: dist/
+          merge-multiple: true
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+          SUBMITTED: ${{ needs.submit.result == 'success' }}
+        run: |
+          {
+            echo "## Downloads"
+            echo
+            echo "- \`nextgleis-$VERSION.aab\` — Google Play app bundle"
+            echo "- \`nextgleis-$VERSION-preview.apk\` — install directly on an Android device"
+            echo
+            if [ "$SUBMITTED" = "true" ]; then
+              echo "Submitted to the Google Play **internal** track. Promote it in Play Console."
+            else
+              echo "Not submitted to Google Play from CI."
+            fi
+            echo
+            echo "EAS build IDs: production \`$(cat dist/production.build-id)\`, preview \`$(cat dist/preview.build-id)\` — open with \`eas build:view <id>\`."
+          } > header.md
+
+          files=(dist/*.aab dist/*.apk)
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "${files[@]}" --clobber
+          else
+            flags=()
+            [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
+            gh release create "$TAG" "${files[@]}" \
+              --verify-tag \
+              --title "NextGleis $VERSION" \
+              --notes-file header.md \
+              --generate-notes \
+              "${flags[@]}"
+          fi

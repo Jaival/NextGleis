@@ -5,6 +5,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PRIVACY_POLICY_URL } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import { useSettingsStore } from '@/lib/settingsStore';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
@@ -71,40 +72,67 @@ export default function SettingsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const themeMode = useSettingsStore((s) => s.themeMode);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
+  const language = useSettingsStore((s) => s.language);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const t = useT();
   const version = Constants.expoConfig?.version ?? '1.0.0';
 
   return (
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>{t('settings.title')}</Text>
 
-        <Card icon="contrast-outline" title="Appearance" styles={styles} colors={colors}>
+        <Card
+          icon="contrast-outline"
+          title={t('settings.appearance')}
+          styles={styles}
+          colors={colors}
+        >
           <View style={styles.cardBody}>
             <SegmentedControl
-              accessibilityLabel="Appearance"
+              accessibilityLabel={t('settings.appearance')}
               value={themeMode}
               onChange={setThemeMode}
               options={[
-                { value: 'system', label: 'System' },
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
+                { value: 'system', label: t('settings.themeSystem') },
+                { value: 'light', label: t('settings.themeLight') },
+                { value: 'dark', label: t('settings.themeDark') },
               ]}
             />
           </View>
         </Card>
 
-        <Card icon="server-outline" title="Data sources" styles={styles} colors={colors}>
+        <Card
+          icon="language-outline"
+          title={t('settings.language')}
+          styles={styles}
+          colors={colors}
+        >
           <View style={styles.cardBody}>
-            <Text style={styles.paragraph}>
-              Departures and routes come from the journey planners of German transport networks —{' '}
-              {HAFAS_NETWORKS} — through the open-source hafas-client library. The timetable data
-              belongs to those networks and their operators.
-            </Text>
-            <Text style={styles.paragraph}>
-              Stations saved in earlier versions of the app may fall back to data from Deutsche Bahn
-              AG / DB InfraGO AG via the DB API Marketplace &quot;Timetables&quot; product, licensed
-              under Creative Commons Attribution 4.0 (CC BY 4.0).
-            </Text>
+            {/* Language names stay in their own language, so someone stuck in
+                the wrong one can still find theirs. */}
+            <SegmentedControl
+              accessibilityLabel={t('settings.language')}
+              value={language}
+              onChange={setLanguage}
+              options={[
+                { value: 'system', label: t('settings.languageSystem') },
+                { value: 'de', label: 'Deutsch' },
+                { value: 'en', label: 'English' },
+              ]}
+            />
+          </View>
+        </Card>
+
+        <Card
+          icon="server-outline"
+          title={t('settings.dataSources')}
+          styles={styles}
+          colors={colors}
+        >
+          <View style={styles.cardBody}>
+            <Text style={styles.paragraph}>{t('settings.dataSourcesHafas', HAFAS_NETWORKS)}</Text>
+            <Text style={styles.paragraph}>{t('settings.dataSourcesDb')}</Text>
           </View>
           <LinkRow
             label="hafas-client"
@@ -113,28 +141,30 @@ export default function SettingsScreen() {
             colors={colors}
           />
           <LinkRow
-            label="CC BY 4.0 license"
+            label={t('settings.license')}
             url="https://creativecommons.org/licenses/by/4.0/"
             styles={styles}
             colors={colors}
           />
           <LinkRow
-            label="DB terms of use"
+            label={t('settings.dbTerms')}
             url="https://data.deutschebahn.com/nutzungsbedingungen.html"
             styles={styles}
             colors={colors}
           />
         </Card>
 
-        <Card icon="lock-closed-outline" title="Privacy" styles={styles} colors={colors}>
+        <Card
+          icon="lock-closed-outline"
+          title={t('settings.privacy')}
+          styles={styles}
+          colors={colors}
+        >
           <View style={styles.cardBody}>
-            <Text style={styles.paragraph}>
-              No account is required. Favorite stations, favorite routes, and preferences are stored
-              only on this device.
-            </Text>
+            <Text style={styles.paragraph}>{t('settings.privacyText')}</Text>
           </View>
           <LinkRow
-            label="Privacy policy"
+            label={t('settings.privacyPolicy')}
             url={PRIVACY_POLICY_URL}
             styles={styles}
             colors={colors}

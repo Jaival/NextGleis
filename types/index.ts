@@ -10,16 +10,27 @@ export type FavoriteStation = {
 // U-Bahn, ferry).
 export type ServiceKind = 'db' | 'rail' | 'transit';
 
+// A disruption or service change reported by the network: construction work,
+// a cancelled stop, replacement buses. `warning` is a disruption notice;
+// `info` is a change to this one service.
+export type Notice = {
+  title?: string;
+  text: string;
+  severity: 'warning' | 'info';
+};
+
 export type DepartureRow = {
   line: string;
   direction: string;
   scheduledTime: string; // ISO
   actualTime?: string;
   delayMinutes?: number;
-  platform?: string;
+  platform?: string; // realtime where known
+  plannedPlatform?: string; // only set when the platform changed
   cancelled: boolean;
   kind: ServiceKind;
   operator?: string;
+  notices?: Notice[];
 };
 
 export type StationSearchResult = {
@@ -31,6 +42,10 @@ export type StationSearchResult = {
   network?: string; // the transport network the stop came from, e.g. "RMV"
 };
 
+export type NearbyStop = StationSearchResult & {
+  distance: number; // metres from the user's position
+};
+
 export type JourneyLeg = {
   walking: boolean;
   origin: string;
@@ -40,12 +55,15 @@ export type JourneyLeg = {
   departureDelayMinutes?: number;
   arrivalDelayMinutes?: number;
   departurePlatform?: string;
+  plannedDeparturePlatform?: string; // only set when the platform changed
   arrivalPlatform?: string;
+  plannedArrivalPlatform?: string;
   line?: string;
   kind?: ServiceKind;
   direction?: string;
   distance?: number; // metres, walking legs only
   cancelled: boolean;
+  notices?: Notice[];
 };
 
 export type Journey = {
@@ -71,6 +89,12 @@ export type FavoriteRoute = {
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
+export type Language = 'en' | 'de';
+export type LanguageSetting = 'system' | Language;
+
 export type AppSettings = {
   themeMode: ThemeMode;
+  language: LanguageSetting;
+  // Set once the first-run screen has been seen (or skipped).
+  onboarded: boolean;
 };

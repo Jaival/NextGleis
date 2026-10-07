@@ -1,4 +1,5 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { useT } from '@/lib/i18n';
 import { useThemeColors } from '@/lib/useThemeColors';
 
 // Native system tab bar: a real Material `BottomNavigationView` on Android
@@ -7,6 +8,7 @@ import { useThemeColors } from '@/lib/useThemeColors';
 // the Material Symbols catalog, `sf` from SF Symbols.
 export default function TabsLayout() {
   const { colors } = useThemeColors();
+  const t = useT();
 
   return (
     <NativeTabs
@@ -26,22 +28,22 @@ export default function TabsLayout() {
       tabBarRespectsIMEInsets
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="search">
-        <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.search')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="routes">
-        <NativeTabs.Trigger.Label>Routes</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.routes')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="arrow.triangle.branch" md="route" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.settings')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="gearshape.fill" md="settings" />
       </NativeTabs.Trigger>
     </NativeTabs>

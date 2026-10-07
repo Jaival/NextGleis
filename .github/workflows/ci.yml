@@ -1,0 +1,83 @@
+# Checks every pull request and every push to main. release.yml calls this
+# same workflow first, so nothing ships that wouldn't pass here.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit, branch or tag to check. Defaults to the triggering ref.
+        type: string
+        default: ''
+
+# A new push to the same PR makes the previous run pointless.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: App
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Formatting
+        run: npm run format:check
+
+      # Native module versions that don't match the SDK are the most common
+      # cause of a build that compiles but crashes on launch.
+      - name: Dependencies match Expo SDK
+        run: npx expo install --check
+
+      - name: Expo Doctor
+        run: npx expo-doctor
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Only what's deployed: dev-only advisories don't reach users.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high

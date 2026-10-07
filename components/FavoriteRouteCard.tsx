@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { FavoriteCard } from './FavoriteCard';
+import { useT } from '@/lib/i18n';
 import { spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 import type { FavoriteRoute } from '@/types';
@@ -17,13 +18,14 @@ type Props = {
 export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onRemove }: Props) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const label = `${favorite.fromName} to ${favorite.toName}`;
+  const t = useT();
+  const label = t('favorites.routeLabel', favorite.fromName, favorite.toName);
 
   return (
     <FavoriteCard
       icon="git-network"
       itemLabel={label}
-      openLabel={`Find routes from ${label}`}
+      openLabel={t('favorites.openRoute', label)}
       onPress={onPress}
       onMoveUp={onMoveUp}
       onMoveDown={onMoveDown}

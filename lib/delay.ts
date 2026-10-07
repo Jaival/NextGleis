@@ -1,3 +1,4 @@
+import type { Translate } from './i18n';
 import type { ThemeColors } from './theme';
 
 export type DepartureStatusKind = 'onTime' | 'delayed' | 'cancelled';
@@ -15,11 +16,12 @@ export type DepartureStatus = {
 export function departureStatus(
   status: { cancelled: boolean; delayMinutes?: number },
   colors: ThemeColors,
+  t: Translate,
 ): DepartureStatus {
   if (status.cancelled) {
     return {
       kind: 'cancelled',
-      label: 'Cancelled',
+      label: t('status.cancelled'),
       fg: colors.cancelled,
       bg: colors.cancelledSoft,
     };
@@ -27,10 +29,10 @@ export function departureStatus(
   if (status.delayMinutes && status.delayMinutes > 0) {
     return {
       kind: 'delayed',
-      label: `+${status.delayMinutes} min`,
+      label: t('status.delayed', status.delayMinutes),
       fg: colors.delay,
       bg: colors.delaySoft,
     };
   }
-  return { kind: 'onTime', label: 'On time', fg: colors.onTime, bg: colors.onTimeSoft };
+  return { kind: 'onTime', label: t('status.onTime'), fg: colors.onTime, bg: colors.onTimeSoft };
 }

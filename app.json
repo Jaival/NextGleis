@@ -41,6 +41,13 @@
             "backgroundColor": "#0A0C13"
           }
         }
+      ],
+      "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "NextGleis uses your location to show the stops near you."
+        }
       ]
     ],
     "experiments": {
