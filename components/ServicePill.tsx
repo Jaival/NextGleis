@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, type ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useT, type Translate } from '@/lib/i18n';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 import type { ServiceKind } from '@/types';
-
-const LABELS: Record<ServiceKind, string> = { db: 'DB', rail: 'Train', transit: 'Local' };
 
 const ICONS: Record<Exclude<ServiceKind, 'db'>, ComponentProps<typeof Ionicons>['name']> = {
   rail: 'train-outline',
@@ -13,11 +12,9 @@ const ICONS: Record<Exclude<ServiceKind, 'db'>, ComponentProps<typeof Ionicons>[
 };
 
 // For the accessibility labels of the rows the pill sits in.
-export const SERVICE_DESCRIPTIONS: Record<ServiceKind, string> = {
-  db: 'Deutsche Bahn train',
-  rail: 'train',
-  transit: 'local public transport',
-};
+export function serviceDescription(kind: ServiceKind, t: Translate): string {
+  return t(`service.${kind}Description`);
+}
 
 // Tells a Deutsche Bahn train apart from other operators' trains and from
 // local public transport (bus, tram, U-Bahn) at a glance. DB is the one filled
@@ -26,11 +23,12 @@ export const SERVICE_DESCRIPTIONS: Record<ServiceKind, string> = {
 export function ServicePill({ kind }: { kind: ServiceKind }) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
 
   if (kind === 'db') {
     return (
       <View style={[styles.pill, styles.db]}>
-        <Text style={[styles.label, styles.dbLabel]}>{LABELS.db}</Text>
+        <Text style={[styles.label, styles.dbLabel]}>{t('service.db')}</Text>
       </View>
     );
   }
@@ -38,7 +36,7 @@ export function ServicePill({ kind }: { kind: ServiceKind }) {
   return (
     <View style={styles.pill}>
       <Ionicons name={ICONS[kind]} size={11} color={colors.textSecondary} />
-      <Text style={styles.label}>{LABELS[kind]}</Text>
+      <Text style={styles.label}>{t(`service.${kind}`)}</Text>
     </View>
   );
 }

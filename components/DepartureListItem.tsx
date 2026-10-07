@@ -1,8 +1,10 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { LineBadge } from './LineBadge';
-import { SERVICE_DESCRIPTIONS, ServicePill } from './ServicePill';
+import { NoticeLine } from './NoticeLine';
+import { ServicePill, serviceDescription } from './ServicePill';
 import { departureStatus } from '@/lib/delay';
+import { useT } from '@/lib/i18n';
 import { formatTime } from '@/lib/time';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
@@ -15,8 +17,13 @@ import type { DepartureRow } from '@/types';
 function DepartureListItemBase({ row }: { row: DepartureRow }) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
 
-  const status = departureStatus(row, colors);
+  const status = departureStatus(row, colors, t);
+  // Disruption warnings are shown once in the board's banner; a row only
+  // carries what's specific to this one service.
+  const notices = row.notices?.filter((notice) => notice.severity === 'info') ?? [];
+  const platformChanged = Boolean(row.platform && row.plannedPlatform);
   const scheduled = formatTime(row.scheduledTime);
   // A delayed departure's headline time is when it will *actually* leave; the
   // scheduled one drops to a struck-through footnote beside the delta.
@@ -24,12 +31,17 @@ function DepartureListItemBase({ row }: { row: DepartureRow }) {
     status.kind === 'delayed' && row.actualTime ? formatTime(row.actualTime) : scheduled;
 
   const a11yLabel = [
-    row.line || 'Unlabelled line',
-    SERVICE_DESCRIPTIONS[row.kind],
-    `to ${row.direction || 'unknown direction'}`,
-    `departs ${scheduled}`,
-    status.kind === 'delayed' ? `delayed ${row.delayMinutes} minutes` : status.label.toLowerCase(),
-    row.platform ? `platform ${row.platform}` : null,
+    row.line || t('departure.unlabelledLine'),
+    serviceDescription(row.kind, t),
+    t('departure.to', row.direction || t('departure.unknownDirection')),
+    t('departure.departs', scheduled),
+    status.kind === 'delayed' ? t('departure.delayedBy', row.delayMinutes ?? 0) : status.label,
+    row.platform && row.plannedPlatform
+      ? t('departure.platformChanged', row.platform, row.plannedPlatform)
+      : row.platform
+        ? t('departure.platform', row.platform)
+        : null,
+    ...notices.map((notice) => notice.text),
   ]
     .filter(Boolean)
     .join(', ');
@@ -44,16 +56,26 @@ function DepartureListItemBase({ row }: { row: DepartureRow }) {
 
       <View style={styles.middle}>
         <Text style={styles.direction} numberOfLines={1}>
-          {row.direction || 'Unknown direction'}
+          {row.direction || t('departure.unknownDirection')}
         </Text>
         <View style={styles.meta}>
           <ServicePill kind={row.kind} />
           {row.platform ? (
-            <View style={styles.platform}>
-              <Text style={styles.platformText}>Platform {row.platform}</Text>
+            <View style={[styles.platform, platformChanged && styles.platformChanged]}>
+              <Text style={[styles.platformText, platformChanged && styles.platformTextChanged]}>
+                {t('departure.platform', row.platform)}
+              </Text>
             </View>
           ) : null}
+          {/* The old platform stays visible, struck through, so a rider who
+              memorised it notices the move instead of reading past it. */}
+          {platformChanged && row.plannedPlatform ? (
+            <Text style={styles.plannedPlatform}>{row.plannedPlatform}</Text>
+          ) : null}
         </View>
+        {notices.map((notice) => (
+          <NoticeLine key={notice.text} notice={notice} />
+        ))}
       </View>
 
       <View style={styles.right}>
@@ -105,6 +127,13 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingVertical: 2,
     },
     platformText: { ...type.micro, color: colors.textSecondary },
+    platformChanged: { backgroundColor: colors.delaySoft },
+    platformTextChanged: { ...type.microBold, color: colors.delay },
+    plannedPlatform: {
+      ...type.micro,
+      color: colors.textTertiary,
+      textDecorationLine: 'line-through',
+    },
     right: { alignItems: 'flex-end', gap: 2 },
     time: { ...type.time, color: colors.textPrimary },
     timeCancelled: { textDecorationLine: 'line-through', color: colors.textSecondary },

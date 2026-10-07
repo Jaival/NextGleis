@@ -1,6 +1,7 @@
 import type { Alternative, Journey as HafasJourney, Leg, Line, Location, Station, Stop } from 'hafas-client';
 import type { DepartureRow, Journey, JourneyLeg, ServiceKind } from '../../types/index.js';
 import { classifyService, lineLabel } from '../lines.js';
+import { toNotices } from './remarks.js';
 
 // HAFAS timestamps are ISO with an offset. Every network here runs on
 // Europe/Berlin, so dropping the offset leaves Berlin wall-clock time — the
@@ -24,6 +25,16 @@ function describeLine(line: Line | undefined): { label: string; kind: ServiceKin
     kind,
     operator,
   };
+}
+
+// The planned platform, only when realtime moved the service somewhere else —
+// so the field's presence alone tells the app to flag a change.
+// Sector letters don't count: "13" and "13D-F" are the same platform, one
+// reported with the section of it the train stops at.
+function changedFrom(planned: string | undefined, actual: string | undefined): string | undefined {
+  if (!planned || !actual) return undefined;
+  const track = (platform: string) => platform.match(/^\d+/)?.[0] ?? platform.trim();
+  return track(planned) !== track(actual) ? planned : undefined;
 }
 
 function placeName(place: Station | Stop | Location | undefined): string {
@@ -52,7 +63,11 @@ export function toDepartureRow(departure: Alternative): DepartureRow | null {
 
   const platform = departure.platform ?? departure.plannedPlatform;
   if (platform) row.platform = platform;
+  const plannedPlatform = changedFrom(departure.plannedPlatform, platform);
+  if (plannedPlatform) row.plannedPlatform = plannedPlatform;
   if (line.operator) row.operator = line.operator;
+  const notices = toNotices(departure.remarks);
+  if (notices) row.notices = notices;
 
   return row;
 }
@@ -85,8 +100,14 @@ function toLeg(leg: Leg): JourneyLeg | null {
   if (typeof leg.arrivalDelay === 'number') out.arrivalDelayMinutes = delayMinutes(leg.arrivalDelay);
   const departurePlatform = leg.departurePlatform ?? leg.plannedDeparturePlatform;
   if (departurePlatform) out.departurePlatform = departurePlatform;
+  const plannedDeparturePlatform = changedFrom(leg.plannedDeparturePlatform, departurePlatform);
+  if (plannedDeparturePlatform) out.plannedDeparturePlatform = plannedDeparturePlatform;
   const arrivalPlatform = leg.arrivalPlatform ?? leg.plannedArrivalPlatform;
   if (arrivalPlatform) out.arrivalPlatform = arrivalPlatform;
+  const plannedArrivalPlatform = changedFrom(leg.plannedArrivalPlatform, arrivalPlatform);
+  if (plannedArrivalPlatform) out.plannedArrivalPlatform = plannedArrivalPlatform;
+  const notices = toNotices(leg.remarks);
+  if (notices) out.notices = notices;
   return out;
 }
 

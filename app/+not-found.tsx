@@ -3,24 +3,26 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { useT } from '@/lib/i18n';
 import { spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
 export default function NotFoundScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
 
   return (
     <ScreenContainer>
-      <Stack.Screen options={{ title: 'Not found' }} />
+      <Stack.Screen options={{ title: t('notFound.title') }} />
       <View style={styles.center}>
         <EmptyState
           icon="help-circle-outline"
-          title="This screen doesn't exist"
-          message="The link you followed points somewhere NextGleis doesn't have."
+          title={t('notFound.heading')}
+          message={t('notFound.message')}
         />
         <Link href="/" style={styles.link}>
-          Go to the home screen
+          {t('notFound.home')}
         </Link>
       </View>
     </ScreenContainer>

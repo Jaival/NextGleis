@@ -18,7 +18,7 @@ export async function hafasBoard(ref: StopRef): Promise<DepartureRow[]> {
     client.departures(ref.id, {
       duration: BOARD_MINUTES,
       results: BOARD_MAX_RESULTS,
-      remarks: false,
+      remarks: true,
       // No `stopovers` key at all: hafas-client rejects the option outright on
       // boards, even set to false.
       linesOfStops: false,

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { EmptyState } from './EmptyState';
 import { StationResultItem } from './StationResultItem';
+import { useT } from '@/lib/i18n';
 import { spacing } from '@/lib/theme';
 import type { StationSearch } from '@/lib/useStationSearch';
 import { useThemeColors } from '@/lib/useThemeColors';
@@ -24,6 +25,7 @@ export function StationSearchResults({
 }: Props) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(), []);
+  const t = useT();
   const { debounced, tooShort, data, isFetching, isError, isOffline } = search;
 
   return (
@@ -45,7 +47,7 @@ export function StationSearchResults({
           <StationResultItem
             station={item}
             onPress={() => onSelect(item)}
-            accessibilityLabel={itemLabel?.(item)}
+            accessibilityLabel={itemLabel?.(item) ?? t('search.itemLabel', item.name)}
           />
         )}
         ListEmptyComponent={
@@ -54,20 +56,20 @@ export function StationSearchResults({
           ) : isOffline ? (
             <EmptyState
               icon="cloud-offline-outline"
-              title="You're offline"
-              message="Connect to the internet to search for stops."
+              title={t('common.offline')}
+              message={t('search.offlineMessage')}
             />
           ) : isError ? (
             <EmptyState
               icon="alert-circle-outline"
-              title="Something went wrong"
-              message="Could not load results. Check your connection and try again."
+              title={t('search.errorTitle')}
+              message={t('search.errorMessage')}
             />
           ) : (
             <EmptyState
               icon="search-outline"
-              title="No matches"
-              message={`Nothing matched "${debounced}". Try a different spelling.`}
+              title={t('search.noMatches')}
+              message={t('search.noMatchesMessage', debounced)}
             />
           )
         }

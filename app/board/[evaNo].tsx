@@ -15,12 +15,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BoardSkeleton } from '@/components/BoardSkeleton';
 import { Chip } from '@/components/Chip';
 import { DepartureListItem } from '@/components/DepartureListItem';
+import { DisruptionBanner } from '@/components/DisruptionBanner';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { getBoard } from '@/lib/api';
 import { useFavoritesStore } from '@/lib/favoritesStore';
 import { tap } from '@/lib/haptics';
+import { useT } from '@/lib/i18n';
 import { duration, easing, spring } from '@/lib/motion';
+import { boardWarnings } from '@/lib/notices';
 import { spacing } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
@@ -29,6 +32,7 @@ export default function BoardScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
+  const t = useT();
   const { evaNo, name } = useLocalSearchParams<{ evaNo: string; name?: string }>();
   const favorites = useFavoritesStore((s) => s.favorites);
   const addFavorite = useFavoritesStore((s) => s.addFavorite);
@@ -37,7 +41,7 @@ export default function BoardScreen() {
 
   const favorite = favorites.find((f) => f.evaNo === evaNo);
   const isFavorite = Boolean(favorite);
-  const stationName = favorite?.name ?? name ?? 'Station';
+  const stationName = favorite?.name ?? name ?? t('board.fallbackTitle');
 
   const [sessionHidden, setSessionHidden] = useState<string[]>([]);
   const hiddenLines = favorite?.hiddenLines ?? sessionHidden;
@@ -59,6 +63,9 @@ export default function BoardScreen() {
     () => (data ?? []).filter((row) => !hiddenLines.includes(row.line)),
     [data, hiddenLines],
   );
+
+  // Only for the lines on show: a diversion of a hidden tram isn't news.
+  const warnings = useMemo(() => boardWarnings(visibleRows), [visibleRows]);
 
   const toggleLine = (line: string) => {
     if (isFavorite) {
@@ -105,8 +112,8 @@ export default function BoardScreen() {
               accessibilityState={{ selected: isFavorite }}
               accessibilityLabel={
                 isFavorite
-                  ? `Remove ${stationName} from favorites`
-                  : `Add ${stationName} to favorites`
+                  ? t('board.removeFavorite', stationName)
+                  : t('board.addFavorite', stationName)
               }
               hitSlop={12}
             >
@@ -135,7 +142,9 @@ export default function BoardScreen() {
               label={line}
               active={!hiddenLines.includes(line)}
               onPress={() => toggleLine(line)}
-              accessibilityLabel={`${hiddenLines.includes(line) ? 'Show' : 'Hide'} line ${line}`}
+              accessibilityLabel={
+                hiddenLines.includes(line) ? t('board.showLine', line) : t('board.hideLine', line)
+              }
             />
           ))}
         </ScrollView>
@@ -145,8 +154,8 @@ export default function BoardScreen() {
         <EmptyState
           fill
           icon="cloud-offline-outline"
-          title="You're offline"
-          message="Connect to the internet to load this board."
+          title={t('common.offline')}
+          message={t('board.offlineLoading')}
         />
       ) : isLoading ? (
         // No crossfade here on purpose: BoardSkeleton mirrors the row geometry
@@ -158,6 +167,7 @@ export default function BoardScreen() {
           data={visibleRows}
           keyExtractor={(item, index) => `${item.line}-${item.scheduledTime}-${index}`}
           renderItem={({ item }) => <DepartureListItem row={item} />}
+          ListHeaderComponent={<DisruptionBanner notices={warnings} />}
           // Android is edge-to-edge, so the list draws behind the navigation
           // bar. Padding the content (rather than insetting the container) lets
           // rows scroll under it while the last row still clears it.
@@ -176,29 +186,29 @@ export default function BoardScreen() {
               <EmptyState
                 fill
                 icon="cloud-offline-outline"
-                title="You're offline"
-                message="Departures will update once you're back online."
+                title={t('common.offline')}
+                message={t('board.offlineStale')}
               />
             ) : isError ? (
               <EmptyState
                 fill
                 icon="alert-circle-outline"
-                title="Could not load this board"
-                message="Pull down to refresh and try again."
+                title={t('board.error')}
+                message={t('common.pullToRetry')}
               />
             ) : hiddenLines.length > 0 ? (
               <EmptyState
                 fill
                 icon="filter-outline"
-                title="Everything is filtered out"
-                message="Tap a line above to bring its departures back."
+                title={t('board.filteredTitle')}
+                message={t('board.filteredMessage')}
               />
             ) : (
               <EmptyState
                 fill
                 icon="time-outline"
-                title="Nothing scheduled"
-                message="No departures from this stop in the next couple of hours."
+                title={t('board.emptyTitle')}
+                message={t('board.emptyMessage')}
               />
             )
           }

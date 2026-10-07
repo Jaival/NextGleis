@@ -20,6 +20,7 @@ import { StationSearchResults } from '@/components/StationSearchResults';
 import { getJourneys } from '@/lib/api';
 import { routeId, useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { tap } from '@/lib/haptics';
+import { useT, type Translate } from '@/lib/i18n';
 import { radii, spacing, type } from '@/lib/theme';
 import { useStationSearch } from '@/lib/useStationSearch';
 import { useThemeColors } from '@/lib/useThemeColors';
@@ -30,14 +31,20 @@ type Styles = ReturnType<typeof createStyles>;
 type Stop = { id: string; name: string };
 type End = 'from' | 'to';
 
-const ENDS: Record<End, { title: string; placeholder: string; role: string }> = {
-  from: { title: 'From', placeholder: 'Where are you starting?', role: 'start' },
-  to: { title: 'To', placeholder: 'Where are you going?', role: 'destination' },
-};
+function endLabels(end: End, t: Translate): { title: string; placeholder: string; role: string } {
+  return end === 'from'
+    ? {
+        title: t('routes.from'),
+        placeholder: t('routes.fromPlaceholder'),
+        role: t('routes.fromRole'),
+      }
+    : { title: t('routes.to'), placeholder: t('routes.toPlaceholder'), role: t('routes.toRole') };
+}
 
 export default function RoutesScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
   const { fromEva, fromName, toEva, toName } = useLocalSearchParams<{
     fromEva?: string;
     fromName?: string;
@@ -111,13 +118,13 @@ export default function RoutesScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.title}>Routes</Text>
+        <Text style={styles.title}>{t('routes.title')}</Text>
         {ready ? (
           <Pressable
             onPress={toggleSaved}
             accessibilityRole="button"
             accessibilityState={{ selected: saved }}
-            accessibilityLabel={saved ? 'Remove route from favorites' : 'Save route to favorites'}
+            accessibilityLabel={saved ? t('routes.unsave') : t('routes.save')}
             hitSlop={12}
           >
             <Ionicons
@@ -152,7 +159,7 @@ export default function RoutesScreen() {
           disabled={!from && !to}
           style={styles.swap}
           accessibilityRole="button"
-          accessibilityLabel="Swap start and destination"
+          accessibilityLabel={t('routes.swap')}
           hitSlop={8}
         >
           <Ionicons name="swap-vertical" size={18} color={colors.primary} />
@@ -167,35 +174,35 @@ export default function RoutesScreen() {
                 autoFocus
                 value={input}
                 onChangeText={setInput}
-                placeholder={ENDS[editing].placeholder}
-                accessibilityLabel={`Search for the ${ENDS[editing].role} stop`}
+                placeholder={endLabels(editing, t).placeholder}
+                accessibilityLabel={t('routes.searchLabel', endLabels(editing, t).role)}
               />
             </View>
             <Pressable onPress={stopEditing} accessibilityRole="button" hitSlop={8}>
-              <Text style={styles.cancel}>Cancel</Text>
+              <Text style={styles.cancel}>{t('common.cancel')}</Text>
             </Pressable>
           </View>
           <StationSearchResults
             search={search}
             onSelect={pick}
-            idleTitle={editing === 'from' ? 'Choose a start' : 'Choose a destination'}
-            idleMessage="Type at least two letters of a stop or station name."
-            itemLabel={(station) => `Choose ${station.name} as ${ENDS[editing].role}`}
+            idleTitle={editing === 'from' ? t('routes.chooseStart') : t('routes.chooseDestination')}
+            idleMessage={t('routes.idleMessage')}
+            itemLabel={(station) => t('routes.chooseAs', station.name, endLabels(editing, t).role)}
           />
         </View>
       ) : !from || !to ? (
         <EmptyState
           fill
           icon="git-network-outline"
-          title="Plan a trip"
-          message="Choose where you start and where you're going to see connections by train, bus, and tram."
+          title={t('routes.planTitle')}
+          message={t('routes.planMessage')}
         />
       ) : !ready ? (
         <EmptyState
           fill
           icon="swap-vertical"
-          title="Same stop twice"
-          message="Pick a different destination to find a route."
+          title={t('routes.sameStopTitle')}
+          message={t('routes.sameStopMessage')}
         />
       ) : (
         <JourneyList from={from} to={to} styles={styles} colors={colors} />
@@ -219,13 +226,14 @@ function EndRow({
   styles: Styles;
   colors: Colors;
 }) {
-  const labels = ENDS[end];
+  const t = useT();
+  const labels = endLabels(end, t);
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={
-        stop ? `${labels.title} ${stop.name}. Tap to change.` : `Choose ${labels.role}`
+        stop ? t('routes.endLabel', labels.title, stop.name) : t('routes.chooseEnd', labels.role)
       }
       style={({ pressed }) => [styles.endRow, pressed && styles.endRowPressed]}
     >
@@ -255,6 +263,7 @@ function JourneyList({
   styles: Styles;
   colors: Colors;
 }) {
+  const t = useT();
   const { data, isLoading, isError, isRefetching, refetch, fetchStatus } = useQuery({
     queryKey: ['journeys', from.id, to.id],
     queryFn: ({ signal }) => getJourneys(from.id, to.id, signal),
@@ -269,8 +278,8 @@ function JourneyList({
       <EmptyState
         fill
         icon="cloud-offline-outline"
-        title="You're offline"
-        message="Connect to the internet to find routes."
+        title={t('common.offline')}
+        message={t('routes.offlineLoading')}
       />
     ) : (
       <View style={styles.loading}>
@@ -298,22 +307,22 @@ function JourneyList({
           <EmptyState
             fill
             icon="cloud-offline-outline"
-            title="You're offline"
-            message="Routes will update once you're back online."
+            title={t('common.offline')}
+            message={t('routes.offlineStale')}
           />
         ) : isError ? (
           <EmptyState
             fill
             icon="alert-circle-outline"
-            title="Could not find routes"
-            message="Pull down to refresh and try again."
+            title={t('routes.error')}
+            message={t('common.pullToRetry')}
           />
         ) : (
           <EmptyState
             fill
             icon="git-network-outline"
-            title="No connections found"
-            message="Nothing runs between these stops soon. Try a stop nearby."
+            title={t('routes.emptyTitle')}
+            message={t('routes.emptyMessage')}
           />
         )
       }

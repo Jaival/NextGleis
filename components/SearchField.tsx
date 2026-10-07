@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, css, useReducedMotion } from 'react-native-reanimated';
 import { duration as durations, curve, easing } from '@/lib/motion';
+import { useT } from '@/lib/i18n';
 import { radii, spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
@@ -33,6 +34,7 @@ export function SearchField({
   autoFocus,
 }: Props) {
   const { colors } = useThemeColors();
+  const t = useT();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
   const reduced = useReducedMotion();
@@ -70,7 +72,7 @@ export function SearchField({
             <Pressable
               onPress={() => onChangeText('')}
               accessibilityRole="button"
-              accessibilityLabel="Clear search"
+              accessibilityLabel={t('search.clear')}
               hitSlop={12}
             >
               <Ionicons name="close-circle" size={18} color={colors.textTertiary} />

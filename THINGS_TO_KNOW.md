@@ -49,6 +49,31 @@ Left out:
   minutes, boards for 25 seconds, routes for 60 seconds, and stop positions for
   a day.
 
+## Disruption notices
+
+- Boards and routes ask the networks for remarks. Only `warning` (construction,
+  diversions) and `status` (stop cancelled, extra service) remarks are passed
+  on; the many fixed `hint`s (bicycles, wheelchairs, fare zones) are dropped in
+  `backend/lib/hafas/remarks.ts`.
+- A warning is usually attached to every departure of the lines it affects, so
+  the app shows warnings once, in a banner at the top of the board, and keeps
+  only `status` remarks on the rows.
+- How much each network reports varies a lot: RMV attaches long construction
+  notices, VBB almost none.
+
+## Platform changes
+
+- A departure carries `plannedPlatform` only when realtime moved it. Sector
+  letters don't count: `13` and `13D-F` are the same platform.
+
+## Nearby stops
+
+- `/api/nearby?lat=&lon=` asks the network that owns the area, then the first
+  fallback network. Results are within 800 m.
+- In Baden-Württemberg and most of Bavaria only rail stations come back (see
+  coverage gaps above).
+- The app rounds the position to about 100 m before sending it.
+
 ## User agent
 
 - Every request to a network carries a user agent that identifies the app. It

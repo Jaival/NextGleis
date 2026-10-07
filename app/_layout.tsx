@@ -74,6 +74,12 @@ export default function RootLayout() {
               }}
             >
               <Stack.Screen name="(tabs)" />
+              {/* Reached by a redirect from Home, so there is nothing behind
+                  it to swipe back to. */}
+              <Stack.Screen
+                name="onboarding"
+                options={{ gestureEnabled: false, animation: 'fade' }}
+              />
               <Stack.Screen name="board/[evaNo]" options={{ headerShown: true }} />
             </Stack>
           </ThemeProvider>

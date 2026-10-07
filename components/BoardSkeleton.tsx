@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { css, useReducedMotion } from 'react-native-reanimated';
+import { useT } from '@/lib/i18n';
 import { radii, spacing } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
@@ -55,10 +56,11 @@ function SkeletonRow({
 
 export function BoardSkeleton() {
   const { colors } = useThemeColors();
+  const t = useT();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View accessible accessibilityLabel="Loading departures" style={styles.container}>
+    <View accessible accessibilityLabel={t('board.loading')} style={styles.container}>
       {Array.from({ length: ROWS }).map((_, i) => (
         <SkeletonRow key={i} index={i} styles={styles} />
       ))}

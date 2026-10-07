@@ -3,9 +3,11 @@ import { Fragment, memo, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { LineBadge } from './LineBadge';
+import { NoticeLine } from './NoticeLine';
 import { PressableScale } from './PressableScale';
-import { SERVICE_DESCRIPTIONS, ServicePill } from './ServicePill';
+import { ServicePill, serviceDescription } from './ServicePill';
 import { departureStatus } from '@/lib/delay';
+import { useT, type Translate } from '@/lib/i18n';
 import { duration, easing } from '@/lib/motion';
 import { formatDuration, formatTime, minutesBetween } from '@/lib/time';
 import { radii, spacing, type } from '@/lib/theme';
@@ -17,9 +19,8 @@ type Styles = ReturnType<typeof createStyles>;
 
 const DETAILS_IN = FadeIn.duration(duration.fast).easing(easing.out);
 
-function changesLabel(transfers: number): string {
-  if (transfers === 0) return 'Direct';
-  return `${transfers} change${transfers === 1 ? '' : 's'}`;
+function changesLabel(transfers: number, t: Translate): string {
+  return transfers === 0 ? t('journey.direct') : t('journey.changes', transfers);
 }
 
 // The summary carries what a list of connections gets compared on — when, how
@@ -28,27 +29,31 @@ function changesLabel(transfers: number): string {
 function JourneyCardBase({ journey }: { journey: Journey }) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
 
   const status = departureStatus(
     { cancelled: journey.cancelled, delayMinutes: journey.departureDelayMinutes },
     colors,
+    t,
   );
   const riding = journey.legs.filter((leg) => !leg.walking);
-  const changes = changesLabel(journey.transfers);
+  const changes = changesLabel(journey.transfers, t);
+  const hasNotices = riding.some((leg) => leg.notices?.length);
 
   const a11yLabel = [
-    `Departs ${formatTime(journey.departure)}, arrives ${formatTime(journey.arrival)}`,
-    formatDuration(journey.durationMinutes),
+    t('journey.summary', formatTime(journey.departure), formatTime(journey.arrival)),
+    formatDuration(journey.durationMinutes, t),
     changes,
     status.kind === 'delayed'
-      ? `departure delayed ${journey.departureDelayMinutes} minutes`
-      : status.label.toLowerCase(),
+      ? t('journey.departureDelayed', journey.departureDelayMinutes ?? 0)
+      : status.label,
+    hasNotices ? t('journey.hasNotices') : null,
     riding
       .map((leg) =>
-        [leg.line, leg.kind ? SERVICE_DESCRIPTIONS[leg.kind] : null].filter(Boolean).join(', '),
+        [leg.line, leg.kind ? serviceDescription(leg.kind, t) : null].filter(Boolean).join(', '),
       )
-      .join(', then '),
+      .join(t('journey.then')),
   ]
     .filter(Boolean)
     .join('. ');
@@ -60,20 +65,19 @@ function JourneyCardBase({ journey }: { journey: Journey }) {
       accessibilityRole="button"
       accessibilityState={{ expanded }}
       accessibilityLabel={a11yLabel}
-      accessibilityHint={
-        expanded ? 'Hides the legs of this connection' : 'Shows each leg of this connection'
-      }
+      accessibilityHint={expanded ? t('journey.collapseHint') : t('journey.expandHint')}
     >
       <View style={styles.summary}>
         <Text style={[styles.time, journey.cancelled && styles.timeCancelled]}>
           {formatTime(journey.departure)} – {formatTime(journey.arrival)}
         </Text>
-        <Text style={styles.duration}>{formatDuration(journey.durationMinutes)}</Text>
+        <Text style={styles.duration}>{formatDuration(journey.durationMinutes, t)}</Text>
       </View>
 
       <View style={styles.subline}>
         <Text style={[styles.status, { color: status.fg }]}>{status.label}</Text>
         <Text style={styles.changes}>{changes}</Text>
+        {hasNotices ? <Ionicons name="warning" size={13} color={colors.delay} /> : null}
       </View>
 
       <View style={styles.badges}>
@@ -101,6 +105,7 @@ function JourneyCardBase({ journey }: { journey: Journey }) {
               leg={leg}
               styles={styles}
               colors={colors}
+              t={t}
             />
           ))}
         </Animated.View>
@@ -113,15 +118,25 @@ function JourneyCardBase({ journey }: { journey: Journey }) {
 // card even when nothing changed.
 export const JourneyCard = memo(JourneyCardBase);
 
-function LegDetail({ leg, styles, colors }: { leg: JourneyLeg; styles: Styles; colors: Colors }) {
+function LegDetail({
+  leg,
+  styles,
+  colors,
+  t,
+}: {
+  leg: JourneyLeg;
+  styles: Styles;
+  colors: Colors;
+  t: Translate;
+}) {
   if (leg.walking) {
     const minutes = minutesBetween(leg.departure, leg.arrival);
-    const where = leg.destination && leg.destination !== leg.origin ? ` to ${leg.destination}` : '';
+    const where = leg.destination && leg.destination !== leg.origin ? leg.destination : null;
     return (
       <View style={styles.walk}>
         <Ionicons name="walk-outline" size={14} color={colors.textTertiary} />
         <Text style={styles.walkText} numberOfLines={1}>
-          {minutes > 0 ? `Walk ${minutes} min${where}` : `Change${where}`}
+          {minutes > 0 ? t('journey.walk', minutes, where) : t('journey.change', where)}
         </Text>
       </View>
     );
@@ -134,7 +149,7 @@ function LegDetail({ leg, styles, colors }: { leg: JourneyLeg; styles: Styles; c
         {leg.kind ? <ServicePill kind={leg.kind} /> : null}
         {leg.direction ? (
           <Text style={styles.legDirection} numberOfLines={1}>
-            to {leg.direction}
+            {t('departure.to', leg.direction)}
           </Text>
         ) : null}
       </View>
@@ -143,19 +158,26 @@ function LegDetail({ leg, styles, colors }: { leg: JourneyLeg; styles: Styles; c
         delay={leg.departureDelayMinutes}
         place={leg.origin}
         platform={leg.departurePlatform}
+        plannedPlatform={leg.plannedDeparturePlatform}
         cancelled={leg.cancelled}
         styles={styles}
         colors={colors}
+        t={t}
       />
       <StopLine
         time={leg.arrival}
         delay={leg.arrivalDelayMinutes}
         place={leg.destination}
         platform={leg.arrivalPlatform}
+        plannedPlatform={leg.plannedArrivalPlatform}
         cancelled={leg.cancelled}
         styles={styles}
         colors={colors}
+        t={t}
       />
+      {leg.notices?.map((notice) => (
+        <NoticeLine key={notice.text} notice={notice} lines={3} />
+      ))}
     </View>
   );
 }
@@ -165,17 +187,21 @@ function StopLine({
   delay,
   place,
   platform,
+  plannedPlatform,
   cancelled,
   styles,
   colors,
+  t,
 }: {
   time: string;
   delay?: number;
   place: string;
   platform?: string;
+  plannedPlatform?: string;
   cancelled: boolean;
   styles: Styles;
   colors: Colors;
+  t: Translate;
 }) {
   return (
     <View style={styles.stopLine}>
@@ -184,7 +210,12 @@ function StopLine({
       <Text style={styles.stopPlace} numberOfLines={1}>
         {place}
       </Text>
-      {platform ? <Text style={styles.stopPlatform}>Pl. {platform}</Text> : null}
+      {plannedPlatform ? <Text style={styles.stopPlatformPlanned}>{plannedPlatform}</Text> : null}
+      {platform ? (
+        <Text style={[styles.stopPlatform, plannedPlatform ? styles.stopPlatformChanged : null]}>
+          {t('departure.platformShort', platform)}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -224,6 +255,12 @@ function createStyles(colors: Colors) {
     stopDelay: { ...type.captionBold },
     stopPlace: { flex: 1, ...type.footnote, color: colors.textPrimary },
     stopPlatform: { ...type.micro, color: colors.textTertiary },
+    stopPlatformChanged: { ...type.microBold, color: colors.delay },
+    stopPlatformPlanned: {
+      ...type.micro,
+      color: colors.textTertiary,
+      textDecorationLine: 'line-through',
+    },
     walk: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     walkText: { flex: 1, ...type.caption, color: colors.textTertiary },
   });

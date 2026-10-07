@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SearchField } from '@/components/SearchField';
 import { StationSearchResults } from '@/components/StationSearchResults';
+import { useT } from '@/lib/i18n';
 import { spacing, type } from '@/lib/theme';
 import { useStationSearch } from '@/lib/useStationSearch';
 import { useThemeColors } from '@/lib/useThemeColors';
@@ -11,6 +12,7 @@ import { useThemeColors } from '@/lib/useThemeColors';
 export default function SearchScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
   const [input, setInput] = useState('');
   const search = useStationSearch(input);
 
@@ -21,20 +23,20 @@ export default function SearchScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.title}>Search</Text>
+        <Text style={styles.title}>{t('search.title')}</Text>
         <SearchField
           value={input}
           onChangeText={setInput}
-          placeholder="Stop or station, e.g. Frankfurt Hbf"
-          accessibilityLabel="Stop or station search"
+          placeholder={t('search.placeholder')}
+          accessibilityLabel={t('search.label')}
         />
       </View>
 
       <StationSearchResults
         search={search}
         onSelect={(station) => openBoard(station.evaNo, station.name)}
-        idleTitle="Find a stop"
-        idleMessage="Type at least two letters of a stop or station name to see its departures."
+        idleTitle={t('search.idleTitle')}
+        idleMessage={t('search.idleMessage')}
       />
     </ScreenContainer>
   );

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { FavoriteCard } from './FavoriteCard';
+import { useT } from '@/lib/i18n';
 import { type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 import type { FavoriteStation } from '@/types';
@@ -16,13 +17,14 @@ type Props = {
 export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, onRemove }: Props) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const t = useT();
   const hiddenCount = favorite.hiddenLines.length;
 
   return (
     <FavoriteCard
       icon="train"
       itemLabel={favorite.name}
-      openLabel={`Open departure board for ${favorite.name}`}
+      openLabel={t('favorites.openBoard', favorite.name)}
       onPress={onPress}
       onMoveUp={onMoveUp}
       onMoveDown={onMoveDown}
@@ -32,9 +34,7 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
         {favorite.name}
       </Text>
       {hiddenCount > 0 ? (
-        <Text style={styles.meta}>
-          {hiddenCount} line{hiddenCount === 1 ? '' : 's'} hidden
-        </Text>
+        <Text style={styles.meta}>{t('favorites.linesHidden', hiddenCount)}</Text>
       ) : null}
     </FavoriteCard>
   );

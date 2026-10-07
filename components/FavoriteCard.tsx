@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { press } from './PressableScale';
 import { tap } from '@/lib/haptics';
+import { useT } from '@/lib/i18n';
 import { radii, spacing } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
 
@@ -44,6 +45,7 @@ export function FavoriteCard({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [pressed, setPressed] = useState(false);
   const reduced = useReducedMotion();
+  const t = useT();
 
   return (
     <Animated.View style={[styles.card, !reduced && press.base, pressed && !reduced && press.down]}>
@@ -64,7 +66,7 @@ export function FavoriteCard({
       <View style={styles.actions}>
         <ControlButton
           icon="chevron-up"
-          label={`Move ${itemLabel} up`}
+          label={t('favorites.moveUp', itemLabel)}
           onPress={onMoveUp}
           haptic="selection"
           styles={styles}
@@ -72,7 +74,7 @@ export function FavoriteCard({
         />
         <ControlButton
           icon="chevron-down"
-          label={`Move ${itemLabel} down`}
+          label={t('favorites.moveDown', itemLabel)}
           onPress={onMoveDown}
           haptic="selection"
           styles={styles}
@@ -80,7 +82,7 @@ export function FavoriteCard({
         />
         <ControlButton
           icon="close"
-          label={`Remove ${itemLabel} from favorites`}
+          label={t('favorites.remove', itemLabel)}
           onPress={onRemove}
           haptic="medium"
           styles={styles}
