@@ -1,5 +1,5 @@
 import type { Alternative, Journey as HafasJourney, Leg, Line, Location, Station, Stop } from 'hafas-client';
-import type { DepartureRow, Journey, JourneyLeg, ServiceKind } from '../../types/index.js';
+import type { ArrivalRow, DepartureRow, Journey, JourneyLeg, ServiceKind } from '../../types/index.js';
 import { classifyService, lineLabel } from '../lines.js';
 import { toNotices } from './remarks.js';
 
@@ -67,6 +67,37 @@ export function toDepartureRow(departure: Alternative): DepartureRow | null {
   if (plannedPlatform) row.plannedPlatform = plannedPlatform;
   if (line.operator) row.operator = line.operator;
   const notices = toNotices(departure.remarks);
+  if (notices) row.notices = notices;
+
+  return row;
+}
+
+// Mirrors toDepartureRow, but an arrival's "where from" is a place
+// (`origin`), not the string `direction` a departure carries.
+export function toArrivalRow(arrival: Alternative): ArrivalRow | null {
+  const planned = arrival.plannedWhen ?? arrival.when;
+  if (!planned) return null;
+
+  const line = describeLine(arrival.line);
+  const row: ArrivalRow = {
+    line: line.label,
+    origin: placeName(arrival.origin) || (arrival.direction ?? ''),
+    scheduledTime: wallClock(planned),
+    cancelled: Boolean(arrival.cancelled),
+    kind: line.kind,
+  };
+
+  if (!row.cancelled && arrival.when && typeof arrival.delay === 'number') {
+    row.actualTime = wallClock(arrival.when);
+    row.delayMinutes = delayMinutes(arrival.delay);
+  }
+
+  const platform = arrival.platform ?? arrival.plannedPlatform;
+  if (platform) row.platform = platform;
+  const plannedPlatform = changedFrom(arrival.plannedPlatform, platform);
+  if (plannedPlatform) row.plannedPlatform = plannedPlatform;
+  if (line.operator) row.operator = line.operator;
+  const notices = toNotices(arrival.remarks);
   if (notices) row.notices = notices;
 
   return row;

@@ -1,10 +1,12 @@
-# Things to know — HAFAS data sources
+# Things to know — HAFAS and EFA data sources
 
 Search, departure boards, and the Routes tab get their data from the public
-journey planners of German transport networks, through the open-source
-[hafas-client](https://github.com/public-transport/hafas-client) library. This
-page covers the limits and caveats of that setup. The network list and region
-rules live in `backend/lib/hafas/networks.ts`.
+journey planners of German transport networks, mostly through the open-source
+[hafas-client](https://github.com/public-transport/hafas-client) library, plus
+four regional EFA (Elektronische Fahrplanauskunft) deployments that fill
+HAFAS's one real coverage gap — see "EFA networks" below. This page covers the
+limits and caveats of both. The HAFAS network list and region rules live in
+`backend/lib/hafas/networks.ts`; the EFA ones in `backend/lib/efa/networks.ts`.
 
 ## Networks in use
 
@@ -24,9 +26,13 @@ Left out:
 ## Coverage gaps
 
 - **Baden-Württemberg and most of Bavaria** have no working network in the
-  library. Stops there come from networks that also list the rest of Germany,
-  but only with trains. For example, Stuttgart Hbf shows S-Bahn, regional and
-  long-distance trains, but no buses or trams.
+  HAFAS library itself. Stops there come from networks that also list the rest
+  of Germany, but only with trains. For example, without EFA, Stuttgart Hbf
+  would show only S-Bahn, regional and long-distance trains, no buses or trams.
+  The Stuttgart, Karlsruhe, Munich and Nürnberg metro areas now get their buses
+  and trams from EFA instead — see "EFA networks" below. The rest of both
+  states (Freiburg, Ulm, Augsburg, and everywhere not near one of those four
+  cities) still has the HAFAS-only, rail-only gap.
 - Munich (S-Bahn München), Ingolstadt (INVG), NRW (through AVV), Hamburg
   (through NAH.SH), Saxony (through INSA) and the other covered regions include
   local buses and trams.
@@ -34,6 +40,50 @@ Left out:
   edge of a region, a stop can end up with its neighbouring network. That
   usually doesn't matter, because neighbours carry each other's cross-border
   lines.
+
+## EFA networks (Baden-Württemberg, Bavaria)
+
+- **VVS** (Stuttgart), **KVV** (Karlsruhe), **MVV** (Munich) and **VGN**
+  (Nürnberg) — each operator's own EFA "rapidJSON" interface, found through the
+  [transport-apis](https://github.com/public-transport/transport-apis)
+  registry (the same project hafas-client's maintainer runs) and confirmed
+  live. A statewide EFA-BW endpoint exists too, but it's missing from that
+  registry and its XML interface is due to retire at the end of 2027, so these
+  four metro operators' own servers are the only verified-working source for
+  now.
+- **Scope is stop search and the departure board only** — the same two things
+  HAFAS started with. No arrivals, no "nearby" (coordinate-based search), no
+  trip planning, and no disruption notices on EFA boards yet. See
+  `docs/ROADMAP.md` for what's left.
+- **Permission is the same open question as HAFAS's**, not a cleaner one. A
+  statewide EFA-BW dataset on MobiData BW carries an open
+  Datenlizenz-Deutschland-2.0 license, but the four servers actually used here
+  are the regional operators' own, reached the same way the HAFAS networks
+  are: publicly, without a published terms-of-use statement for third-party
+  use.
+- **An EFA result always wins a same-stop duplicate from a HAFAS fallback
+  network.** Search merges both sources' candidates, and inside an EFA
+  network's own region (`ownerOfEfa` in `backend/lib/efa/networks.ts`) its
+  result replaces the thinner HAFAS one regardless of either source's own
+  area-ranking — that's the entire reason these four were added. Outside those
+  four areas, nothing changes.
+- **EFA timestamps are UTC**, unlike HAFAS's, which already carry the
+  Europe/Berlin offset. `backend/lib/efa/normalize.ts` converts with
+  `Intl.DateTimeFormat` rather than a string slice, so it stays correct across
+  the DST change.
+- **MVV's live data can lag.** Its own `XML_SYSTEMINFO_REQUEST` reports a
+  validity window (`validity.to`) that has been observed in the past —
+  departure-monitor requests for "now" fail with EFA's "invalid date" system
+  message until MVV rolls the window forward. The board request still
+  degrades cleanly (an upstream error or an empty board, not a crash); this
+  is the operator's own data lag, not something the app's code can fix.
+- **A departure-monitor response always sends both the current and the
+  planned platform name** (`platformName` / `plannedPlatformName`), identical
+  when nothing changed — unlike HAFAS, which only sends a planned value when
+  it differs. `changedPlatform` in `backend/lib/efa/normalize.ts` does that
+  comparison itself, extracting the bare platform number from each (EFA's
+  platform names are pre-formatted German text like "Gleis 3"; the app
+  localizes and formats that itself, so the raw number is what gets stored).
 
 ## Permission and reliability
 

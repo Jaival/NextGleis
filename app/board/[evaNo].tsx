@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -12,13 +12,15 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrivalListItem } from '@/components/ArrivalListItem';
 import { BoardSkeleton } from '@/components/BoardSkeleton';
 import { Chip } from '@/components/Chip';
 import { DepartureListItem } from '@/components/DepartureListItem';
 import { DisruptionBanner } from '@/components/DisruptionBanner';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenContainer } from '@/components/ScreenContainer';
-import { getBoard } from '@/lib/api';
+import { SegmentedControl } from '@/components/SegmentedControl';
+import { getArrivals, getBoard } from '@/lib/api';
 import { useFavoritesStore } from '@/lib/favoritesStore';
 import { tap } from '@/lib/haptics';
 import { useT } from '@/lib/i18n';
@@ -26,6 +28,9 @@ import { duration, easing, spring } from '@/lib/motion';
 import { boardWarnings } from '@/lib/notices';
 import { spacing } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
+import type { ArrivalRow, DepartureRow } from '@/types';
+
+type Mode = 'departures' | 'arrivals';
 
 export default function BoardScreen() {
   const { colors } = useThemeColors();
@@ -46,9 +51,19 @@ export default function BoardScreen() {
   const [sessionHidden, setSessionHidden] = useState<string[]>([]);
   const hiddenLines = favorite?.hiddenLines ?? sessionHidden;
 
+  const [mode, setMode] = useState<Mode>('departures');
+  const modeOptions = useMemo(
+    () => [
+      { value: 'departures' as const, label: t('board.departures') },
+      { value: 'arrivals' as const, label: t('board.arrivals') },
+    ],
+    [t],
+  );
+
   const { data, isLoading, isError, isRefetching, refetch, fetchStatus } = useQuery({
-    queryKey: ['board', evaNo],
-    queryFn: ({ signal }) => getBoard(evaNo, signal),
+    queryKey: ['board', mode, evaNo],
+    queryFn: ({ signal }): Promise<(DepartureRow | ArrivalRow)[]> =>
+      mode === 'departures' ? getBoard(evaNo, signal) : getArrivals(evaNo, signal),
     refetchInterval: 30_000,
   });
   const isOffline = fetchStatus === 'paused';
@@ -129,6 +144,15 @@ export default function BoardScreen() {
         }}
       />
 
+      <View style={styles.modeRow}>
+        <SegmentedControl
+          options={modeOptions}
+          value={mode}
+          onChange={setMode}
+          accessibilityLabel={t('board.modeLabel')}
+        />
+      </View>
+
       {lines.length > 0 ? (
         <ScrollView
           horizontal
@@ -161,12 +185,20 @@ export default function BoardScreen() {
         // No crossfade here on purpose: BoardSkeleton mirrors the row geometry
         // exactly, so real departures land where the placeholders were and the
         // swap needs no motion to cover a jump.
-        <BoardSkeleton />
+        <BoardSkeleton
+          label={mode === 'departures' ? t('board.loading') : t('board.loadingArrivals')}
+        />
       ) : (
         <FlatList
           data={visibleRows}
           keyExtractor={(item, index) => `${item.line}-${item.scheduledTime}-${index}`}
-          renderItem={({ item }) => <DepartureListItem row={item} />}
+          renderItem={({ item }) =>
+            mode === 'departures' ? (
+              <DepartureListItem row={item as DepartureRow} />
+            ) : (
+              <ArrivalListItem row={item as ArrivalRow} />
+            )
+          }
           ListHeaderComponent={<DisruptionBanner notices={warnings} />}
           // Android is edge-to-edge, so the list draws behind the navigation
           // bar. Padding the content (rather than insetting the container) lets
@@ -187,7 +219,9 @@ export default function BoardScreen() {
                 fill
                 icon="cloud-offline-outline"
                 title={t('common.offline')}
-                message={t('board.offlineStale')}
+                message={
+                  mode === 'departures' ? t('board.offlineStale') : t('board.offlineStaleArrivals')
+                }
               />
             ) : isError ? (
               <EmptyState
@@ -208,7 +242,9 @@ export default function BoardScreen() {
                 fill
                 icon="time-outline"
                 title={t('board.emptyTitle')}
-                message={t('board.emptyMessage')}
+                message={
+                  mode === 'departures' ? t('board.emptyMessage') : t('board.emptyMessageArrivals')
+                }
               />
             )
           }
@@ -220,6 +256,12 @@ export default function BoardScreen() {
 
 function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
   return StyleSheet.create({
+    modeRow: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.xs,
+      backgroundColor: colors.background,
+    },
     chipRow: {
       flexGrow: 0,
       borderBottomWidth: StyleSheet.hairlineWidth,
