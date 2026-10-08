@@ -33,6 +33,20 @@ export type DepartureRow = {
   notices?: Notice[];
 };
 
+export type ArrivalRow = {
+  line: string;
+  origin: string;
+  scheduledTime: string; // ISO
+  actualTime?: string;
+  delayMinutes?: number;
+  platform?: string; // realtime where known
+  plannedPlatform?: string; // only set when the platform changed
+  cancelled: boolean;
+  kind: ServiceKind;
+  operator?: string;
+  notices?: Notice[];
+};
+
 export type StationSearchResult = {
   // Stop id, "<network>:<id>" (e.g. "rmv:3000010"). Named for the EVA numbers
   // it held under the DB Timetables API; favorites saved back then still hold

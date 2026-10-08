@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { DbApiError } from './dbClient.js';
+import { EfaRequestError } from './efa/request.js';
 import { UpstreamTimeoutError } from './hafas/networks.js';
 import { StopNotFoundError } from './hafas/resolve.js';
 
@@ -37,6 +38,10 @@ export function sendError(res: ApiResponse, err: unknown): void {
   }
   if (err instanceof UpstreamTimeoutError) {
     res.status(504).json({ error: err.message });
+    return;
+  }
+  if (err instanceof EfaRequestError) {
+    res.status(502).json({ error: err.message });
     return;
   }
   if (isHafasError(err)) {

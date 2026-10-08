@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import type { DepartureRow, Journey, NearbyStop, StationSearchResult } from '@/types';
+import type { ArrivalRow, DepartureRow, Journey, NearbyStop, StationSearchResult } from '@/types';
 
 // On the Android emulator `localhost` resolves to the emulator itself, not the
 // host machine running the backend — 10.0.2.2 is the host loopback alias.
@@ -88,6 +88,10 @@ export function getNearbyStops(
 
 export function getBoard(evaNo: string, signal?: AbortSignal): Promise<DepartureRow[]> {
   return request<DepartureRow[]>(`/api/board/${encodeURIComponent(evaNo)}`, signal);
+}
+
+export function getArrivals(evaNo: string, signal?: AbortSignal): Promise<ArrivalRow[]> {
+  return request<ArrivalRow[]>(`/api/arrivals/${encodeURIComponent(evaNo)}`, signal);
 }
 
 export function getJourneys(from: string, to: string, signal?: AbortSignal): Promise<Journey[]> {

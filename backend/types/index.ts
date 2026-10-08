@@ -29,6 +29,20 @@ export type DepartureRow = {
   notices?: Notice[];
 };
 
+export type ArrivalRow = {
+  line: string;
+  origin: string;
+  scheduledTime: string; // ISO, Europe/Berlin local wall-clock time
+  actualTime?: string;
+  delayMinutes?: number;
+  platform?: string; // realtime where known
+  plannedPlatform?: string; // only set when the platform changed
+  cancelled: boolean;
+  kind: ServiceKind;
+  operator?: string;
+  notices?: Notice[];
+};
+
 export type StationSearchResult = {
   // Stop id — "<network>:<id>", see lib/hafas/stopId.ts. Still named for the
   // EVA numbers it held under the DB Timetables API, since the app persists it.

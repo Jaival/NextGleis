@@ -60,8 +60,8 @@ Not features, but needed before the first store release.
 | # | Item | Notes |
 | --- | --- | --- |
 | 3.1 | **Delay alerts** for saved routes at chosen times | Push notifications + a scheduled backend job; needs a small store of push tokens — the first server-side user data, so privacy policy and data safety change |
-| 3.2 | **Arrival boards** | hafas-client `arrivals()`; toggle on the board |
-| 3.3 | **Coverage for Baden-Württemberg and Bavaria** | Needs a new data source (e.g. EFA-based APIs); check terms first |
+| 3.2 | **Arrival boards** ☑ | hafas-client `arrivals()`; toggle on the board |
+| 3.3 | **Coverage for Baden-Württemberg and Bavaria** ◐ | Stop search and departure boards now come from EFA for Stuttgart (VVS), Karlsruhe (KVV), Munich (MVV) and Nürnberg (VGN) — see THINGS_TO_KNOW.md. Still open: arrivals, nearby, trip planning and disruption notices on EFA boards; the rest of both states (Freiburg, Ulm, Augsburg, …) still has no local-transit source |
 | 3.4 | **Home-screen widget** | Deprioritized for now |
 | 3.5 | Android Auto / Wear OS next-departure tile | After the widget |
 

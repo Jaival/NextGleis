@@ -1,9 +1,10 @@
-import type { DepartureRow, Notice } from '@/types';
+import type { Notice } from '@/types';
 
 // The disruption warnings across a board's rows, each once, most widespread
 // first: a warning on half the board matters to more riders than one on a
-// single departure.
-export function boardWarnings(rows: readonly DepartureRow[]): Notice[] {
+// single departure. Works for departure or arrival rows alike — only the
+// notices matter here.
+export function boardWarnings(rows: readonly { notices?: Notice[] }[]): Notice[] {
   const counts = new Map<string, { notice: Notice; count: number }>();
   for (const row of rows) {
     for (const notice of row.notices ?? []) {
