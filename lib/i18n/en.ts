@@ -18,6 +18,7 @@ export const en = {
   'common.offline': "You're offline",
   'common.pullToRetry': 'Pull down to refresh and try again.',
   'common.cancel': 'Cancel',
+  'common.done': 'Done',
   'common.minutes': (minutes: number) => `${minutes} min`,
   'common.duration': (hours: number, minutes: number) =>
     hours === 0 ? `${minutes} min` : minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`,
@@ -71,26 +72,42 @@ export const en = {
   'board.hideLine': (line: string) => `Hide line ${line}`,
   'board.offlineLoading': 'Connect to the internet to load this board.',
   'board.offlineStale': "Departures will update once you're back online.",
+  'board.offlineStaleArrivals': "Arrivals will update once you're back online.",
   'board.error': 'Could not load this board',
   'board.filteredTitle': 'Everything is filtered out',
   'board.filteredMessage': 'Tap a line above to bring its departures back.',
   'board.emptyTitle': 'Nothing scheduled',
   'board.emptyMessage': 'No departures from this stop in the next couple of hours.',
+  'board.emptyMessageArrivals': 'No arrivals at this stop in the next couple of hours.',
   'board.disruptions': (count: number) =>
     `${count} ${plural(count, 'disruption notice', 'disruption notices')}`,
   'board.showNotices': 'Show disruption notices',
   'board.hideNotices': 'Hide disruption notices',
   'board.loading': 'Loading departures',
+  'board.loadingArrivals': 'Loading arrivals',
+  'board.departures': 'Departures',
+  'board.arrivals': 'Arrivals',
+  'board.modeLabel': 'Departures or arrivals',
+  'board.laterDepartures': 'Later departures',
+  'board.laterArrivals': 'Later arrivals',
+  'board.chooseDirections': (line: string) => `Choose directions for ${line}`,
+  'board.directionsMessage': 'Show departures towards:',
+  'board.showAll': 'Show all',
+  'board.longDistanceHidden': (count: number) =>
+    `${count} long-distance ${plural(count, 'train', 'trains')} hidden (Deutschlandticket mode)`,
 
   // Departures and journeys
   'departure.unknownDirection': 'Unknown direction',
+  'departure.unknownOrigin': 'Unknown origin',
   'departure.unlabelledLine': 'Unlabelled line',
   'departure.platform': (platform: string) => `Platform ${platform}`,
   'departure.platformShort': (platform: string) => `Pl. ${platform}`,
   'departure.platformChanged': (platform: string, planned: string) =>
     `platform changed to ${platform}, was ${planned}`,
   'departure.to': (direction: string) => `to ${direction}`,
+  'departure.from': (origin: string) => `from ${origin}`,
   'departure.departs': (time: string) => `departs ${time}`,
+  'departure.arrives': (time: string) => `arrives ${time}`,
   'departure.delayedBy': (minutes: number) => `delayed ${minutes} minutes`,
   'status.onTime': 'On time',
   'status.cancelled': 'Cancelled',
@@ -115,6 +132,17 @@ export const en = {
   'journey.hasNotices': 'has disruption notices',
   'journey.expandHint': 'Shows each leg of this connection',
   'journey.collapseHint': 'Hides the legs of this connection',
+
+  // Trip
+  'trip.openHint': 'Shows every stop of this service',
+  'trip.fallbackTitle': 'Trip',
+  'trip.to': (direction: string) => `to ${direction}`,
+  'trip.offlineLoading': 'Connect to the internet to load this trip.',
+  'trip.error': 'Could not load this trip',
+  'trip.cancelled': 'This service is cancelled.',
+  'trip.stopCancelled': 'Stop cancelled',
+  'trip.departed': 'departed',
+  'trip.openBoard': (name: string) => `Open the board for ${name}`,
 
   // Routes
   'routes.title': 'Routes',
@@ -144,9 +172,31 @@ export const en = {
   'routes.error': 'Could not find routes',
   'routes.emptyTitle': 'No connections found',
   'routes.emptyMessage': 'Nothing runs between these stops soon. Try a stop nearby.',
+  'routes.emptyMessageAt':
+    'Nothing runs between these stops around that time. Try another time or a stop nearby.',
+  'routes.leaveNow': 'Leave now',
+  'routes.deutschlandticket': 'Deutschlandticket',
+  'routes.deutschlandticketLabel':
+    'Deutschlandticket mode is on: long-distance trains are left out.',
+  'routes.departAt': (day: string, time: string) => `Depart ${day}, ${time}`,
+  'routes.arriveBy': (day: string, time: string) => `Arrive by ${day}, ${time}`,
+  'routes.today': 'today',
+  'routes.tomorrow': 'tomorrow',
+  'routes.timeLabel': (current: string) => `${current}. Tap to change the time.`,
+  'routes.timeTitle': 'When?',
+  'routes.timeModeLabel': 'Depart at or arrive by',
+  'routes.depart': 'Depart at',
+  'routes.arrive': 'Arrive by',
+  'routes.date': 'Date',
+  'routes.time': 'Time',
+  'routes.now': 'Now',
+  'routes.earlier': 'Earlier connections',
+  'routes.later': 'Later connections',
 
   // Favorites
   'favorites.linesHidden': (count: number) => `${count} ${plural(count, 'line', 'lines')} hidden`,
+  'favorites.directionsHidden': (count: number) =>
+    `${count} ${plural(count, 'direction', 'directions')} hidden`,
   'favorites.openBoard': (name: string) => `Open departure board for ${name}`,
   'favorites.routeLabel': (from: string, to: string) => `${from} to ${to}`,
   'favorites.openRoute': (route: string) => `Find routes from ${route}`,
@@ -165,11 +215,17 @@ export const en = {
   'settings.dataSources': 'Data sources',
   'settings.dataSourcesHafas': (networks: string) =>
     `Departures and routes come from the journey planners of German transport networks — ${networks} — through the open-source hafas-client library. The timetable data belongs to those networks and their operators.`,
+  'settings.dataSourcesEfa': (networks: string) =>
+    `Stops and departures around Stuttgart, Karlsruhe, Munich and Nuremberg come from the EFA journey planners of ${networks}.`,
   'settings.dataSourcesDb':
     'Stations saved in earlier versions of the app may fall back to data from Deutsche Bahn AG / DB InfraGO AG via the DB API Marketplace "Timetables" product, licensed under Creative Commons Attribution 4.0 (CC BY 4.0).',
   'settings.license': 'CC BY 4.0 license',
   'settings.dbTerms': 'DB terms of use',
   'settings.privacy': 'Privacy',
+  'settings.tickets': 'Tickets',
+  'settings.deutschlandticket': 'Deutschlandticket mode',
+  'settings.deutschlandticketText':
+    "Leaves ICE, IC/EC and other trains the Deutschlandticket doesn't cover out of boards and routes. A few IC routes that accept the ticket regionally are hidden too.",
   'settings.privacyText':
     'No account is required. Favorite stations, favorite routes, and preferences are stored only on this device. If you use "Nearby", your location is sent to the NextGleis server once to find stops and is not stored.',
   'settings.privacyPolicy': 'Privacy policy',

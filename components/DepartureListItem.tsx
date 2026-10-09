@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LineBadge } from './LineBadge';
 import { NoticeLine } from './NoticeLine';
 import { ServicePill, serviceDescription } from './ServicePill';
@@ -14,7 +14,15 @@ import type { DepartureRow } from '@/types';
 // goes for first: which service it is, where it goes, when it leaves — and the
 // colour in a row is the line badge (which product), the DB pill (whose train)
 // and the status caption (whether to worry).
-function DepartureListItemBase({ row }: { row: DepartureRow }) {
+// `onPress` takes the row rather than being bound per row, so the board can
+// pass one stable callback and memo still skips unchanged rows.
+function DepartureListItemBase({
+  row,
+  onPress,
+}: {
+  row: DepartureRow;
+  onPress?: (row: DepartureRow) => void;
+}) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const t = useT();
@@ -47,10 +55,18 @@ function DepartureListItemBase({ row }: { row: DepartureRow }) {
     .join(', ');
 
   return (
-    <View
-      style={[styles.row, status.kind === 'cancelled' && styles.rowCancelled]}
+    <Pressable
+      onPress={onPress ? () => onPress(row) : undefined}
+      disabled={!onPress}
+      style={({ pressed }) => [
+        styles.row,
+        pressed && styles.rowPressed,
+        status.kind === 'cancelled' && styles.rowCancelled,
+      ]}
       accessible
+      accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={a11yLabel}
+      accessibilityHint={onPress ? t('trip.openHint') : undefined}
     >
       <LineBadge line={row.line} />
 
@@ -95,7 +111,7 @@ function DepartureListItemBase({ row }: { row: DepartureRow }) {
           <Text style={[styles.statusLabel, { color: status.fg }]}>{status.label}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -115,6 +131,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       borderBottomColor: colors.border,
       backgroundColor: colors.surface,
     },
+    rowPressed: { backgroundColor: colors.surfaceMuted },
     rowCancelled: { opacity: 0.7 },
     middle: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
     direction: { ...type.subheadMedium, color: colors.textPrimary },

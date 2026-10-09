@@ -1,6 +1,6 @@
 import { cached } from '../lib/cache.js';
-import { searchStops } from '../lib/hafas/search.js';
 import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
+import { searchStops } from '../lib/search.js';
 
 // Stop names barely change, and every search fans out to all networks — a few
 // minutes' cache spares them the same query from every user typing it.

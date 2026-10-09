@@ -1,8 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -12,20 +20,50 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrivalListItem } from '@/components/ArrivalListItem';
 import { BoardSkeleton } from '@/components/BoardSkeleton';
 import { Chip } from '@/components/Chip';
 import { DepartureListItem } from '@/components/DepartureListItem';
+import { DirectionSheet } from '@/components/DirectionSheet';
 import { DisruptionBanner } from '@/components/DisruptionBanner';
 import { EmptyState } from '@/components/EmptyState';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { ScreenContainer } from '@/components/ScreenContainer';
-import { getBoard } from '@/lib/api';
-import { useFavoritesStore } from '@/lib/favoritesStore';
+import { SegmentedControl } from '@/components/SegmentedControl';
+import { getArrivals, getBoard } from '@/lib/api';
+import { toggleDirection, useFavoritesStore } from '@/lib/favoritesStore';
 import { tap } from '@/lib/haptics';
 import { useT } from '@/lib/i18n';
+import { needsLongDistanceTicket } from '@/lib/product';
+import { useSettingsStore } from '@/lib/settingsStore';
 import { duration, easing, spring } from '@/lib/motion';
 import { boardWarnings } from '@/lib/notices';
-import { spacing } from '@/lib/theme';
+import { spacing, type } from '@/lib/theme';
 import { useThemeColors } from '@/lib/useThemeColors';
+import type { ArrivalRow, DepartureRow, HiddenDirection } from '@/types';
+
+type Mode = 'departures' | 'arrivals';
+type Row = DepartureRow | ArrivalRow;
+
+// A window starting at the last row's minute repeats the rows of that minute,
+// and HAFAS adds delayed services planned a little before the start — so
+// pages are merged rather than appended: deduplicated, then back in order.
+function rowKey(row: Row): string {
+  const towards = 'direction' in row ? row.direction : row.origin;
+  return row.tripId ?? `${row.line}|${towards}|${row.scheduledTime}`;
+}
+
+function mergePages(pages: Row[][]): Row[] {
+  const seen = new Set<string>();
+  const rows: Row[] = [];
+  for (const row of pages.flat()) {
+    const key = rowKey(row);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push(row);
+  }
+  return rows.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+}
 
 export default function BoardScreen() {
   const { colors } = useThemeColors();
@@ -33,11 +71,13 @@ export default function BoardScreen() {
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const t = useT();
+  const router = useRouter();
   const { evaNo, name } = useLocalSearchParams<{ evaNo: string; name?: string }>();
   const favorites = useFavoritesStore((s) => s.favorites);
   const addFavorite = useFavoritesStore((s) => s.addFavorite);
   const removeFavorite = useFavoritesStore((s) => s.removeFavorite);
   const toggleHiddenLine = useFavoritesStore((s) => s.toggleHiddenLine);
+  const toggleHiddenDirection = useFavoritesStore((s) => s.toggleHiddenDirection);
 
   const favorite = favorites.find((f) => f.evaNo === evaNo);
   const isFavorite = Boolean(favorite);
@@ -45,23 +85,114 @@ export default function BoardScreen() {
 
   const [sessionHidden, setSessionHidden] = useState<string[]>([]);
   const hiddenLines = favorite?.hiddenLines ?? sessionHidden;
+  const [sessionDirections, setSessionDirections] = useState<HiddenDirection[]>([]);
+  const hiddenDirections = favorite?.hiddenDirections ?? sessionDirections;
+  const [directionLine, setDirectionLine] = useState('');
+  const [choosingDirections, setChoosingDirections] = useState(false);
 
-  const { data, isLoading, isError, isRefetching, refetch, fetchStatus } = useQuery({
-    queryKey: ['board', evaNo],
-    queryFn: ({ signal }) => getBoard(evaNo, signal),
+  const [mode, setMode] = useState<Mode>('departures');
+  const modeOptions = useMemo(
+    () => [
+      { value: 'departures' as const, label: t('board.departures') },
+      { value: 'arrivals' as const, label: t('board.arrivals') },
+    ],
+    [t],
+  );
+
+  // Each page is a two-hour window; `null` is the one starting now, and the
+  // next starts at the minute of the last row so far.
+  const {
+    data,
+    isLoading,
+    isError,
+    isRefetching,
+    refetch,
+    fetchStatus,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['board', mode, evaNo],
+    queryFn: ({ pageParam, signal }): Promise<Row[]> =>
+      mode === 'departures'
+        ? getBoard(evaNo, pageParam, signal)
+        : getArrivals(evaNo, pageParam, signal),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last, _pages, lastParam) => {
+      const next = last.at(-1)?.scheduledTime.slice(0, 16);
+      // An empty window, or one that didn't get past its own start (a stop
+      // whose sources can't look ahead), has nothing later to offer.
+      return next && next > (lastParam ?? '') ? next : undefined;
+    },
     refetchInterval: 30_000,
   });
   const isOffline = fetchStatus === 'paused';
+  const merged = useMemo(() => mergePages(data?.pages ?? []), [data]);
+
+  // Deutschlandticket mode drops long-distance trains before anything else,
+  // so they don't get filter chips either.
+  const deutschlandticket = useSettingsStore((s) => s.deutschlandticket);
+  const rows = useMemo(
+    () => (deutschlandticket ? merged.filter((row) => !needsLongDistanceTicket(row.line)) : merged),
+    [merged, deutschlandticket],
+  );
+  const longDistanceHidden = merged.length - rows.length;
 
   const lines = useMemo(() => {
     const set = new Set<string>();
-    for (const row of data ?? []) if (row.line) set.add(row.line);
+    for (const row of rows) if (row.line) set.add(row.line);
     return Array.from(set).sort();
-  }, [data]);
+  }, [rows]);
 
+  // Direction filters are about where a departure goes, so they only apply
+  // to the departures board; an arrival's "where from" is a different list.
+  const isDirectionHidden = useCallback(
+    (line: string, direction: string) =>
+      hiddenDirections.some((h) => h.line === line && h.direction === direction),
+    [hiddenDirections],
+  );
   const visibleRows = useMemo(
-    () => (data ?? []).filter((row) => !hiddenLines.includes(row.line)),
-    [data, hiddenLines],
+    () =>
+      rows.filter(
+        (row) =>
+          !hiddenLines.includes(row.line) &&
+          !('direction' in row && isDirectionHidden(row.line, row.direction)),
+      ),
+    [rows, hiddenLines, isDirectionHidden],
+  );
+
+  // Every direction the line has on this board, plus any hidden earlier that
+  // isn't running right now — otherwise it could never be brought back.
+  const lineDirections = useMemo(() => {
+    const set = new Set<string>();
+    for (const row of rows) {
+      if (row.line === directionLine && 'direction' in row && row.direction) set.add(row.direction);
+    }
+    for (const h of hiddenDirections) if (h.line === directionLine) set.add(h.direction);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [rows, hiddenDirections, directionLine]);
+
+  const toggleDirectionOf = (direction: string) => {
+    const hidden = { line: directionLine, direction };
+    if (isFavorite) toggleHiddenDirection(evaNo, hidden);
+    else setSessionDirections((prev) => toggleDirection(prev, hidden));
+  };
+
+  const showAllDirections = () => {
+    for (const h of hiddenDirections) if (h.line === directionLine) toggleDirectionOf(h.direction);
+  };
+
+  const openTrip = useCallback(
+    (row: Row) => {
+      if (!row.tripId) return;
+      router.push({
+        pathname: '/trip/[id]',
+        // `at` and `side` pick out this stop among the trip's stops: the one
+        // whose departure (or arrival) is this row's time.
+        params: { id: row.tripId, line: row.line, at: row.scheduledTime, side: mode },
+      });
+    },
+    [router, mode],
   );
 
   // Only for the lines on show: a diversion of a hidden tram isn't news.
@@ -129,6 +260,15 @@ export default function BoardScreen() {
         }}
       />
 
+      <View style={styles.modeRow}>
+        <SegmentedControl
+          options={modeOptions}
+          value={mode}
+          onChange={setMode}
+          accessibilityLabel={t('board.modeLabel')}
+        />
+      </View>
+
       {lines.length > 0 ? (
         <ScrollView
           horizontal
@@ -142,6 +282,20 @@ export default function BoardScreen() {
               label={line}
               active={!hiddenLines.includes(line)}
               onPress={() => toggleLine(line)}
+              partial={
+                mode === 'departures' &&
+                !hiddenLines.includes(line) &&
+                hiddenDirections.some((h) => h.line === line)
+              }
+              onLongPress={
+                mode === 'departures'
+                  ? () => {
+                      setDirectionLine(line);
+                      setChoosingDirections(true);
+                    }
+                  : undefined
+              }
+              longPressLabel={t('board.chooseDirections', line)}
               accessibilityLabel={
                 hiddenLines.includes(line) ? t('board.showLine', line) : t('board.hideLine', line)
               }
@@ -161,13 +315,49 @@ export default function BoardScreen() {
         // No crossfade here on purpose: BoardSkeleton mirrors the row geometry
         // exactly, so real departures land where the placeholders were and the
         // swap needs no motion to cover a jump.
-        <BoardSkeleton />
+        <BoardSkeleton
+          label={mode === 'departures' ? t('board.loading') : t('board.loadingArrivals')}
+        />
       ) : (
         <FlatList
           data={visibleRows}
           keyExtractor={(item, index) => `${item.line}-${item.scheduledTime}-${index}`}
-          renderItem={({ item }) => <DepartureListItem row={item} />}
-          ListHeaderComponent={<DisruptionBanner notices={warnings} />}
+          renderItem={({ item }) =>
+            mode === 'departures' ? (
+              <DepartureListItem
+                row={item as DepartureRow}
+                onPress={item.tripId ? openTrip : undefined}
+              />
+            ) : (
+              <ArrivalListItem
+                row={item as ArrivalRow}
+                onPress={item.tripId ? openTrip : undefined}
+              />
+            )
+          }
+          ListHeaderComponent={
+            <>
+              <DisruptionBanner notices={warnings} />
+              {longDistanceHidden > 0 ? (
+                <Text style={styles.ticketNote}>
+                  {t('board.longDistanceHidden', longDistanceHidden)}
+                </Text>
+              ) : null}
+            </>
+          }
+          ListFooterComponent={
+            visibleRows.length > 0 && hasNextPage ? (
+              <LoadMoreButton
+                label={
+                  mode === 'departures' ? t('board.laterDepartures') : t('board.laterArrivals')
+                }
+                direction="later"
+                loading={isFetchingNextPage}
+                disabled={isOffline}
+                onPress={() => fetchNextPage()}
+              />
+            ) : null
+          }
           // Android is edge-to-edge, so the list draws behind the navigation
           // bar. Padding the content (rather than insetting the container) lets
           // rows scroll under it while the last row still clears it.
@@ -175,7 +365,9 @@ export default function BoardScreen() {
           scrollIndicatorInsets={{ bottom: insets.bottom }}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
+              // isRefetching also covers a page being added, which has its own
+              // spinner on the button.
+              refreshing={isRefetching && !isFetchingNextPage}
               onRefresh={refetch}
               colors={[colors.primary]}
               tintColor={colors.primary}
@@ -187,7 +379,9 @@ export default function BoardScreen() {
                 fill
                 icon="cloud-offline-outline"
                 title={t('common.offline')}
-                message={t('board.offlineStale')}
+                message={
+                  mode === 'departures' ? t('board.offlineStale') : t('board.offlineStaleArrivals')
+                }
               />
             ) : isError ? (
               <EmptyState
@@ -208,23 +402,50 @@ export default function BoardScreen() {
                 fill
                 icon="time-outline"
                 title={t('board.emptyTitle')}
-                message={t('board.emptyMessage')}
+                message={
+                  mode === 'departures' ? t('board.emptyMessage') : t('board.emptyMessageArrivals')
+                }
               />
             )
           }
         />
       )}
+
+      <DirectionSheet
+        visible={choosingDirections}
+        line={directionLine}
+        directions={lineDirections}
+        hidden={(direction) => isDirectionHidden(directionLine, direction)}
+        onToggle={toggleDirectionOf}
+        onShowAll={showAllDirections}
+        onClose={() => setChoosingDirections(false)}
+      />
     </ScreenContainer>
   );
 }
 
 function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
   return StyleSheet.create({
+    modeRow: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.xs,
+      backgroundColor: colors.background,
+    },
     chipRow: {
       flexGrow: 0,
+      // Native already never shrinks it; react-native-web does once the list
+      // below is long enough, clipping the chips.
+      flexShrink: 0,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
       backgroundColor: colors.background,
+    },
+    ticketNote: {
+      ...type.caption,
+      color: colors.textTertiary,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
     },
     chipRowContent: {
       paddingHorizontal: spacing.lg,

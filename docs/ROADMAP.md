@@ -35,9 +35,9 @@ Not features, but needed before the first store release.
 
 | # | Item | Status | Notes |
 | --- | --- | --- | --- |
-| 0.1 | Set `EXPO_PUBLIC_API_BASE_URL` in EAS and pin `environment` per build profile | ☐ | Otherwise store builds can't reach the backend. DEVOPS.md §3 |
+| 0.1 | Set `EXPO_PUBLIC_API_BASE_URL` in EAS and pin `environment` per build profile | ◐ | Profiles are pinned in `eas.json`; the variable itself still has to be set on the EAS account (`eas env:set`). Otherwise store builds can't reach the backend. DEVOPS.md §3 |
 | 0.2 | CI on pull requests, and a tag-triggered release pipeline | ☑ | `.github/workflows/`, DEVOPS.md §8 |
-| 0.3 | Backend unit tests for `normalize.ts`, `lines.ts`, `stopId.ts` | ☐ | Node's built-in test runner, no new dependency |
+| 0.3 | Backend unit tests for `normalize.ts`, `lines.ts`, `stopId.ts` | ☑ | `npm test` in `backend/` (Node's test runner, no new dependency); runs in CI |
 | 0.4 | Crash reporting | ☐ | Sentry or EAS Observe |
 | 0.5 | Store listing: screenshots (DE + EN), feature graphic, data-safety form | ☐ | Data safety must mention location once 1.3 ships |
 | 0.6 | Privacy policy: add location use | ☑ | Location is sent to the backend for a nearby search and not stored |
@@ -46,22 +46,26 @@ Not features, but needed before the first store release.
 
 | # | Item | Notes |
 | --- | --- | --- |
-| 2.1 | **Route time** — depart at / arrive by, any day | `/api/journeys?when=&arrival=`; date/time picker on Routes |
-| 2.2 | **Later / earlier connections** | hafas-client `laterThan` / `earlierThan` refs |
-| 2.3 | **Later departures on a board** | `when` on `/api/board`; "Show later" at the end of the list |
-| 2.4 | **Trip details** — tap a departure to see all its stops with live times | hafas-client `trip()`; new `/api/trip` and a trip screen |
-| 2.5 | **Filter by direction** — hide "Tram 6 → X" but keep "Tram 6 → Y" | Extends `hiddenLines` on favorites; long-press a chip (spec §7.4) |
-| 2.6 | **Deutschlandticket mode** — hide ICE/IC/EC/FlixTrain on boards and routes | Uses existing product classification; a setting |
+| 2.1 | **Route time** — depart at / arrive by, any day ☑ | `/api/journeys?when=&arrival=`; date/time picker on Routes |
+| 2.2 | **Later / earlier connections** ☑ | hafas-client `laterThan` / `earlierThan` refs |
+| 2.3 | **Later departures on a board** ☑ | `when` on `/api/board`; "Show later" at the end of the list |
+| 2.4 | **Trip details** — tap a departure to see all its stops with live times ☑ | hafas-client `trip()`; new `/api/trip` and a trip screen |
+| 2.5 | **Filter by direction** — hide "Tram 6 → X" but keep "Tram 6 → Y" ☑ | Extends `hiddenLines` on favorites; long-press a chip (spec §7.4) |
+| 2.6 | **Deutschlandticket mode** — hide ICE/IC/EC/FlixTrain on boards and routes ☑ | Uses existing product classification; a setting |
 | 2.7 | **Share** a board or route as a link that opens the app | `nextgleis://` scheme exists; add web fallback page on the backend |
 | 2.8 | **Offline last-known board** | Persist the React Query cache for favorites |
+
+2.1–2.6 need a new native build: the Routes time picker uses
+`@react-native-community/datetimepicker`, a native module. The web build has
+no picker, so Routes there always searches from now.
 
 ## Phase 3 — Retention
 
 | # | Item | Notes |
 | --- | --- | --- |
 | 3.1 | **Delay alerts** for saved routes at chosen times | Push notifications + a scheduled backend job; needs a small store of push tokens — the first server-side user data, so privacy policy and data safety change |
-| 3.2 | **Arrival boards** | hafas-client `arrivals()`; toggle on the board |
-| 3.3 | **Coverage for Baden-Württemberg and Bavaria** | Needs a new data source (e.g. EFA-based APIs); check terms first |
+| 3.2 | **Arrival boards** ☑ | hafas-client `arrivals()`; toggle on the board |
+| 3.3 | **Coverage for Baden-Württemberg and Bavaria** ◐ | Stop search and departure boards now come from EFA for Stuttgart (VVS), Karlsruhe (KVV), Munich (MVV) and Nürnberg (VGN) — see THINGS_TO_KNOW.md. Still open: arrivals, nearby, trip planning, trip details and disruption notices on EFA boards; the rest of both states (Freiburg, Ulm, Augsburg, …) still has no local-transit source |
 | 3.4 | **Home-screen widget** | Deprioritized for now |
 | 3.5 | Android Auto / Wear OS next-departure tile | After the widget |
 

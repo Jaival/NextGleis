@@ -20,6 +20,7 @@ export const de: Messages = {
   'common.offline': 'Du bist offline',
   'common.pullToRetry': 'Zum Aktualisieren nach unten ziehen und erneut versuchen.',
   'common.cancel': 'Abbrechen',
+  'common.done': 'Fertig',
   'common.minutes': (minutes) => `${minutes} Min.`,
   'common.duration': (hours, minutes) =>
     hours === 0
@@ -80,26 +81,42 @@ export const de: Messages = {
   'board.hideLine': (line) => `Linie ${line} ausblenden`,
   'board.offlineLoading': 'Verbinde dich mit dem Internet, um die Abfahrten zu laden.',
   'board.offlineStale': 'Die Abfahrten werden aktualisiert, sobald du wieder online bist.',
+  'board.offlineStaleArrivals': 'Die Ankünfte werden aktualisiert, sobald du wieder online bist.',
   'board.error': 'Abfahrten konnten nicht geladen werden',
   'board.filteredTitle': 'Alles ausgeblendet',
   'board.filteredMessage': 'Tippe oben auf eine Linie, um ihre Abfahrten wieder einzublenden.',
   'board.emptyTitle': 'Keine Abfahrten',
   'board.emptyMessage': 'In den nächsten Stunden fährt hier nichts ab.',
+  'board.emptyMessageArrivals': 'In den nächsten Stunden kommt hier nichts an.',
   'board.disruptions': (count) =>
     `${count} ${plural(count, 'Störungsmeldung', 'Störungsmeldungen')}`,
   'board.showNotices': 'Störungsmeldungen anzeigen',
   'board.hideNotices': 'Störungsmeldungen ausblenden',
   'board.loading': 'Abfahrten werden geladen',
+  'board.loadingArrivals': 'Ankünfte werden geladen',
+  'board.departures': 'Abfahrten',
+  'board.arrivals': 'Ankünfte',
+  'board.modeLabel': 'Abfahrten oder Ankünfte',
+  'board.laterDepartures': 'Spätere Abfahrten',
+  'board.laterArrivals': 'Spätere Ankünfte',
+  'board.chooseDirections': (line) => `Richtungen für ${line} wählen`,
+  'board.directionsMessage': 'Abfahrten anzeigen in Richtung:',
+  'board.showAll': 'Alle zeigen',
+  'board.longDistanceHidden': (count) =>
+    `${count} ${plural(count, 'Fernzug', 'Fernzüge')} ausgeblendet (Deutschlandticket-Modus)`,
 
   // Departures and journeys
   'departure.unknownDirection': 'Richtung unbekannt',
+  'departure.unknownOrigin': 'Herkunft unbekannt',
   'departure.unlabelledLine': 'Linie ohne Bezeichnung',
   'departure.platform': (platform) => `Gleis ${platform}`,
   'departure.platformShort': (platform) => `Gl. ${platform}`,
   'departure.platformChanged': (platform, planned) =>
     `Gleiswechsel auf ${platform}, geplant war ${planned}`,
   'departure.to': (direction) => `nach ${direction}`,
+  'departure.from': (origin) => `von ${origin}`,
   'departure.departs': (time) => `Abfahrt ${time}`,
+  'departure.arrives': (time) => `Ankunft ${time}`,
   'departure.delayedBy': (minutes) => `${minutes} Minuten verspätet`,
   'status.onTime': 'Pünktlich',
   'status.cancelled': 'Fällt aus',
@@ -123,6 +140,17 @@ export const de: Messages = {
   'journey.hasNotices': 'mit Störungsmeldungen',
   'journey.expandHint': 'Zeigt die einzelnen Abschnitte dieser Verbindung',
   'journey.collapseHint': 'Blendet die Abschnitte dieser Verbindung aus',
+
+  // Trip
+  'trip.openHint': 'Zeigt alle Halte dieser Fahrt',
+  'trip.fallbackTitle': 'Fahrt',
+  'trip.to': (direction) => `nach ${direction}`,
+  'trip.offlineLoading': 'Verbinde dich mit dem Internet, um diese Fahrt zu laden.',
+  'trip.error': 'Fahrt konnte nicht geladen werden',
+  'trip.cancelled': 'Diese Fahrt fällt aus.',
+  'trip.stopCancelled': 'Halt fällt aus',
+  'trip.departed': 'abgefahren',
+  'trip.openBoard': (name) => `Tafel für ${name} öffnen`,
 
   // Routes
   'routes.title': 'Routen',
@@ -153,9 +181,30 @@ export const de: Messages = {
   'routes.emptyTitle': 'Keine Verbindungen gefunden',
   'routes.emptyMessage':
     'Zwischen diesen Haltestellen fährt bald nichts. Versuch eine Haltestelle in der Nähe.',
+  'routes.emptyMessageAt':
+    'Zu dieser Zeit fährt zwischen diesen Haltestellen nichts. Versuch eine andere Zeit oder eine Haltestelle in der Nähe.',
+  'routes.leaveNow': 'Ab jetzt',
+  'routes.deutschlandticket': 'Deutschlandticket',
+  'routes.deutschlandticketLabel': 'Deutschlandticket-Modus ist an: Fernzüge werden ausgelassen.',
+  'routes.departAt': (day, time) => `Abfahrt ${day}, ${time}`,
+  'routes.arriveBy': (day, time) => `Ankunft bis ${day}, ${time}`,
+  'routes.today': 'heute',
+  'routes.tomorrow': 'morgen',
+  'routes.timeLabel': (current) => `${current}. Zum Ändern der Zeit tippen.`,
+  'routes.timeTitle': 'Wann?',
+  'routes.timeModeLabel': 'Abfahrt oder Ankunft',
+  'routes.depart': 'Abfahrt',
+  'routes.arrive': 'Ankunft',
+  'routes.date': 'Datum',
+  'routes.time': 'Uhrzeit',
+  'routes.now': 'Jetzt',
+  'routes.earlier': 'Frühere Verbindungen',
+  'routes.later': 'Spätere Verbindungen',
 
   // Favorites
   'favorites.linesHidden': (count) => `${count} ${plural(count, 'Linie', 'Linien')} ausgeblendet`,
+  'favorites.directionsHidden': (count) =>
+    `${count} ${plural(count, 'Richtung', 'Richtungen')} ausgeblendet`,
   'favorites.openBoard': (name) => `Abfahrten für ${name} öffnen`,
   'favorites.routeLabel': (from, to) => `${from} nach ${to}`,
   'favorites.openRoute': (route) => `Verbindungen von ${route} suchen`,
@@ -174,10 +223,16 @@ export const de: Messages = {
   'settings.dataSources': 'Datenquellen',
   'settings.dataSourcesHafas': (networks) =>
     `Abfahrten und Routen stammen aus den Fahrplanauskünften deutscher Verkehrsverbünde — ${networks} — über die Open-Source-Bibliothek hafas-client. Die Fahrplandaten gehören diesen Verbünden und ihren Verkehrsunternehmen.`,
+  'settings.dataSourcesEfa': (networks) =>
+    `Haltestellen und Abfahrten rund um Stuttgart, Karlsruhe, München und Nürnberg stammen aus den EFA-Fahrplanauskünften von ${networks}.`,
   'settings.dataSourcesDb':
     'Haltestellen, die in älteren Versionen der App gespeichert wurden, können auf Daten der Deutschen Bahn AG / DB InfraGO AG aus dem Produkt „Timetables“ des DB API Marketplace zurückgreifen, lizenziert unter Creative Commons Namensnennung 4.0 (CC BY 4.0).',
   'settings.license': 'Lizenz CC BY 4.0',
   'settings.dbTerms': 'Nutzungsbedingungen der DB',
+  'settings.tickets': 'Tickets',
+  'settings.deutschlandticket': 'Deutschlandticket-Modus',
+  'settings.deutschlandticketText':
+    'Blendet ICE, IC/EC und andere Züge, in denen das Deutschlandticket nicht gilt, auf Tafeln und Routen aus. Auch die wenigen IC-Strecken, die das Ticket regional anerkennen, werden ausgeblendet.',
   'settings.privacy': 'Datenschutz',
   'settings.privacyText':
     'Du brauchst kein Konto. Favorisierte Haltestellen, Routen und Einstellungen werden nur auf diesem Gerät gespeichert. Wenn du „In der Nähe“ nutzt, wird dein Standort einmalig an den NextGleis-Server gesendet, um Haltestellen zu finden, und nicht gespeichert.',

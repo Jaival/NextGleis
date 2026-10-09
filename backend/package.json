@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node --watch --env-file-if-exists=.env dev-server.mjs",
     "start:vercel": "vercel dev --local --listen 3000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import ./ts-resolve.mjs --test \"test/*.test.ts\""
   },
   "dependencies": {
     "fast-xml-parser": "^5.11.0",

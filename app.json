@@ -48,7 +48,8 @@
         {
           "locationWhenInUsePermission": "NextGleis uses your location to show the stops near you."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

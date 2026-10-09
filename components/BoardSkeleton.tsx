@@ -54,13 +54,13 @@ function SkeletonRow({
   );
 }
 
-export function BoardSkeleton() {
+export function BoardSkeleton({ label }: { label?: string } = {}) {
   const { colors } = useThemeColors();
   const t = useT();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View accessible accessibilityLabel={t('board.loading')} style={styles.container}>
+    <View accessible accessibilityLabel={label ?? t('board.loading')} style={styles.container}>
       {Array.from({ length: ROWS }).map((_, i) => (
         <SkeletonRow key={i} index={i} styles={styles} />
       ))}
