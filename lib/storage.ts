@@ -53,6 +53,7 @@ const defaultSettings: AppSettings = {
   themeMode: 'system',
   language: 'system',
   onboarded: false,
+  deutschlandticket: false,
 };
 
 export async function getSettings(): Promise<AppSettings> {

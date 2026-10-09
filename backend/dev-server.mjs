@@ -4,23 +4,9 @@
 // Node's built-in type stripping (Node 22.18 or later).
 import { existsSync, readdirSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { registerHooks } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-
-// The sources import each other as `./x.js`, which is what Vercel's compiled
-// output needs. Here there is no compiled output, so point those at the `.ts`.
-registerHooks({
-  resolve(specifier, context, nextResolve) {
-    if (specifier.startsWith('.') && specifier.endsWith('.js') && context.parentURL?.startsWith('file:')) {
-      const ts = new URL(specifier.replace(/\.js$/, '.ts'), context.parentURL);
-      if (!existsSync(new URL(specifier, context.parentURL)) && existsSync(ts)) {
-        return nextResolve(ts.href, context);
-      }
-    }
-    return nextResolve(specifier, context);
-  },
-});
+import './ts-resolve.mjs';
 
 const API_DIR = fileURLToPath(new URL('./api/', import.meta.url));
 const DYNAMIC = /^\[(\w+)\](\.ts)?$/;

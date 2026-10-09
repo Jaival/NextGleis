@@ -81,6 +81,7 @@ export default function RootLayout() {
                 options={{ gestureEnabled: false, animation: 'fade' }}
               />
               <Stack.Screen name="board/[evaNo]" options={{ headerShown: true }} />
+              <Stack.Screen name="trip/[id]" options={{ headerShown: true }} />
             </Stack>
           </ThemeProvider>
           <StatusBar style={isDark ? 'light' : 'dark'} />

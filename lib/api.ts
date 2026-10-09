@@ -1,5 +1,12 @@
 import { Platform } from 'react-native';
-import type { ArrivalRow, DepartureRow, Journey, NearbyStop, StationSearchResult } from '@/types';
+import type {
+  ArrivalRow,
+  DepartureRow,
+  JourneyPage,
+  NearbyStop,
+  StationSearchResult,
+  Trip,
+} from '@/types';
 
 // On the Android emulator `localhost` resolves to the emulator itself, not the
 // host machine running the backend — 10.0.2.2 is the host loopback alias.
@@ -86,20 +93,63 @@ export function getNearbyStops(
   return request<NearbyStop[]>(`/api/nearby?lat=${latitude}&lon=${longitude}`, signal);
 }
 
-export function getBoard(evaNo: string, signal?: AbortSignal): Promise<DepartureRow[]> {
-  return request<DepartureRow[]>(`/api/board/${encodeURIComponent(evaNo)}`, signal);
+// `from` (Berlin wall-clock, "YYYY-MM-DDTHH:mm") starts the board's two-hour
+// window there instead of now.
+function boardPath(kind: 'board' | 'arrivals', evaNo: string, from: string | null): string {
+  const path = `/api/${kind}/${encodeURIComponent(evaNo)}`;
+  return from ? `${path}?when=${encodeURIComponent(from)}` : path;
 }
 
-export function getArrivals(evaNo: string, signal?: AbortSignal): Promise<ArrivalRow[]> {
-  return request<ArrivalRow[]>(`/api/arrivals/${encodeURIComponent(evaNo)}`, signal);
+export function getBoard(
+  evaNo: string,
+  from: string | null,
+  signal?: AbortSignal,
+): Promise<DepartureRow[]> {
+  return request<DepartureRow[]>(boardPath('board', evaNo, from), signal);
 }
 
-export function getJourneys(from: string, to: string, signal?: AbortSignal): Promise<Journey[]> {
-  return request<Journey[]>(
-    `/api/journeys?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
-    signal,
-    JOURNEYS_TIMEOUT_MS,
-  );
+export function getArrivals(
+  evaNo: string,
+  from: string | null,
+  signal?: AbortSignal,
+): Promise<ArrivalRow[]> {
+  return request<ArrivalRow[]>(boardPath('arrivals', evaNo, from), signal);
+}
+
+export function getTrip(id: string, signal?: AbortSignal): Promise<Trip> {
+  return request<Trip>(`/api/trip?id=${encodeURIComponent(id)}`, signal);
+}
+
+// A time to leave after (or arrive before), or a step from a page already
+// shown. `when` absent means "from now".
+export type JourneyQuery =
+  { when?: Date; arrival: boolean } | { earlier: string } | { later: string };
+
+// `regionalOnly` leaves out trains the Deutschlandticket doesn't cover; it
+// has to be the same for every page of one search.
+export function getJourneys(
+  from: string,
+  to: string,
+  query: JourneyQuery,
+  regionalOnly: boolean,
+  signal?: AbortSignal,
+): Promise<JourneyPage> {
+  const params: [string, string][] = [
+    ['from', from],
+    ['to', to],
+    ['paged', '1'],
+  ];
+  if (regionalOnly) params.push(['regional', '1']);
+  if ('earlier' in query) params.push(['earlier', query.earlier]);
+  else if ('later' in query) params.push(['later', query.later]);
+  else if (query.when) {
+    params.push(['when', query.when.toISOString()]);
+    if (query.arrival) params.push(['arrival', '1']);
+  }
+  // Built by hand rather than with URLSearchParams, which React Native only
+  // partly implements.
+  const search = params.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  return request<JourneyPage>(`/api/journeys?${search}`, signal, JOURNEYS_TIMEOUT_MS);
 }
 
 export { ApiError };

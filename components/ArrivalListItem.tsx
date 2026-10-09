@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LineBadge } from './LineBadge';
 import { NoticeLine } from './NoticeLine';
 import { ServicePill, serviceDescription } from './ServicePill';
@@ -13,7 +13,15 @@ import type { ArrivalRow } from '@/types';
 // Mirrors DepartureListItem: same three columns, same status logic — only the
 // wording changes, since an arrival is read as "from X, arrives at HH:MM"
 // rather than "to X, departs HH:MM".
-function ArrivalListItemBase({ row }: { row: ArrivalRow }) {
+// `onPress` takes the row rather than being bound per row, so the board can
+// pass one stable callback and memo still skips unchanged rows.
+function ArrivalListItemBase({
+  row,
+  onPress,
+}: {
+  row: ArrivalRow;
+  onPress?: (row: ArrivalRow) => void;
+}) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const t = useT();
@@ -42,10 +50,18 @@ function ArrivalListItemBase({ row }: { row: ArrivalRow }) {
     .join(', ');
 
   return (
-    <View
-      style={[styles.row, status.kind === 'cancelled' && styles.rowCancelled]}
+    <Pressable
+      onPress={onPress ? () => onPress(row) : undefined}
+      disabled={!onPress}
+      style={({ pressed }) => [
+        styles.row,
+        pressed && styles.rowPressed,
+        status.kind === 'cancelled' && styles.rowCancelled,
+      ]}
       accessible
+      accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={a11yLabel}
+      accessibilityHint={onPress ? t('trip.openHint') : undefined}
     >
       <LineBadge line={row.line} />
 
@@ -88,7 +104,7 @@ function ArrivalListItemBase({ row }: { row: ArrivalRow }) {
           <Text style={[styles.statusLabel, { color: status.fg }]}>{status.label}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -108,6 +124,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       borderBottomColor: colors.border,
       backgroundColor: colors.surface,
     },
+    rowPressed: { backgroundColor: colors.surfaceMuted },
     rowCancelled: { opacity: 0.7 },
     middle: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
     direction: { ...type.subheadMedium, color: colors.textPrimary },

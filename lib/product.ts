@@ -43,6 +43,16 @@ const CATEGORY_KIND: Record<string, ProductKind> = {
  * operators (MEX, IRE, ALX, TER, …) and they all look and behave alike.
  * Labels with no category at all fall back to the neutral `other`.
  */
+/**
+ * Whether a line is a train the Deutschlandticket doesn't cover: ICE, IC/EC,
+ * night trains, FlixTrain. Decided by category alone, so the few IC routes a
+ * region has opened to the ticket still count as long-distance here.
+ */
+export function needsLongDistanceTicket(line: string): boolean {
+  const kind = productKind(line);
+  return kind === 'highSpeed' || kind === 'longDistance';
+}
+
 export function productKind(line: string): ProductKind {
   const category = /^\p{Letter}+/u.exec(line.trim())?.[0].toUpperCase();
   if (!category) return 'other';
