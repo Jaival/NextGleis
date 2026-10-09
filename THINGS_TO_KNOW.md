@@ -85,6 +85,62 @@ Left out:
   platform names are pre-formatted German text like "Gleis 3"; the app
   localizes and formats that itself, so the raw number is what gets stored).
 
+## Route times and earlier/later connections
+
+- `/api/journeys` takes `when` (an ISO instant) with `arrival=1` for "arrive
+  by", or `earlier`/`later` with a ref from a previous page. The app sends
+  `paged=1` and gets `{ journeys, earlierRef, laterRef }`. Without `paged=1`
+  the response is still the bare array, so app versions from before this keep
+  working.
+- A page ref is the issuing network's own continuation context, so it's
+  prefixed with that network (`rmv:3|OF|…`), and a step to earlier or later
+  connections goes back to that one network only.
+- Times are picked and shown in Berlin time, whatever zone the phone is in, to
+  match the timetable times everywhere else in the app.
+- Earlier and later load one at a time: starting one page fetch would cancel
+  the other.
+
+## Later departures and trip details
+
+- `/api/board` and `/api/arrivals` take `when` as Berlin wall-clock time
+  (`2026-10-09T16:00`) and return the two hours from there. "Later
+  departures" asks for the window starting at the last row's minute.
+- A window that starts at 16:00 also lists trains planned a little earlier but
+  running late, so pages are merged (deduplicated, then sorted again) rather
+  than appended.
+- EFA boards are capped at 40 results, which is only about 20 minutes at
+  Stuttgart Hbf. "Later departures" works there too (EFA's own `itdDate` /
+  `itdTime`).
+- Trip details are HAFAS only: board rows carry a `tripId` (prefixed with the
+  network, like stop ids) and `/api/trip` returns every served stop. EFA rows
+  have no `tripId`, so they aren't tappable.
+- A trip's stop ids are in the network that served the board, which isn't
+  always the stop's owner. Tapping one opens its board, which re-points at the
+  owning network as usual.
+
+## Direction filters
+
+- Long-press a line chip on a departures board to hide single directions of
+  it. They're saved on the favorite (`hiddenDirections`) by line and
+  destination name, or kept for the visit on a station that isn't a favorite.
+- Departures only: an arrival row has an origin, not a direction.
+- The match is by name, so if a network renames a destination, that filter
+  stops matching and the direction shows again.
+
+## Deutschlandticket mode
+
+- A setting that leaves out ICE, IC/EC, night trains and FlixTrain.
+- Boards filter in the app, by line category (`needsLongDistanceTicket` in
+  `lib/product.ts`).
+- Routes ask HAFAS to leave those products out (`regional=1`), so the five
+  results are all usable rather than filtered down afterwards. Every network
+  names its products differently; the list per network is
+  `LONG_DISTANCE_PRODUCTS` in `backend/lib/hafas/networks.ts`. The app also
+  drops any journey with a long-distance leg the network filed under a
+  regional product.
+- The few IC routes that accept the ticket in some regions are hidden too:
+  the app goes by category, not by route.
+
 ## Permission and reliability
 
 - These are the networks' public journey-planner feeds, used without formal
@@ -190,6 +246,13 @@ Left out:
   INSA or NAH.SH), then served by the network that covers that area.
 - New stop IDs carry their network as a prefix, e.g. `rmv:3000010`. The field
   is still called `evaNo` so that saved favorites stay readable.
+
+## Backend tests
+
+- `npm test` in `backend/` runs the unit tests in `backend/test/` with Node's
+  built-in test runner, straight from TypeScript. CI runs them too.
+- `backend/ts-resolve.mjs` points the sources' `./x.js` imports at the `.ts`
+  files; the dev server and the tests both load it.
 
 ## Running the backend locally
 

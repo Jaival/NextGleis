@@ -20,6 +20,7 @@ type SettingsState = AppSettings & {
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   setLanguage: (language: LanguageSetting) => Promise<void>;
   completeOnboarding: () => Promise<void>;
+  setDeutschlandticket: (deutschlandticket: boolean) => Promise<void>;
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => {
@@ -27,14 +28,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
   // can't silently drop the others from storage.
   const update = async (patch: Partial<AppSettings>) => {
     set(patch);
-    const { themeMode, language, onboarded } = get();
-    await saveSettings({ themeMode, language, onboarded });
+    const { themeMode, language, onboarded, deutschlandticket } = get();
+    await saveSettings({ themeMode, language, onboarded, deutschlandticket });
   };
 
   return {
     themeMode: 'system',
     language: 'system',
     onboarded: false,
+    deutschlandticket: false,
     hydrated: false,
 
     hydrate: async () => {
@@ -55,5 +57,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     setLanguage: (language) => update({ language }),
 
     completeOnboarding: () => update({ onboarded: true }),
+
+    setDeutschlandticket: (deutschlandticket) => update({ deutschlandticket }),
   };
 });

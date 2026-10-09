@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, { css, useReducedMotion } from 'react-native-reanimated';
@@ -11,6 +12,12 @@ type ChipProps = {
   active: boolean;
   onPress: () => void;
   accessibilityLabel?: string;
+  // A secondary action on long-press, offered to screen readers as a named
+  // action (they can't discover a long-press otherwise).
+  onLongPress?: () => void;
+  longPressLabel?: string;
+  // Some but not all of what the chip stands for is filtered out.
+  partial?: boolean;
 };
 
 // Fill and label crossfade together — half the duration with the label already
@@ -30,7 +37,15 @@ const motion = css.create({
   },
 });
 
-export function Chip({ label, active, onPress, accessibilityLabel }: ChipProps) {
+export function Chip({
+  label,
+  active,
+  onPress,
+  accessibilityLabel,
+  onLongPress,
+  longPressLabel,
+  partial = false,
+}: ChipProps) {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [pressed, setPressed] = useState(false);
@@ -41,6 +56,25 @@ export function Chip({ label, active, onPress, accessibilityLabel }: ChipProps) 
       onPress={() => {
         tap.selection();
         onPress();
+      }}
+      onLongPress={
+        onLongPress
+          ? () => {
+              tap.light();
+              onLongPress();
+            }
+          : undefined
+      }
+      // `activate` is listed too: once custom actions are declared, a plain
+      // double-tap is routed here rather than to onPress.
+      accessibilityActions={
+        onLongPress && longPressLabel
+          ? [{ name: 'activate' }, { name: 'longpress', label: longPressLabel }]
+          : undefined
+      }
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'activate') onPress();
+        if (event.nativeEvent.actionName === 'longpress') onLongPress?.();
       }}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
@@ -62,6 +96,14 @@ export function Chip({ label, active, onPress, accessibilityLabel }: ChipProps) 
         <Animated.Text style={[styles.text, active && styles.textActive, !reduced && motion.label]}>
           {label}
         </Animated.Text>
+        {partial ? (
+          <Ionicons
+            name="funnel"
+            size={10}
+            color={active ? colors.chipTextActive : colors.chipText}
+            style={styles.partial}
+          />
+        ) : null}
       </Animated.View>
     </Pressable>
   );
@@ -72,6 +114,8 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
     chip: {
       paddingHorizontal: spacing.md,
       height: 32,
+      flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'center',
       borderRadius: radii.pill,
       marginRight: spacing.sm,
@@ -81,5 +125,6 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
     chipInactive: { backgroundColor: colors.chipBg, borderColor: colors.border },
     text: { ...type.footnoteMedium, color: colors.chipText },
     textActive: { color: colors.chipTextActive },
+    partial: { marginLeft: spacing.xs },
   });
 }

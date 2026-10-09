@@ -18,7 +18,14 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const t = useT();
-  const hiddenCount = favorite.hiddenLines.length;
+  const hiddenLines = favorite.hiddenLines.length;
+  const hiddenDirections = favorite.hiddenDirections?.length ?? 0;
+  const filters = [
+    hiddenLines > 0 ? t('favorites.linesHidden', hiddenLines) : null,
+    hiddenDirections > 0 ? t('favorites.directionsHidden', hiddenDirections) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <FavoriteCard
@@ -33,9 +40,7 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
       <Text style={styles.name} numberOfLines={1}>
         {favorite.name}
       </Text>
-      {hiddenCount > 0 ? (
-        <Text style={styles.meta}>{t('favorites.linesHidden', hiddenCount)}</Text>
-      ) : null}
+      {filters ? <Text style={styles.meta}>{filters}</Text> : null}
     </FavoriteCard>
   );
 }

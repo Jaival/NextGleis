@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { getFavorites, saveFavorites } from './storage';
-import type { FavoriteStation } from '@/types';
+import type { FavoriteStation, HiddenDirection } from '@/types';
 
 type FavoritesState = {
   favorites: FavoriteStation[];
@@ -10,7 +10,17 @@ type FavoritesState = {
   removeFavorite: (evaNo: string) => Promise<void>;
   reorderFavorites: (orderedEvaNos: string[]) => Promise<void>;
   toggleHiddenLine: (evaNo: string, line: string) => Promise<void>;
+  toggleHiddenDirection: (evaNo: string, hidden: HiddenDirection) => Promise<void>;
 };
+
+export function toggleDirection(
+  list: readonly HiddenDirection[],
+  { line, direction }: HiddenDirection,
+): HiddenDirection[] {
+  return list.some((h) => h.line === line && h.direction === direction)
+    ? list.filter((h) => h.line !== line || h.direction !== direction)
+    : [...list, { line, direction }];
+}
 
 export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   favorites: [],
@@ -63,6 +73,16 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
         : [...f.hiddenLines, line];
       return { ...f, hiddenLines };
     });
+    set({ favorites: next });
+    await saveFavorites(next);
+  },
+
+  toggleHiddenDirection: async (evaNo, hidden) => {
+    const next = get().favorites.map((f) =>
+      f.evaNo === evaNo
+        ? { ...f, hiddenDirections: toggleDirection(f.hiddenDirections ?? [], hidden) }
+        : f,
+    );
     set({ favorites: next });
     await saveFavorites(next);
   },

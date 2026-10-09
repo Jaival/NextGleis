@@ -1,4 +1,5 @@
 import type { DepartureRow, ServiceKind } from '../../types/index.js';
+import { berlinWallClock } from '../berlinTime.js';
 import { classifyService, lineLabel } from '../lines.js';
 import type { EfaLocation, EfaStopEvent } from './types.js';
 
@@ -6,21 +7,8 @@ import type { EfaLocation, EfaStopEvent } from './types.js';
 // Europe/Berlin offset — see hafas/normalize.ts's wallClock. Everything here
 // runs in that timezone, so this does the real conversion rather than a
 // string slice.
-const BERLIN_FORMATTER = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Europe/Berlin',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hourCycle: 'h23',
-});
-
 function wallClock(isoUtc: string): string {
-  const parts = BERLIN_FORMATTER.formatToParts(new Date(isoUtc));
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
-  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}`;
+  return berlinWallClock(new Date(isoUtc));
 }
 
 function delayMinutes(plannedIso: string, estimatedIso: string): number {

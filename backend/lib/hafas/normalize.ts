@@ -1,7 +1,27 @@
-import type { Alternative, Journey as HafasJourney, Leg, Line, Location, Station, Stop } from 'hafas-client';
-import type { ArrivalRow, DepartureRow, Journey, JourneyLeg, ServiceKind } from '../../types/index.js';
+import type {
+  Alternative,
+  Journey as HafasJourney,
+  Trip as HafasTrip,
+  Leg,
+  Line,
+  Location,
+  Station,
+  Stop,
+  StopOver,
+} from 'hafas-client';
+import type {
+  ArrivalRow,
+  DepartureRow,
+  Journey,
+  JourneyLeg,
+  ServiceKind,
+  Trip,
+  TripStop,
+} from '../../types/index.js';
 import { classifyService, lineLabel } from '../lines.js';
+import type { NetworkId } from './networks.js';
 import { toNotices } from './remarks.js';
+import { formatStopId } from './stopId.js';
 
 // HAFAS timestamps are ISO with an offset. Every network here runs on
 // Europe/Berlin, so dropping the offset leaves Berlin wall-clock time — the
@@ -138,6 +158,49 @@ function toLeg(leg: Leg): JourneyLeg | null {
   const plannedArrivalPlatform = changedFrom(leg.plannedArrivalPlatform, arrivalPlatform);
   if (plannedArrivalPlatform) out.plannedArrivalPlatform = plannedArrivalPlatform;
   const notices = toNotices(leg.remarks);
+  if (notices) out.notices = notices;
+  return out;
+}
+
+function toTripStop(stopover: StopOver, network: NetworkId): TripStop | null {
+  const place = stopover.stop as { id?: string; name?: string } | undefined;
+  if (!place?.name) return null;
+
+  const stop: TripStop = { name: place.name, cancelled: Boolean(stopover.cancelled) };
+  if (place.id) stop.stopId = formatStopId({ network, id: place.id });
+  const arrival = stopover.plannedArrival ?? stopover.arrival;
+  if (arrival) stop.arrival = wallClock(arrival);
+  const departure = stopover.plannedDeparture ?? stopover.departure;
+  if (departure) stop.departure = wallClock(departure);
+  if (typeof stopover.arrivalDelay === 'number') stop.arrivalDelayMinutes = delayMinutes(stopover.arrivalDelay);
+  if (typeof stopover.departureDelay === 'number') {
+    stop.departureDelayMinutes = delayMinutes(stopover.departureDelay);
+  }
+
+  // One platform per stop: where the train leaves from, or for the last stop
+  // where it arrives.
+  const actual = stopover.departurePlatform ?? stopover.arrivalPlatform;
+  const planned = stopover.plannedDeparturePlatform ?? stopover.plannedArrivalPlatform;
+  const platform = actual ?? planned;
+  if (platform) stop.platform = platform;
+  const plannedPlatform = changedFrom(planned, platform);
+  if (plannedPlatform) stop.plannedPlatform = plannedPlatform;
+  return stop;
+}
+
+export function toTrip(trip: HafasTrip, network: NetworkId): Trip {
+  const line = describeLine(trip.line);
+  const out: Trip = {
+    line: line.label,
+    direction: trip.direction ?? placeName(trip.destination),
+    kind: line.kind,
+    cancelled: Boolean(trip.cancelled),
+    // Stops the train runs through without stopping aren't the rider's
+    // business.
+    stops: (trip.stopovers ?? []).flatMap((s) => (s.passBy ? [] : (toTripStop(s, network) ?? []))),
+  };
+  if (line.operator) out.operator = line.operator;
+  const notices = toNotices(trip.remarks);
   if (notices) out.notices = notices;
   return out;
 }

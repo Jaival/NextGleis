@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useMemo, type ComponentProps, type ReactNode } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PRIVACY_POLICY_URL } from '@/lib/api';
@@ -16,6 +16,8 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 // Mirrors NETWORKS in backend/lib/hafas/networks.ts.
 const HAFAS_NETWORKS =
   'RMV, NVV, VBB, VBN, VOS, VSN, NAH.SH, INSA, VMT, RSAG, AVV, Saarfahrplan, S-Bahn München and INVG';
+// Mirrors EFA_NETWORKS in backend/lib/efa/networks.ts.
+const EFA_NETWORKS = 'VVS, KVV, MVV and VGN';
 
 function Card({
   icon,
@@ -74,6 +76,8 @@ export default function SettingsScreen() {
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const deutschlandticket = useSettingsStore((s) => s.deutschlandticket);
+  const setDeutschlandticket = useSettingsStore((s) => s.setDeutschlandticket);
   const t = useT();
   const version = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -124,6 +128,22 @@ export default function SettingsScreen() {
           </View>
         </Card>
 
+        <Card icon="ticket-outline" title={t('settings.tickets')} styles={styles} colors={colors}>
+          <View style={[styles.cardBody, styles.switchRow]}>
+            <View style={styles.switchText}>
+              <Text style={styles.switchLabel}>{t('settings.deutschlandticket')}</Text>
+              <Text style={styles.paragraph}>{t('settings.deutschlandticketText')}</Text>
+            </View>
+            <Switch
+              value={deutschlandticket}
+              onValueChange={setDeutschlandticket}
+              accessibilityLabel={t('settings.deutschlandticket')}
+              trackColor={{ false: colors.borderStrong, true: colors.primary }}
+              thumbColor={colors.surface}
+            />
+          </View>
+        </Card>
+
         <Card
           icon="server-outline"
           title={t('settings.dataSources')}
@@ -132,6 +152,7 @@ export default function SettingsScreen() {
         >
           <View style={styles.cardBody}>
             <Text style={styles.paragraph}>{t('settings.dataSourcesHafas', HAFAS_NETWORKS)}</Text>
+            <Text style={styles.paragraph}>{t('settings.dataSourcesEfa', EFA_NETWORKS)}</Text>
             <Text style={styles.paragraph}>{t('settings.dataSourcesDb')}</Text>
           </View>
           <LinkRow
@@ -214,6 +235,9 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
     cardTitle: { ...type.headline, color: colors.textPrimary },
     cardBody: { paddingHorizontal: spacing.md, paddingBottom: spacing.md, gap: spacing.sm },
     paragraph: { ...type.body, color: colors.textSecondary, lineHeight: 20 },
+    switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    switchText: { flex: 1, gap: spacing.xs },
+    switchLabel: { ...type.subheadMedium, color: colors.textPrimary },
     linkRow: {
       flexDirection: 'row',
       alignItems: 'center',

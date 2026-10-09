@@ -78,6 +78,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Unit tests
+        run: npm test
+
       # Only what's deployed: dev-only advisories don't reach users.
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high

@@ -89,6 +89,34 @@ export const NETWORKS: readonly Network[] = [
   { id: 'invg', label: 'INVG', profile: invg, regions: [[48.6, 11.2, 48.95, 11.65]] },
 ];
 
+// Each profile's product ids for trains the Deutschlandticket doesn't cover
+// (ICE, IC/EC, and the like), for searches that leave them out. The ids are
+// the profile's own and differ from network to network; a bucket that mixes
+// in regional trains the ticket does cover (S-Bahn München's "IRE") is kept.
+// Typed over every NetworkId so a network added later can't be forgotten.
+const LONG_DISTANCE_PRODUCTS: Record<NetworkId, readonly string[]> = {
+  avv: ['express-train', 'long-distance-train', 'fernbus'],
+  insa: ['nationalExpress', 'national'],
+  invg: ['express-train'],
+  nahsh: ['nationalExpress', 'national'],
+  nvv: ['express', 'national'],
+  rmv: ['express-train', 'long-distance-train'],
+  rsag: ['ice', 'ic-ec', 'long-distance-train'],
+  saarfahrplan: ['nationalExpress', 'national'],
+  'sbahn-muenchen': ['ice', 'ic-ec'],
+  vbb: ['express'],
+  vbn: ['express-train', 'national-train'],
+  vmt: ['long-distance-train'],
+  vos: ['ice', 'national-train'],
+  vsn: ['nationalExpress', 'national'],
+};
+
+// hafas-client's `products` option: every listed product switched off, the
+// rest left at the profile's default (on).
+export function withoutLongDistance(id: NetworkId): Record<string, boolean> {
+  return Object.fromEntries(LONG_DISTANCE_PRODUCTS[id].map((product) => [product, false]));
+}
+
 const byId = new Map(NETWORKS.map((network) => [network.id, network]));
 
 export function isNetworkId(value: string): value is NetworkId {

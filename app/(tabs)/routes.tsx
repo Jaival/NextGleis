@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Keyboard,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -14,22 +15,40 @@ import {
 } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { JourneyCard } from '@/components/JourneyCard';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SearchField } from '@/components/SearchField';
 import { StationSearchResults } from '@/components/StationSearchResults';
-import { getJourneys } from '@/lib/api';
+import { TripTimeSheet, type TripTime } from '@/components/TripTimeSheet';
+import { getJourneys, type JourneyQuery } from '@/lib/api';
 import { routeId, useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { tap } from '@/lib/haptics';
-import { useT, type Translate } from '@/lib/i18n';
+import { useLanguage, useT, type Translate } from '@/lib/i18n';
+import { needsLongDistanceTicket } from '@/lib/product';
+import { useSettingsStore } from '@/lib/settingsStore';
 import { radii, spacing, type } from '@/lib/theme';
+import { formatClock, formatDay } from '@/lib/time';
 import { useStationSearch } from '@/lib/useStationSearch';
 import { useThemeColors } from '@/lib/useThemeColors';
-import type { StationSearchResult } from '@/types';
+import type { Journey, Language, StationSearchResult } from '@/types';
 
 type Colors = ReturnType<typeof useThemeColors>['colors'];
 type Styles = ReturnType<typeof createStyles>;
 type Stop = { id: string; name: string };
 type End = 'from' | 'to';
+
+const LEAVE_NOW: TripTime = { arrival: false, when: null };
+
+// The system date/time pickers don't exist on web (see TripTimeSheet), so
+// there the search is always from now.
+const CAN_PICK_TIME = Platform.OS !== 'web';
+
+function tripTimeLabel(time: TripTime, language: Language, t: Translate): string {
+  if (!time.when) return t('routes.leaveNow');
+  const day = formatDay(time.when, language, t);
+  const clock = formatClock(time.when, language);
+  return time.arrival ? t('routes.arriveBy', day, clock) : t('routes.departAt', day, clock);
+}
 
 function endLabels(end: End, t: Translate): { title: string; placeholder: string; role: string } {
   return end === 'from'
@@ -45,6 +64,7 @@ export default function RoutesScreen() {
   const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const t = useT();
+  const language = useLanguage();
   const { fromEva, fromName, toEva, toName } = useLocalSearchParams<{
     fromEva?: string;
     fromName?: string;
@@ -57,6 +77,9 @@ export default function RoutesScreen() {
   const [editing, setEditing] = useState<End | null>(null);
   const [input, setInput] = useState('');
   const search = useStationSearch(input, editing !== null);
+  const [tripTime, setTripTime] = useState<TripTime>(LEAVE_NOW);
+  const [pickingTime, setPickingTime] = useState(false);
+  const deutschlandticket = useSettingsStore((s) => s.deutschlandticket);
 
   // A saved route opened from Home arrives as params and replaces whatever
   // was on screen. Applied during render (rather than in an effect) so the
@@ -166,6 +189,39 @@ export default function RoutesScreen() {
         </Pressable>
       </View>
 
+      {(CAN_PICK_TIME || deutschlandticket) && !editing ? (
+        <View style={styles.optionsRow}>
+          {CAN_PICK_TIME ? (
+            <Pressable
+              onPress={() => setPickingTime(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('routes.timeLabel', tripTimeLabel(tripTime, language, t))}
+              style={({ pressed }) => [styles.timeButton, pressed && styles.timeButtonPressed]}
+            >
+              <Ionicons
+                name="time-outline"
+                size={16}
+                color={tripTime.when ? colors.primary : colors.textSecondary}
+              />
+              <Text style={[styles.timeText, tripTime.when !== null && styles.timeTextSet]}>
+                {tripTimeLabel(tripTime, language, t)}
+              </Text>
+              <Ionicons name="chevron-down" size={14} color={colors.textTertiary} />
+            </Pressable>
+          ) : null}
+          {deutschlandticket ? (
+            <View
+              style={styles.ticketPill}
+              accessible
+              accessibilityLabel={t('routes.deutschlandticketLabel')}
+            >
+              <Ionicons name="ticket-outline" size={14} color={colors.textSecondary} />
+              <Text style={styles.ticketText}>{t('routes.deutschlandticket')}</Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
       {editing ? (
         <View style={styles.fill}>
           <View style={styles.searchRow}>
@@ -205,8 +261,24 @@ export default function RoutesScreen() {
           message={t('routes.sameStopMessage')}
         />
       ) : (
-        <JourneyList from={from} to={to} styles={styles} colors={colors} />
+        <JourneyList
+          from={from}
+          to={to}
+          time={tripTime}
+          regionalOnly={deutschlandticket}
+          styles={styles}
+          colors={colors}
+        />
       )}
+
+      {CAN_PICK_TIME ? (
+        <TripTimeSheet
+          visible={pickingTime}
+          value={tripTime}
+          onChange={setTripTime}
+          onClose={() => setPickingTime(false)}
+        />
+      ) : null}
     </ScreenContainer>
   );
 }
@@ -255,23 +327,80 @@ function EndRow({
 function JourneyList({
   from,
   to,
+  time,
+  regionalOnly,
   styles,
   colors,
 }: {
   from: Stop;
   to: Stop;
+  time: TripTime;
+  regionalOnly: boolean;
   styles: Styles;
   colors: Colors;
 }) {
   const t = useT();
-  const { data, isLoading, isError, isRefetching, refetch, fetchStatus } = useQuery({
-    queryKey: ['journeys', from.id, to.id],
-    queryFn: ({ signal }) => getJourneys(from.id, to.id, signal),
+  const {
+    data,
+    isLoading,
+    isError,
+    isRefetching,
+    refetch,
+    fetchStatus,
+    hasPreviousPage,
+    hasNextPage,
+    fetchPreviousPage,
+    fetchNextPage,
+    isFetchingPreviousPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: [
+      'journeys',
+      from.id,
+      to.id,
+      time.arrival,
+      time.when?.toISOString() ?? 'now',
+      regionalOnly,
+    ],
+    queryFn: ({ pageParam, signal }) =>
+      getJourneys(from.id, to.id, pageParam, regionalOnly, signal),
+    initialPageParam: (time.when
+      ? { when: time.when, arrival: time.arrival }
+      : { arrival: false }) as JourneyQuery,
+    getPreviousPageParam: (first): JourneyQuery | undefined =>
+      first.earlierRef ? { earlier: first.earlierRef } : undefined,
+    getNextPageParam: (last): JourneyQuery | undefined =>
+      last.laterRef ? { later: last.laterRef } : undefined,
     // Connections shift with realtime delays; a minute is fresh enough while
     // the list is open.
     refetchInterval: 60_000,
   });
   const isOffline = fetchStatus === 'paused';
+
+  // Neighbouring pages can repeat a connection where they meet. In
+  // Deutschlandticket mode the backend already asks for regional trains only;
+  // this catches a long-distance train a network files under a regional
+  // product.
+  const journeys = useMemo(() => {
+    const seen = new Set<string>();
+    const all: Journey[] = [];
+    for (const journey of data?.pages.flatMap((page) => page.journeys) ?? []) {
+      if (seen.has(journey.id)) continue;
+      if (
+        regionalOnly &&
+        journey.legs.some((leg) => !leg.walking && leg.line && needsLongDistanceTicket(leg.line))
+      ) {
+        continue;
+      }
+      seen.add(journey.id);
+      all.push(journey);
+    }
+    return all;
+  }, [data, regionalOnly]);
+  const hasJourneys = journeys.length > 0;
+  // Starting one page fetch cancels the other, so a quick tap on "Earlier"
+  // would silently drop a "Later" still loading: one at a time.
+  const fetchingPage = isFetchingPreviousPage || isFetchingNextPage;
 
   if (isLoading) {
     return isOffline ? (
@@ -290,17 +419,41 @@ function JourneyList({
 
   return (
     <FlatList
-      data={data ?? []}
+      data={journeys}
       keyExtractor={(journey) => journey.id}
       renderItem={({ item }) => <JourneyCard journey={item} />}
       contentContainerStyle={styles.list}
       refreshControl={
         <RefreshControl
-          refreshing={isRefetching}
+          // isRefetching is also true while a page is added; that has its own
+          // spinner on the button.
+          refreshing={isRefetching && !isFetchingPreviousPage && !isFetchingNextPage}
           onRefresh={refetch}
           colors={[colors.primary]}
           tintColor={colors.primary}
         />
+      }
+      ListHeaderComponent={
+        hasJourneys && hasPreviousPage ? (
+          <LoadMoreButton
+            label={t('routes.earlier')}
+            direction="earlier"
+            loading={isFetchingPreviousPage}
+            disabled={isOffline || fetchingPage}
+            onPress={() => fetchPreviousPage()}
+          />
+        ) : null
+      }
+      ListFooterComponent={
+        hasJourneys && hasNextPage ? (
+          <LoadMoreButton
+            label={t('routes.later')}
+            direction="later"
+            loading={isFetchingNextPage}
+            disabled={isOffline || fetchingPage}
+            onPress={() => fetchNextPage()}
+          />
+        ) : null
       }
       ListEmptyComponent={
         isOffline ? (
@@ -322,7 +475,7 @@ function JourneyList({
             fill
             icon="git-network-outline"
             title={t('routes.emptyTitle')}
-            message={t('routes.emptyMessage')}
+            message={time.when ? t('routes.emptyMessageAt') : t('routes.emptyMessage')}
           />
         )
       }
@@ -390,6 +543,37 @@ function createStyles(colors: Colors) {
       paddingTop: spacing.md,
     },
     cancel: { ...type.calloutMedium, color: colors.primary },
+    optionsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.sm,
+    },
+    ticketPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: radii.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.borderStrong,
+    },
+    ticketText: { ...type.footnoteMedium, color: colors.textSecondary },
+    timeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: radii.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    timeButtonPressed: { backgroundColor: colors.border },
+    timeText: { ...type.footnoteMedium, color: colors.textSecondary },
+    timeTextSet: { color: colors.primary },
     loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     list: {
       paddingHorizontal: spacing.lg,
