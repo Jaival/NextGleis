@@ -353,7 +353,7 @@ existing release.
 | `PLAY_SUBMIT` | Variable | Play upload | `true` once the app exists in Play Console |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Secret | Play upload | The full JSON key of the Play service account |
 
-The backend-deploy and submit jobs run in a GitHub environment called
+The backend-deploy, build and submit jobs run in a GitHub environment called
 `production`, created automatically on the first run. To require an approval
 before anything ships, add yourself as a required reviewer under Settings →
 Environments → production. Secrets can also be moved into that environment so

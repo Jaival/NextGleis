@@ -96,6 +96,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        # The Vercel project is just backend/, the same as `cd backend && vercel --prod`.
+        working-directory: backend
         run: |
           npm install --global vercel@latest
           vercel deploy --prod --yes --token="$VERCEL_TOKEN"
@@ -124,6 +126,8 @@ jobs:
     runs-on: ubuntu-latest
     # EAS builds queue before they run; the free tier's queue can be long.
     timeout-minutes: 120
+    # For EXPO_TOKEN, when it's stored as a production environment secret.
+    environment: production
     strategy:
       # One profile failing shouldn't throw away the other's finished build.
       fail-fast: false
