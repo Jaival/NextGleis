@@ -56,3 +56,6 @@ yarn-error.*
 
 # stray backups
 *.bak
+
+.vercel
+.env*
