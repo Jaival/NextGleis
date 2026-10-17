@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   FlatList,
   Keyboard,
+  Linking,
   Platform,
   Pressable,
   RefreshControl,
@@ -24,17 +25,21 @@ import { getJourneys, type JourneyQuery } from '@/lib/api';
 import { routeId, useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { tap } from '@/lib/haptics';
 import { useLanguage, useT, type Translate } from '@/lib/i18n';
+import { findNearestStop, LocationUnavailableError } from '@/lib/location';
 import { needsLongDistanceTicket } from '@/lib/product';
 import { useSettingsStore } from '@/lib/settingsStore';
 import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { formatClock, formatDay } from '@/lib/time';
+import { useNearbyStops } from '@/lib/useNearbyStops';
 import { useStationSearch } from '@/lib/useStationSearch';
 import { useTheme } from '@/lib/useTheme';
-import type { Journey, Language, StationSearchResult } from '@/types';
+import type { Journey, Language, NearbyStop, StationSearchResult } from '@/types';
 
 type Colors = ThemeColors;
 type Styles = ReturnType<typeof createStyles>;
-type Stop = { id: string; name: string };
+// `distance` is set only when the stop was picked from the user's location.
+type Stop = { id: string; name: string; distance?: number };
+type LocateState = 'idle' | 'locating' | 'denied' | 'blocked' | 'noStops' | 'error';
 type End = 'from' | 'to';
 
 const LEAVE_NOW: TripTime = { arrival: false, when: null };
@@ -94,6 +99,16 @@ export default function RoutesScreen() {
     setEditing(null);
   }
 
+  // A fresh Routes screen starts from the stop nearest to the user, when they
+  // have location on and already granted — never prompting just for this.
+  const nearby = useNearbyStops();
+  const nearest = nearby.stops?.[0];
+  const [autoFilled, setAutoFilled] = useState(false);
+  if (!autoFilled && nearest && !from && !to && !paramsKey) {
+    setAutoFilled(true);
+    setFrom(nearbyToStop(nearest));
+  }
+
   const saved = useFavoriteRoutesStore(
     (s) =>
       from !== null &&
@@ -124,12 +139,13 @@ export default function RoutesScreen() {
     setEditing(null);
   };
 
-  const pick = (station: StationSearchResult) => {
-    const stop = { id: station.evaNo, name: station.name };
+  const setEnd = (stop: Stop) => {
     if (editing === 'from') setFrom(stop);
     else setTo(stop);
     stopEditing();
   };
+
+  const pick = (station: StationSearchResult) => setEnd({ id: station.evaNo, name: station.name });
 
   const swap = () => {
     tap.light();
@@ -241,6 +257,9 @@ export default function RoutesScreen() {
               <Text style={styles.cancel}>{t('common.cancel')}</Text>
             </Pressable>
           </View>
+          {nearby.locationEnabled && search.tooShort ? (
+            <CurrentLocationRow onLocated={setEnd} styles={styles} colors={colors} />
+          ) : null}
           <StationSearchResults
             search={search}
             onSelect={pick}
@@ -286,6 +305,74 @@ export default function RoutesScreen() {
   );
 }
 
+function nearbyToStop(stop: NearbyStop): Stop {
+  return { id: stop.evaNo, name: stop.name, distance: stop.distance };
+}
+
+// Resolves "where I am" to the closest stop, since routes are planned between
+// stops. Asks for permission on tap if it hasn't been decided yet.
+function CurrentLocationRow({
+  onLocated,
+  styles,
+  colors,
+}: {
+  onLocated: (stop: Stop) => void;
+  styles: Styles;
+  colors: Colors;
+}) {
+  const t = useT();
+  const [state, setState] = useState<LocateState>('idle');
+
+  const locate = async () => {
+    if (state === 'locating') return;
+    if (state === 'blocked') {
+      Linking.openSettings();
+      return;
+    }
+    tap.light();
+    setState('locating');
+    try {
+      const stop = await findNearestStop();
+      setState('idle');
+      onLocated(nearbyToStop(stop));
+    } catch (error) {
+      setState(error instanceof LocationUnavailableError ? error.reason : 'error');
+    }
+  };
+
+  const hint = {
+    idle: t('routes.currentLocationHint'),
+    locating: t('routes.locating'),
+    denied: t('routes.locationDenied'),
+    blocked: t('routes.locationBlocked'),
+    noStops: t('routes.locationNoStops'),
+    error: t('routes.locationError'),
+  }[state];
+  const failed = state !== 'idle' && state !== 'locating';
+
+  return (
+    <Pressable
+      onPress={locate}
+      accessibilityRole="button"
+      accessibilityLabel={`${t('routes.currentLocation')}. ${hint}`}
+      accessibilityState={{ busy: state === 'locating' }}
+      style={({ pressed }) => [styles.locateRow, pressed && styles.endRowPressed]}
+    >
+      <View style={styles.locateIcon}>
+        {state === 'locating' ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Ionicons name="navigate" size={16} color={colors.primary} />
+        )}
+      </View>
+      <View style={styles.fill}>
+        <Text style={styles.locateTitle}>{t('routes.currentLocation')}</Text>
+        <Text style={[styles.endTitle, failed && styles.locateError]}>{hint}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
 function EndRow({
   end,
   stop,
@@ -303,6 +390,7 @@ function EndRow({
 }) {
   const t = useT();
   const labels = endLabels(end, t);
+  const located = stop?.distance !== undefined;
   return (
     <Pressable
       onPress={onPress}
@@ -313,12 +401,16 @@ function EndRow({
       style={({ pressed }) => [styles.endRow, pressed && styles.endRowPressed]}
     >
       <Ionicons
-        name={end === 'from' ? 'radio-button-on' : 'location'}
+        name={located ? 'navigate' : end === 'from' ? 'radio-button-on' : 'location'}
         size={16}
-        color={active ? colors.primary : colors.mutedForeground}
+        color={active || located ? colors.primary : colors.mutedForeground}
       />
       <View style={styles.fill}>
-        <Text style={styles.endTitle}>{labels.title}</Text>
+        <Text style={styles.endTitle}>
+          {located && stop.distance !== undefined
+            ? `${labels.title} · ${t('routes.nearestStop', t('common.distance', stop.distance))}`
+            : labels.title}
+        </Text>
         <Text style={[styles.endName, !stop && styles.endPlaceholder]} numberOfLines={1}>
           {stop?.name ?? labels.placeholder}
         </Text>
@@ -546,6 +638,29 @@ function createStyles({ colors, type, radii }: Theme) {
       paddingTop: spacing.md,
     },
     cancel: { ...type.calloutMedium, color: colors.primary },
+    locateRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.md,
+      padding: spacing.md,
+      backgroundColor: colors.card,
+      borderRadius: radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    locateIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: radii.pill,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    locateTitle: { ...type.subheadMedium, color: colors.foreground },
+    locateError: { color: colors.cancelled },
     optionsRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',

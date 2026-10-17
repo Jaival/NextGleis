@@ -24,6 +24,7 @@ type SettingsState = AppSettings & {
   setLanguage: (language: LanguageSetting) => Promise<void>;
   completeOnboarding: () => Promise<void>;
   setDeutschlandticket: (deutschlandticket: boolean) => Promise<void>;
+  setLocationEnabled: (locationEnabled: boolean) => Promise<void>;
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => {
@@ -31,8 +32,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
   // can't silently drop the others from storage.
   const update = async (patch: Partial<AppSettings>) => {
     set(patch);
-    const { themeMode, colorTheme, uiStyle, highContrast, language, onboarded, deutschlandticket } =
-      get();
+    const {
+      themeMode,
+      colorTheme,
+      uiStyle,
+      highContrast,
+      language,
+      onboarded,
+      deutschlandticket,
+      locationEnabled,
+    } = get();
     await saveSettings({
       themeMode,
       colorTheme,
@@ -41,6 +50,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       language,
       onboarded,
       deutschlandticket,
+      locationEnabled,
     });
   };
 
@@ -52,6 +62,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     language: 'system',
     onboarded: false,
     deutschlandticket: false,
+    locationEnabled: true,
     hydrated: false,
 
     hydrate: async () => {
@@ -80,5 +91,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     completeOnboarding: () => update({ onboarded: true }),
 
     setDeutschlandticket: (deutschlandticket) => update({ deutschlandticket }),
+
+    setLocationEnabled: (locationEnabled) => update({ locationEnabled }),
   };
 });

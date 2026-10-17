@@ -125,6 +125,9 @@ eas env:list --environment production
 
 Each build profile in `eas.json` names its environment explicitly
 (`"environment": "production"` and so on), so it's never inferred.
+The Release workflow checks the variable is set before it builds, and stops
+with an error if it isn't. The live backend is
+`https://backend-six-psi-52.vercel.app`.
 
 To pull EAS values into a local `.env` for testing: `eas env:pull --environment preview`.
 

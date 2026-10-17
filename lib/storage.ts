@@ -58,6 +58,7 @@ const defaultSettings: AppSettings = {
   language: 'system',
   onboarded: false,
   deutschlandticket: false,
+  locationEnabled: true,
 };
 
 export async function getSettings(): Promise<AppSettings> {

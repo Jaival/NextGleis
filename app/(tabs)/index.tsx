@@ -34,6 +34,7 @@ export default function HomeScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const onboarded = useSettingsStore((s) => s.onboarded);
+  const locationEnabled = useSettingsStore((s) => s.locationEnabled);
 
   const favorites = useFavoritesStore((s) => s.favorites);
   const removeFavorite = useFavoritesStore((s) => s.removeFavorite);
@@ -119,9 +120,11 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
         </View>
 
-        <Section title={t('nearby.title')} count={0} styles={styles}>
-          <NearbySection onOpen={(stop) => openBoard(stop.evaNo, stop.name)} />
-        </Section>
+        {locationEnabled ? (
+          <Section title={t('nearby.title')} count={0} styles={styles}>
+            <NearbySection onOpen={(stop) => openBoard(stop.evaNo, stop.name)} />
+          </Section>
+        ) : null}
 
         <Section title={t('home.stations')} count={sortedStations.length} styles={styles}>
           {sortedStations.length === 0 ? (
