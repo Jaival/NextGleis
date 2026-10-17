@@ -1,0 +1,80 @@
+# One-click release: bumps the version, tags it and starts release.yml.
+#
+#   gh workflow run cut-release.yml -f bump=minor
+#
+# or Actions -> Cut release -> Run workflow. It does the same as running
+# `npm version <bump> && git push --follow-tags` locally, after checking that
+# main passes CI, so a broken main never gets a version tag.
+name: Cut release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to bump
+        required: true
+        default: patch
+        type: choice
+        options: [patch, minor, major]
+
+# Two at once would both try to tag the same next version.
+concurrency:
+  group: cut-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ github.sha }}
+
+  tag:
+    name: Bump and tag
+    needs: [checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # Push the version commit and tag to main.
+      contents: write
+      # Start release.yml. A tag pushed with GITHUB_TOKEN doesn't trigger
+      # workflows on its own, so this dispatches it explicitly.
+      actions: write
+    steps:
+      # The commit that passed the checks. If main moved since, the push below
+      # is rejected instead of tagging something unchecked.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # package.json's `version` script copies the version into app.json
+      # (scripts/sync-app-version.mjs) and stages it into the same commit.
+      - name: Bump version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          npm version "$BUMP"
+          echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Push
+        run: git push --atomic origin HEAD:refs/heads/main "refs/tags/${{ steps.version.outputs.tag }}"
+
+      - name: Start release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh workflow run release.yml --ref main -f tag="$TAG"
+          echo "### Started the release of $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "Follow it under Actions -> Release." >> "$GITHUB_STEP_SUMMARY"

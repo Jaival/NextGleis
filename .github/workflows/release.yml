@@ -1,4 +1,9 @@
-# Ships a release when a version tag is pushed:
+# Ships a release when a version tag is pushed. Easiest is one click:
+#
+#   gh workflow run cut-release.yml -f bump=minor   # or Actions -> Cut release
+#
+# which checks main, bumps package.json + app.json, tags and starts this
+# workflow. The same by hand:
 #
 #   npm version minor          # bumps package.json + app.json, commits, tags v1.1.0
 #   git push --follow-tags
@@ -73,52 +78,15 @@ jobs:
           # v1.2.0-beta.1 and the like are published as pre-releases.
           if [[ "$tag_version" == *-* ]]; then echo "prerelease=true"; else echo "prerelease=false"; fi >> "$GITHUB_OUTPUT"
 
+  # Deploys the tagged backend and smoke-tests it (also runs on every push to
+  # main that touches backend/, so this usually redeploys what is already live).
   backend:
     name: Backend
     needs: [checks, prepare]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ env.TAG }}
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-
-      # Off unless DEPLOY_BACKEND is "true": if Vercel's GitHub integration
-      # already deploys main, deploying again here would be redundant.
-      - name: Deploy to Vercel
-        if: vars.DEPLOY_BACKEND == 'true'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        # The Vercel project is just backend/, the same as `cd backend && vercel --prod`.
-        working-directory: backend
-        run: |
-          npm install --global vercel@latest
-          vercel deploy --prod --yes --token="$VERCEL_TOKEN"
-
-      # Whether or not this run deployed, the app being released depends on
-      # what's live, so check it answers the endpoints the app calls.
-      - name: Smoke test
-        if: vars.BACKEND_URL != ''
-        env:
-          BACKEND_URL: ${{ vars.BACKEND_URL }}
-        run: |
-          check() {
-            echo "GET $1"
-            curl --fail --silent --show-error --retry 4 --retry-all-errors --retry-delay 10 \
-              --max-time 30 "$BACKEND_URL$1" | jq -e "$2" > /dev/null
-          }
-          check "/api/stations?query=Alexanderplatz" 'length > 0'
-          check "/api/nearby?lat=50.107&lon=8.664" 'length > 0'
-          check "/api/board/rmv:3000010" 'type == "array"'
-          curl --fail --silent --show-error --max-time 30 "$BACKEND_URL/privacy-policy.html" > /dev/null
-          echo "Backend OK"
+    uses: ./.github/workflows/deploy-backend.yml
+    with:
+      ref: ${{ inputs.tag || github.ref_name }}
+    secrets: inherit
 
   build:
     name: Build ${{ matrix.profile }}
