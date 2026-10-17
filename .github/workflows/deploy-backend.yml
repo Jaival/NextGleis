@@ -1,0 +1,88 @@
+# Deploys backend/ to Vercel production and smoke-tests it.
+#
+# Runs on every push to main that touches backend/, so the live backend is
+# always the one on main. release.yml calls it too, with the release tag, so a
+# release never ships an app against a backend it wasn't tested with.
+#
+# This is the only thing that deploys the backend. The Vercel project's Root
+# Directory is the repo root, so its own Git deployments would ship the Expo
+# app instead of backend/; vercel.json at the repo root turns them off.
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  # Redeploy main by hand, e.g. after changing an environment variable in Vercel.
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit, branch or tag to deploy. The caller has already run the checks.
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    # A caller (release.yml) has already run them against the same ref.
+    if: inputs.ref == ''
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy
+    needs: [checks]
+    # Production only ever gets main or a release tag, and only after the checks
+    # passed (or were run by the caller).
+    if: >-
+      always() &&
+      (needs.checks.result == 'success' || (needs.checks.result == 'skipped' && inputs.ref != '')) &&
+      (inputs.ref != '' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    # One deployment at a time; a push landing mid-deploy waits, then wins.
+    concurrency:
+      group: backend-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        # The Vercel project is just backend/, the same as `cd backend && vercel --prod`.
+        working-directory: backend
+        run: |
+          npm install --global vercel@latest
+          vercel deploy --prod --yes --token="$VERCEL_TOKEN"
+
+      # Check the live backend answers the endpoints the app calls.
+      - name: Smoke test
+        if: vars.BACKEND_URL != ''
+        env:
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+        run: |
+          check() {
+            echo "GET $1"
+            curl --fail --silent --show-error --retry 4 --retry-all-errors --retry-delay 10 \
+              --max-time 30 "$BACKEND_URL$1" | jq -e "$2" > /dev/null
+          }
+          check "/api/stations?query=Alexanderplatz" 'length > 0'
+          check "/api/nearby?lat=50.107&lon=8.664" 'length > 0'
+          check "/api/board/rmv:3000010" 'type == "array"'
+          curl --fail --silent --show-error --max-time 30 "$BACKEND_URL/privacy-policy.html" > /dev/null
+          echo "Backend OK"

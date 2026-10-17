@@ -166,14 +166,19 @@ Backend (`backend/`):
 
 ## Releasing
 
-Releases are cut from a version tag:
+The backend deploys itself: every push to `main` that touches `backend/` is
+checked, deployed to Vercel and smoke-tested.
+
+To release the app, run **Actions → Cut release** on GitHub and pick
+patch/minor/major, or from a terminal:
 
 ```sh
-npm version minor      # bumps package.json and app.json, commits, tags
-git push --follow-tags
+gh workflow run cut-release.yml -f bump=minor
 ```
 
-GitHub Actions then runs the checks, deploys and smoke-tests the backend,
+That checks `main`, bumps `package.json` and `app.json`, tags the commit and
+starts the release. (By hand, `npm version minor && git push --follow-tags`
+does the same without the check.) GitHub Actions then runs the checks, deploys and smoke-tests the backend,
 builds the Android `.aab` and `.apk` on EAS, optionally submits to the Google
 Play internal track, and creates a GitHub Release with both files attached.
 Setup and secrets are described in [DEVOPS.md §8](docs/DEVOPS.md#8-cicd-github-actions).

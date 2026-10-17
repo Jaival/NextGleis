@@ -236,10 +236,17 @@ by default) — fine for sideloading, never for Play.
 The backend is deployed from `backend/` as its own Vercel project (Root
 Directory = `backend`).
 
-1. Merge to `main`. With the Vercel GitHub integration, that deploys to
-   production; every other branch gets a preview URL. Without the
-   integration: `cd backend && vercel --prod`.
-2. Check the deployment:
+1. Merge to `main`. `.github/workflows/deploy-backend.yml` runs the checks,
+   deploys `backend/` to production and smoke-tests it, for every push that
+   touches `backend/`. To redeploy by hand: Actions → Deploy backend → Run
+   workflow, or `cd backend && vercel --prod`.
+
+   Vercel's own Git deployments are turned off (`vercel.json` at the repo
+   root). The Vercel project's Root Directory is the repo root, because the
+   CLI uploads `backend/` as the whole project; a Git deployment would build
+   the repo root instead, which has no `api/`, and take the backend offline.
+   If that ever happens, `vercel rollback` to the last good deployment.
+2. Check the deployment (the workflow does this too):
    ```sh
    curl "https://<backend>/api/stations?query=Alexanderplatz"   # expect VBB results
    curl "https://<backend>/api/board/<an evaNo from above>"
@@ -294,9 +301,24 @@ Two workflows in `.github/workflows/`:
 | Workflow | Runs on | Does |
 | --- | --- | --- |
 | `ci.yml` | Every pull request and push to `main` | App: typecheck, lint, Prettier, `expo install --check`, `expo-doctor`. Backend: typecheck, `npm audit --omit=dev` |
+| `deploy-backend.yml` | Pushes to `main` that touch `backend/`, manually, and from `release.yml` | CI checks → Vercel production deploy → smoke test |
+| `cut-release.yml` | Manually | CI checks on `main` → `npm version` → push commit and tag → start `release.yml` |
 | `release.yml` | Pushing a `v*.*.*` tag, or manually for an existing tag | CI checks → version check → backend deploy + smoke test → EAS builds → Google Play (internal) → GitHub Release |
 
 ### Cutting a release
+
+From GitHub: Actions → **Cut release** → Run workflow → pick `patch`, `minor`
+or `major`. Or from a terminal:
+
+```sh
+gh workflow run cut-release.yml -f bump=patch
+```
+
+It refuses to tag a `main` that fails CI, and refuses to push if `main` moved
+while it ran. A tag pushed by a workflow doesn't start other workflows, so it
+starts `release.yml` itself. Pre-releases (`v1.3.0-beta.1`) still go by hand.
+
+By hand:
 
 ```sh
 git switch main && git pull
@@ -313,8 +335,8 @@ pre-release.
 What the release does, in order:
 
 1. **Checks:** the whole of `ci.yml`, against the tagged commit.
-2. **Backend:** deploys to Vercel if `DEPLOY_BACKEND` is `true`, then
-   smoke-tests the live backend (`/api/stations`, `/api/nearby`,
+2. **Backend:** deploys the tagged `backend/` to Vercel
+   (`deploy-backend.yml`), then smoke-tests the live backend (`/api/stations`, `/api/nearby`,
    `/api/board`, privacy policy). The backend goes before the app, because the
    new app may need endpoints the old backend lacks (section 7).
 3. **Builds:** two EAS builds in parallel. `production` makes the `.aab` for
@@ -347,7 +369,6 @@ existing release.
 | --- | --- | --- | --- |
 | `EXPO_TOKEN` | Secret | Builds, submit | The Expo access token |
 | `BACKEND_URL` | Variable | Smoke test | e.g. `https://nextgleis.vercel.app`, no trailing slash. Leave unset to skip |
-| `DEPLOY_BACKEND` | Variable | Backend deploy | `true` to deploy from the release. Leave unset if Vercel's GitHub integration already deploys `main` |
 | `VERCEL_TOKEN` | Secret | Backend deploy | vercel.com → Account settings → Tokens |
 | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | Secrets | Backend deploy | From `backend/.vercel/project.json` after `vercel link` |
 | `PLAY_SUBMIT` | Variable | Play upload | `true` once the app exists in Play Console |
