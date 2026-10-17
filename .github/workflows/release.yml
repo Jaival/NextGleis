@@ -128,6 +128,16 @@ jobs:
 
       # EXPO_PUBLIC_API_BASE_URL comes from the EAS environment named in the
       # profile (eas.json), not from this runner: set it with `eas env:set`.
+      # Without it the app falls back to the emulator's localhost and every
+      # request fails on a real phone — which shipped once in 1.3.0.
+      - name: Check the backend URL is set
+        run: |
+          if ! eas env:list --environment "${{ matrix.profile }}" \
+            | grep -q '^EXPO_PUBLIC_API_BASE_URL=https://'; then
+            echo "::error::EXPO_PUBLIC_API_BASE_URL is not set to an https URL in the EAS '${{ matrix.profile }}' environment."
+            exit 1
+          fi
+
       - name: Build on EAS
         run: |
           eas build --platform android --profile "${{ matrix.profile }}" \
