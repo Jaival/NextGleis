@@ -8,8 +8,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { tap } from '@/lib/haptics';
 import { duration, easing } from '@/lib/motion';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 const PAD = 3;
 
@@ -30,8 +30,8 @@ export function SegmentedControl<T extends string>({
   onChange,
   accessibilityLabel,
 }: Props<T>) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const reduced = useReducedMotion();
 
   // Measured once per segment with onLayout, never per frame.
@@ -104,11 +104,11 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     container: {
       flexDirection: 'row',
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.muted,
       borderRadius: radii.md,
       borderCurve: 'continuous',
       padding: PAD,
@@ -122,7 +122,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       left: 0,
       borderRadius: radii.sm,
       borderCurve: 'continuous',
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       boxShadow: colors.shadowCard,
     },
     segment: {
@@ -131,7 +131,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    text: { ...type.footnoteMedium, color: colors.textSecondary },
-    textActive: { color: colors.textPrimary },
+    text: { ...type.footnoteMedium, color: colors.mutedForeground },
+    textActive: { color: colors.foreground },
   });
 }

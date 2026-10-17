@@ -7,8 +7,15 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { PRIVACY_POLICY_URL } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import {
+  spacing,
+  THEME_NAMES,
+  themeSwatch,
+  UI_STYLES,
+  type Theme,
+  type ThemeColors,
+} from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type Styles = ReturnType<typeof createStyles>;
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -30,7 +37,7 @@ function Card({
   title: string;
   children: ReactNode;
   styles: Styles;
-  colors: ReturnType<typeof useThemeColors>['colors'];
+  colors: ThemeColors;
 }) {
   return (
     <View style={styles.card}>
@@ -38,7 +45,9 @@ function Card({
         <View style={styles.cardIcon}>
           <Ionicons name={icon} size={15} color={colors.primary} />
         </View>
-        <Text style={styles.cardTitle}>{title}</Text>
+        <Text accessibilityRole="header" style={styles.cardTitle}>
+          {title}
+        </Text>
       </View>
       {children}
     </View>
@@ -54,7 +63,7 @@ function LinkRow({
   label: string;
   url: string;
   styles: Styles;
-  colors: ReturnType<typeof useThemeColors>['colors'];
+  colors: ThemeColors;
 }) {
   return (
     <Pressable
@@ -70,10 +79,17 @@ function LinkRow({
 }
 
 export default function SettingsScreen() {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const themeMode = useSettingsStore((s) => s.themeMode);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
+  const colorTheme = useSettingsStore((s) => s.colorTheme);
+  const setColorTheme = useSettingsStore((s) => s.setColorTheme);
+  const uiStyle = useSettingsStore((s) => s.uiStyle);
+  const setUiStyle = useSettingsStore((s) => s.setUiStyle);
+  const highContrast = useSettingsStore((s) => s.highContrast);
+  const setHighContrast = useSettingsStore((s) => s.setHighContrast);
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const deutschlandticket = useSettingsStore((s) => s.deutschlandticket);
@@ -84,7 +100,9 @@ export default function SettingsScreen() {
   return (
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>{t('settings.title')}</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          {t('settings.title')}
+        </Text>
 
         <Card
           icon="contrast-outline"
@@ -103,6 +121,65 @@ export default function SettingsScreen() {
                 { value: 'dark', label: t('settings.themeDark') },
               ]}
             />
+
+            <Text style={styles.fieldLabel}>{t('settings.colorTheme')}</Text>
+            <View style={styles.swatches} accessibilityRole="radiogroup">
+              {THEME_NAMES.map((name) => {
+                const swatch = themeSwatch(name, theme.isDark);
+                const selected = name === colorTheme;
+                return (
+                  <Pressable
+                    key={name}
+                    onPress={() => setColorTheme(name)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected }}
+                    accessibilityLabel={t(`settings.theme.${name}`)}
+                    style={styles.swatchItem}
+                  >
+                    {/* Each swatch is a miniature of its theme: page colour
+                        behind, primary in front, so the dark-mode swatch shows
+                        what the theme looks like in the current mode. */}
+                    <View style={[styles.swatchRing, selected && { borderColor: colors.primary }]}>
+                      <View style={[styles.swatch, { backgroundColor: swatch.background }]}>
+                        <View style={[styles.swatchDot, { backgroundColor: swatch.primary }]} />
+                      </View>
+                    </View>
+                    <Text
+                      style={[styles.swatchLabel, selected && styles.swatchLabelSelected]}
+                      numberOfLines={1}
+                    >
+                      {t(`settings.theme.${name}`)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={styles.fieldLabel}>{t('settings.uiStyle')}</Text>
+            <SegmentedControl
+              accessibilityLabel={t('settings.uiStyle')}
+              value={uiStyle}
+              onChange={setUiStyle}
+              options={UI_STYLES.map((style) => ({
+                value: style,
+                label: t(`settings.style.${style}`),
+              }))}
+            />
+            <Text style={styles.paragraph}>{t(`settings.style.${uiStyle}Text`)}</Text>
+
+            <View style={[styles.switchRow, styles.switchRowSpaced]}>
+              <View style={styles.switchText}>
+                <Text style={styles.switchLabel}>{t('settings.highContrast')}</Text>
+                <Text style={styles.paragraph}>{t('settings.highContrastText')}</Text>
+              </View>
+              <Switch
+                value={highContrast}
+                onValueChange={setHighContrast}
+                accessibilityLabel={t('settings.highContrast')}
+                trackColor={{ false: colors.input, true: colors.primary }}
+                thumbColor={colors.card}
+              />
+            </View>
           </View>
         </Card>
 
@@ -138,8 +215,8 @@ export default function SettingsScreen() {
               value={deutschlandticket}
               onValueChange={setDeutschlandticket}
               accessibilityLabel={t('settings.deutschlandticket')}
-              trackColor={{ false: colors.borderStrong, true: colors.primary }}
-              thumbColor={colors.surface}
+              trackColor={{ false: colors.input, true: colors.primary }}
+              thumbColor={colors.card}
             />
           </View>
         </Card>
@@ -198,7 +275,7 @@ export default function SettingsScreen() {
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     container: {
       paddingHorizontal: spacing.lg,
@@ -206,9 +283,9 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingBottom: spacing.xxl,
       gap: spacing.md,
     },
-    title: { ...type.largeTitle, color: colors.textPrimary, marginBottom: spacing.xs },
+    title: { ...type.largeTitle, color: colors.foreground, marginBottom: spacing.xs },
     card: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
@@ -228,16 +305,43 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       width: 26,
       height: 26,
       borderRadius: radii.pill,
-      backgroundColor: colors.primarySoft,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    cardTitle: { ...type.headline, color: colors.textPrimary },
+    cardTitle: { ...type.headline, color: colors.foreground },
     cardBody: { paddingHorizontal: spacing.md, paddingBottom: spacing.md, gap: spacing.sm },
-    paragraph: { ...type.body, color: colors.textSecondary, lineHeight: 20 },
+    paragraph: { ...type.body, color: colors.mutedForeground, lineHeight: 20 },
     switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     switchText: { flex: 1, gap: spacing.xs },
-    switchLabel: { ...type.subheadMedium, color: colors.textPrimary },
+    switchLabel: { ...type.subheadMedium, color: colors.foreground },
+    switchRowSpaced: { marginTop: spacing.sm },
+    fieldLabel: {
+      ...type.footnoteMedium,
+      color: colors.mutedForeground,
+      marginTop: spacing.sm,
+    },
+    swatches: { flexDirection: 'row', justifyContent: 'space-between' },
+    // Wider than the swatch so each one is a full-size touch target.
+    swatchItem: { width: 56, alignItems: 'center', gap: spacing.xs },
+    swatchRing: {
+      padding: 3,
+      borderRadius: radii.pill,
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    swatch: {
+      width: 38,
+      height: 38,
+      borderRadius: radii.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.input,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    swatchDot: { width: 18, height: 18, borderRadius: radii.pill },
+    swatchLabel: { ...type.micro, color: colors.mutedForeground },
+    swatchLabelSelected: { ...type.microBold, color: colors.foreground },
     linkRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -247,11 +351,11 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
     },
-    linkRowPressed: { backgroundColor: colors.surfaceMuted },
+    linkRowPressed: { backgroundColor: colors.muted },
     linkText: { ...type.calloutMedium, color: colors.primary },
     version: {
       ...type.caption,
-      color: colors.textTertiary,
+      color: colors.mutedForeground,
       textAlign: 'center',
       marginTop: spacing.sm,
     },

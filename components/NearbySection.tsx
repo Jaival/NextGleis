@@ -5,12 +5,12 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { tap } from '@/lib/haptics';
 import { useT } from '@/lib/i18n';
 import { duration, easing } from '@/lib/motion';
-import { radii, spacing, type } from '@/lib/theme';
+import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { useNearbyStops } from '@/lib/useNearbyStops';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { useTheme } from '@/lib/useTheme';
 import type { NearbyStop } from '@/types';
 
-type Colors = ReturnType<typeof useThemeColors>['colors'];
+type Colors = ThemeColors;
 type Styles = ReturnType<typeof createStyles>;
 
 // Enough to cover the stops around a typical interchange without pushing the
@@ -23,8 +23,9 @@ const LIST_IN = FadeIn.duration(duration.base).easing(easing.out);
 // permission status is known, so it never flashes the "ask" card at someone
 // who already allowed it.
 export function NearbySection({ onOpen }: { onOpen: (stop: NearbyStop) => void }) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const nearby = useNearbyStops();
   const { permission } = nearby;
@@ -136,15 +137,15 @@ function NearbyRow({
         {stop.network ? <Text style={styles.network}>{stop.network}</Text> : null}
       </View>
       <Text style={styles.distance}>{distance}</Text>
-      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+      <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
     </Pressable>
   );
 }
 
-function createStyles(colors: Colors) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
@@ -157,13 +158,13 @@ function createStyles(colors: Colors) {
       width: 40,
       height: 40,
       borderRadius: radii.pill,
-      backgroundColor: colors.primarySoft,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
     promptText: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
-    promptTitle: { ...type.headlineMedium, color: colors.textPrimary },
-    promptMessage: { ...type.footnote, color: colors.textSecondary, lineHeight: 18 },
+    promptTitle: { ...type.headlineMedium, color: colors.foreground },
+    promptMessage: { ...type.footnote, color: colors.mutedForeground, lineHeight: 18 },
     button: {
       marginTop: spacing.sm,
       backgroundColor: colors.primary,
@@ -172,7 +173,7 @@ function createStyles(colors: Colors) {
       paddingVertical: spacing.sm,
     },
     buttonPressed: { opacity: 0.85 },
-    buttonText: { ...type.calloutBold, color: colors.primaryOn },
+    buttonText: { ...type.calloutBold, color: colors.primaryForeground },
     // Same height as two rows, so the swap to the list doesn't jump the page.
     status: {
       minHeight: 72,
@@ -181,7 +182,7 @@ function createStyles(colors: Colors) {
       gap: spacing.xs,
       padding: spacing.md,
     },
-    statusText: { ...type.footnote, color: colors.textSecondary, textAlign: 'center' },
+    statusText: { ...type.footnote, color: colors.mutedForeground, textAlign: 'center' },
     link: { ...type.calloutMedium, color: colors.primary },
     row: {
       flexDirection: 'row',
@@ -190,11 +191,11 @@ function createStyles(colors: Colors) {
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.md,
     },
-    rowPressed: { backgroundColor: colors.surfaceMuted },
+    rowPressed: { backgroundColor: colors.muted },
     rowText: { flex: 1, gap: 2 },
-    name: { ...type.subheadMedium, color: colors.textPrimary },
-    network: { ...type.micro, color: colors.textTertiary },
-    distance: { ...type.footnoteMedium, color: colors.textSecondary },
+    name: { ...type.subheadMedium, color: colors.foreground },
+    network: { ...type.micro, color: colors.mutedForeground },
+    distance: { ...type.footnoteMedium, color: colors.mutedForeground },
     // Starts where the stop names do, like the Routes card.
     divider: {
       height: StyleSheet.hairlineWidth,

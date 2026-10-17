@@ -1,7 +1,7 @@
 import { Appearance } from 'react-native';
 import { create } from 'zustand';
 import { getSettings, saveSettings } from './storage';
-import type { AppSettings, LanguageSetting, ThemeMode } from '@/types';
+import type { AppSettings, ColorTheme, LanguageSetting, ThemeMode, UiStyle } from '@/types';
 
 // Makes native-rendered chrome (dialogs, keyboard, etc.) follow the in-app
 // theme override instead of only the OS-level system setting.
@@ -18,6 +18,9 @@ type SettingsState = AppSettings & {
   hydrated: boolean;
   hydrate: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
+  setColorTheme: (colorTheme: ColorTheme) => Promise<void>;
+  setUiStyle: (uiStyle: UiStyle) => Promise<void>;
+  setHighContrast: (highContrast: boolean) => Promise<void>;
   setLanguage: (language: LanguageSetting) => Promise<void>;
   completeOnboarding: () => Promise<void>;
   setDeutschlandticket: (deutschlandticket: boolean) => Promise<void>;
@@ -28,12 +31,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
   // can't silently drop the others from storage.
   const update = async (patch: Partial<AppSettings>) => {
     set(patch);
-    const { themeMode, language, onboarded, deutschlandticket } = get();
-    await saveSettings({ themeMode, language, onboarded, deutschlandticket });
+    const { themeMode, colorTheme, uiStyle, highContrast, language, onboarded, deutschlandticket } =
+      get();
+    await saveSettings({
+      themeMode,
+      colorTheme,
+      uiStyle,
+      highContrast,
+      language,
+      onboarded,
+      deutschlandticket,
+    });
   };
 
   return {
     themeMode: 'system',
+    colorTheme: 'indigo',
+    uiStyle: 'classic',
+    highContrast: false,
     language: 'system',
     onboarded: false,
     deutschlandticket: false,
@@ -53,6 +68,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       applyColorScheme(themeMode);
       await update({ themeMode });
     },
+
+    setColorTheme: (colorTheme) => update({ colorTheme }),
+
+    setUiStyle: (uiStyle) => update({ uiStyle }),
+
+    setHighContrast: (highContrast) => update({ highContrast }),
 
     setLanguage: (language) => update({ language }),
 

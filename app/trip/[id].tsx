@@ -18,12 +18,12 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { ServicePill } from '@/components/ServicePill';
 import { getTrip } from '@/lib/api';
 import { useT, type Translate } from '@/lib/i18n';
-import { radii, spacing, type } from '@/lib/theme';
+import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { addMinutes, berlinNow, formatTime } from '@/lib/time';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { useTheme } from '@/lib/useTheme';
 import type { TripStop } from '@/types';
 
-type Colors = ReturnType<typeof useThemeColors>['colors'];
+type Colors = ThemeColors;
 type Styles = ReturnType<typeof createStyles>;
 
 // Rows are a fixed height so the list can jump straight to the rider's own
@@ -56,8 +56,9 @@ function stopLabel(stop: TripStop, passed: boolean, t: Translate): string {
 }
 
 export default function TripScreen() {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const t = useT();
   const router = useRouter();
@@ -244,7 +245,7 @@ function StopRow({
   const { scheduled, delay } = stopTime(stop);
   const delayed = !stop.cancelled && Boolean(delay);
   const platformChanged = Boolean(stop.platform && stop.plannedPlatform);
-  const dotColor = own ? colors.primary : passed ? colors.borderStrong : colors.textTertiary;
+  const dotColor = own ? colors.primary : passed ? colors.input : colors.mutedForeground;
 
   return (
     <Pressable
@@ -302,7 +303,7 @@ function StopRow({
   );
 }
 
-function createStyles(colors: Colors) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     summary: {
@@ -314,9 +315,9 @@ function createStyles(colors: Colors) {
       paddingBottom: spacing.md,
     },
     summaryText: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
-    direction: { ...type.headline, color: colors.textPrimary },
+    direction: { ...type.headline, color: colors.foreground },
     summaryMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    operator: { ...type.caption, color: colors.textSecondary, flexShrink: 1 },
+    operator: { ...type.caption, color: colors.mutedForeground, flexShrink: 1 },
     cancelled: {
       ...type.footnoteMedium,
       color: colors.cancelled,
@@ -335,13 +336,13 @@ function createStyles(colors: Colors) {
       paddingHorizontal: spacing.lg,
       gap: spacing.md,
     },
-    rowOwn: { backgroundColor: colors.primarySoft },
-    rowPressed: { backgroundColor: colors.surfaceMuted },
+    rowOwn: { backgroundColor: colors.accent },
+    rowPressed: { backgroundColor: colors.muted },
     rowPassed: { opacity: 0.55 },
     times: { width: 48, alignItems: 'flex-end' },
-    time: { ...type.timeSmall, color: colors.textPrimary },
+    time: { ...type.timeSmall, color: colors.foreground },
     realtime: { ...type.timeSmall, color: colors.delay },
-    struck: { textDecorationLine: 'line-through', color: colors.textTertiary },
+    struck: { textDecorationLine: 'line-through', color: colors.mutedForeground },
     rail: { width: 14, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
     railLine: {
       position: 'absolute',
@@ -361,15 +362,15 @@ function createStyles(colors: Colors) {
     },
     dotOwn: { width: 14, height: 14, backgroundColor: colors.primary },
     stopText: { flex: 1, gap: 2 },
-    stopName: { ...type.subheadMedium, color: colors.textPrimary },
+    stopName: { ...type.subheadMedium, color: colors.foreground },
     stopNameOwn: { ...type.subheadBold },
     stopCancelled: { ...type.captionBold, color: colors.cancelled },
     platformLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-    platform: { ...type.micro, color: colors.textSecondary },
+    platform: { ...type.micro, color: colors.mutedForeground },
     platformChanged: { ...type.microBold, color: colors.delay },
     plannedPlatform: {
       ...type.micro,
-      color: colors.textTertiary,
+      color: colors.mutedForeground,
       textDecorationLine: 'line-through',
     },
   });

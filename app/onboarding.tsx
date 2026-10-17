@@ -9,8 +9,8 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { useT } from '@/lib/i18n';
 import { duration, easing } from '@/lib/motion';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -25,8 +25,9 @@ const enter = (index: number) =>
 // lists real stops around them rather than two empty sections. Location is
 // asked for only when the user taps the button, never on load.
 export default function OnboardingScreen() {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const completeOnboarding = useSettingsStore((s) => s.completeOnboarding);
   const [busy, setBusy] = useState(false);
@@ -56,9 +57,11 @@ export default function OnboardingScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View entering={enter(0)} style={styles.hero}>
           <View style={styles.logo}>
-            <Ionicons name="train" size={32} color={colors.primaryOn} />
+            <Ionicons name="train" size={32} color={colors.primaryForeground} />
           </View>
-          <Text style={styles.title}>{t('onboarding.title')}</Text>
+          <Text accessibilityRole="header" style={styles.title}>
+            {t('onboarding.title')}
+          </Text>
           <Text style={styles.subtitle}>{t('onboarding.subtitle')}</Text>
         </Animated.View>
 
@@ -107,7 +110,7 @@ export default function OnboardingScreen() {
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     scroll: {
       paddingHorizontal: spacing.lg,
@@ -126,23 +129,23 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       justifyContent: 'center',
       marginBottom: spacing.md,
     },
-    title: { ...type.largeTitle, color: colors.textPrimary },
-    subtitle: { ...type.body, color: colors.textSecondary, lineHeight: 20 },
+    title: { ...type.largeTitle, color: colors.foreground },
+    subtitle: { ...type.body, color: colors.mutedForeground, lineHeight: 20 },
     features: { gap: spacing.lg },
     feature: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
     well: {
       width: 36,
       height: 36,
       borderRadius: radii.pill,
-      backgroundColor: colors.primarySoft,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
     featureText: { flex: 1, gap: 2 },
-    featureTitle: { ...type.headlineMedium, color: colors.textPrimary },
-    featureBody: { ...type.footnote, color: colors.textSecondary, lineHeight: 18 },
+    featureTitle: { ...type.headlineMedium, color: colors.foreground },
+    featureBody: { ...type.footnote, color: colors.mutedForeground, lineHeight: 18 },
     location: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
@@ -150,8 +153,8 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       padding: spacing.md,
       gap: spacing.xs,
     },
-    locationTitle: { ...type.headlineMedium, color: colors.textPrimary, marginTop: spacing.xs },
-    locationText: { ...type.footnote, color: colors.textSecondary, lineHeight: 18 },
+    locationTitle: { ...type.headlineMedium, color: colors.foreground, marginTop: spacing.xs },
+    locationText: { ...type.footnote, color: colors.mutedForeground, lineHeight: 18 },
     actions: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
@@ -165,7 +168,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingVertical: spacing.md,
       alignItems: 'center',
     },
-    primaryText: { ...type.headline, color: colors.primaryOn },
+    primaryText: { ...type.headline, color: colors.primaryForeground },
     secondary: { paddingVertical: spacing.sm, alignItems: 'center' },
     secondaryText: { ...type.calloutMedium, color: colors.primary },
   });

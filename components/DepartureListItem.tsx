@@ -6,8 +6,8 @@ import { ServicePill, serviceDescription } from './ServicePill';
 import { departureStatus } from '@/lib/delay';
 import { useT } from '@/lib/i18n';
 import { formatTime } from '@/lib/time';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { DepartureRow } from '@/types';
 
 // A board is scanned, not read. The three columns are ordered by what the eye
@@ -23,8 +23,9 @@ function DepartureListItemBase({
   row: DepartureRow;
   onPress?: (row: DepartureRow) => void;
 }) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
 
   const status = departureStatus(row, colors, t);
@@ -119,7 +120,7 @@ function DepartureListItemBase({
 // without this every poll re-renders all of them even when nothing changed.
 export const DepartureListItem = memo(DepartureListItemBase);
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     row: {
       flexDirection: 'row',
@@ -129,35 +130,35 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingHorizontal: spacing.lg,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
     },
-    rowPressed: { backgroundColor: colors.surfaceMuted },
+    rowPressed: { backgroundColor: colors.muted },
     rowCancelled: { opacity: 0.7 },
     middle: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
-    direction: { ...type.subheadMedium, color: colors.textPrimary },
+    direction: { ...type.subheadMedium, color: colors.foreground },
     meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
     platform: {
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.muted,
       borderRadius: radii.sm,
       borderCurve: 'continuous',
       paddingHorizontal: spacing.sm,
       paddingVertical: 2,
     },
-    platformText: { ...type.micro, color: colors.textSecondary },
+    platformText: { ...type.micro, color: colors.mutedForeground },
     platformChanged: { backgroundColor: colors.delaySoft },
     platformTextChanged: { ...type.microBold, color: colors.delay },
     plannedPlatform: {
       ...type.micro,
-      color: colors.textTertiary,
+      color: colors.mutedForeground,
       textDecorationLine: 'line-through',
     },
     right: { alignItems: 'flex-end', gap: 2 },
-    time: { ...type.time, color: colors.textPrimary },
-    timeCancelled: { textDecorationLine: 'line-through', color: colors.textSecondary },
+    time: { ...type.time, color: colors.foreground },
+    timeCancelled: { textDecorationLine: 'line-through', color: colors.mutedForeground },
     statusLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
     scheduledStruck: {
       ...type.timeSmall,
-      color: colors.textTertiary,
+      color: colors.mutedForeground,
       textDecorationLine: 'line-through',
     },
     statusLabel: { ...type.captionBold },

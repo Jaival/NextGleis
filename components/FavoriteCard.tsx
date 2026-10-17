@@ -5,8 +5,8 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { press } from './PressableScale';
 import { tap } from '@/lib/haptics';
 import { useT } from '@/lib/i18n';
-import { radii, spacing } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -41,8 +41,9 @@ export function FavoriteCard({
   onRemove,
   children,
 }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [pressed, setPressed] = useState(false);
   const reduced = useReducedMotion();
   const t = useT();
@@ -106,7 +107,7 @@ function ControlButton({
   onPress?: () => void;
   haptic: 'selection' | 'medium';
   styles: ReturnType<typeof createStyles>;
-  colors: ReturnType<typeof useThemeColors>['colors'];
+  colors: ThemeColors;
 }) {
   const disabled = !onPress;
   return (
@@ -124,17 +125,17 @@ function ControlButton({
       hitSlop={8}
       style={({ pressed }) => [styles.control, pressed && styles.controlPressed]}
     >
-      <Ionicons name={icon} size={18} color={disabled ? colors.border : colors.textTertiary} />
+      <Ionicons name={icon} size={18} color={disabled ? colors.border : colors.mutedForeground} />
     </Pressable>
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, radii }: Theme) {
   return StyleSheet.create({
     card: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
@@ -149,7 +150,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       width: 40,
       height: 40,
       borderRadius: radii.pill,
-      backgroundColor: colors.primarySoft,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -162,6 +163,6 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       justifyContent: 'center',
       borderRadius: radii.pill,
     },
-    controlPressed: { backgroundColor: colors.surfaceMuted },
+    controlPressed: { backgroundColor: colors.muted },
   });
 }

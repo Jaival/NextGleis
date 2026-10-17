@@ -3,8 +3,8 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressableScale } from '@/components/PressableScale';
 import { useT } from '@/lib/i18n';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = {
   visible: boolean;
@@ -20,8 +20,8 @@ type Props = {
 // A panel over the bottom of the screen, for a short choice that belongs to
 // the screen underneath. Tapping outside or the back button closes it.
 export function BottomSheet({ visible, title, action, onDone, onClose, children }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const t = useT();
 
@@ -69,11 +69,11 @@ export function BottomSheet({ visible, title, action, onDone, onClose, children 
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     root: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.4)' },
     sheet: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderTopLeftRadius: radii.xl,
       borderTopRightRadius: radii.xl,
       borderCurve: 'continuous',
@@ -89,7 +89,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       justifyContent: 'space-between',
       gap: spacing.md,
     },
-    title: { ...type.display, color: colors.textPrimary, flexShrink: 1 },
+    title: { ...type.display, color: colors.foreground, flexShrink: 1 },
     action: { ...type.calloutMedium, color: colors.primary },
     done: {
       backgroundColor: colors.primary,
@@ -97,6 +97,6 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingVertical: spacing.md,
       alignItems: 'center',
     },
-    doneText: { ...type.headline, color: colors.primaryOn },
+    doneText: { ...type.headline, color: colors.primaryForeground },
   });
 }

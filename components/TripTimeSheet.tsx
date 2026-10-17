@@ -8,15 +8,15 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useLanguage, useT } from '@/lib/i18n';
-import { radii, spacing, type } from '@/lib/theme';
+import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { TRANSIT_TIME_ZONE, formatClock, formatDay } from '@/lib/time';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { useTheme } from '@/lib/useTheme';
 
 // `when: null` is "leave now": the search follows the clock instead of
 // pinning the moment the user opened the screen.
 export type TripTime = { arrival: boolean; when: Date | null };
 
-type Colors = ReturnType<typeof useThemeColors>['colors'];
+type Colors = ThemeColors;
 type Mode = 'depart' | 'arrive';
 
 type Props = {
@@ -31,8 +31,9 @@ type Props = {
 // (the library renders nothing there), so Routes doesn't offer this sheet on
 // web at all.
 export function TripTimeSheet({ visible, value, onChange, onClose }: Props) {
-  const { colors, isDark } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors, isDark } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const language = useLanguage();
 
@@ -151,19 +152,19 @@ function PickerRow({
       accessibilityLabel={`${label}: ${value}`}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
-      <Ionicons name={icon} size={18} color={colors.textSecondary} />
+      <Ionicons name={icon} size={18} color={colors.mutedForeground} />
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue}>{value}</Text>
-      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+      <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
     </Pressable>
   );
 }
 
-function createStyles(colors: Colors) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     wheel: { alignSelf: 'stretch' },
     rows: {
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.muted,
       borderRadius: radii.md,
       borderCurve: 'continuous',
       overflow: 'hidden',
@@ -176,8 +177,8 @@ function createStyles(colors: Colors) {
       paddingVertical: spacing.md,
     },
     rowPressed: { backgroundColor: colors.border },
-    rowLabel: { ...type.subhead, color: colors.textSecondary, flex: 1 },
-    rowValue: { ...type.subheadMedium, color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+    rowLabel: { ...type.subhead, color: colors.mutedForeground, flex: 1 },
+    rowValue: { ...type.subheadMedium, color: colors.foreground, fontVariant: ['tabular-nums'] },
     divider: {
       height: StyleSheet.hairlineWidth,
       backgroundColor: colors.border,

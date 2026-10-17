@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AppSettings, FavoriteRoute, FavoriteStation } from '@/types';
+import { THEME_NAMES, UI_STYLES } from './theme';
 
 const FAVORITES_KEY = 'favorites';
 const FAVORITE_ROUTES_KEY = 'favoriteRoutes';
@@ -51,6 +52,9 @@ export async function saveFavoriteRoutes(routes: FavoriteRoute[]): Promise<void>
 
 const defaultSettings: AppSettings = {
   themeMode: 'system',
+  colorTheme: 'indigo',
+  uiStyle: 'classic',
+  highContrast: false,
   language: 'system',
   onboarded: false,
   deutschlandticket: false,
@@ -58,7 +62,12 @@ const defaultSettings: AppSettings = {
 
 export async function getSettings(): Promise<AppSettings> {
   const stored = await readJson<Partial<AppSettings>>(SETTINGS_KEY, {});
-  return { ...defaultSettings, ...stored };
+  const settings = { ...defaultSettings, ...stored };
+  // A theme or style removed in a later version must not leave the app
+  // looking up a palette that no longer exists.
+  if (!THEME_NAMES.includes(settings.colorTheme)) settings.colorTheme = defaultSettings.colorTheme;
+  if (!UI_STYLES.includes(settings.uiStyle)) settings.uiStyle = defaultSettings.uiStyle;
+  return settings;
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {

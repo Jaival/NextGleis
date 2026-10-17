@@ -1,24 +1,24 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useT } from '@/lib/i18n';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { useTheme } from '@/lib/useTheme';
 
 // Native system tab bar: a real Material `BottomNavigationView` on Android
 // (ripple, active indicator pill, platform a11y) instead of the JS-drawn
 // React Navigation bar. Icons are supplied per-platform — `md` names come from
 // the Material Symbols catalog, `sf` from SF Symbols.
 export default function TabsLayout() {
-  const { colors } = useThemeColors();
+  const { colors } = useTheme();
   const t = useT();
 
   return (
     <NativeTabs
-      backgroundColor={colors.surface}
+      backgroundColor={colors.card}
       tintColor={colors.primary}
-      iconColor={{ default: colors.textSecondary, selected: colors.primary }}
-      indicatorColor={colors.primarySoft}
-      rippleColor={colors.primarySoft}
+      iconColor={{ default: colors.mutedForeground, selected: colors.primary }}
+      indicatorColor={colors.accent}
+      rippleColor={colors.accent}
       labelStyle={{
-        default: { color: colors.textSecondary },
+        default: { color: colors.mutedForeground },
         selected: { color: colors.primary },
       }}
       // Let the platform decide whether to show labels at this item count,

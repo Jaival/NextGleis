@@ -13,8 +13,8 @@ import { useT } from '@/lib/i18n';
 import { duration, easing } from '@/lib/motion';
 import { moveItem } from '@/lib/reorder';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 // Layout-animation builders live at module scope: rebuilt inline in JSX they
 // allocate on every render. All three self-disable under Reduce Motion via the
@@ -30,8 +30,8 @@ const STAGGER_MS = 35;
 let launchRevealed = false;
 
 export default function HomeScreen() {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const onboarded = useSettingsStore((s) => s.onboarded);
 
@@ -113,7 +113,9 @@ export default function HomeScreen() {
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>NextGleis</Text>
+          <Text accessibilityRole="header" style={styles.title}>
+            NextGleis
+          </Text>
           <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
         </View>
 
@@ -201,7 +203,9 @@ function Section({
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          {title}
+        </Text>
         {count > 0 ? (
           <View style={styles.countPill}>
             <Text style={styles.countText}>{count}</Text>
@@ -213,7 +217,7 @@ function Section({
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     scroll: { paddingBottom: spacing.xxl, flexGrow: 1 },
     header: {
@@ -221,8 +225,8 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingTop: spacing.md,
       paddingBottom: spacing.lg,
     },
-    title: { ...type.largeTitle, color: colors.textPrimary },
-    subtitle: { ...type.body, color: colors.textSecondary, marginTop: spacing.xs },
+    title: { ...type.largeTitle, color: colors.foreground },
+    subtitle: { ...type.body, color: colors.mutedForeground, marginTop: spacing.xs },
     section: { paddingHorizontal: spacing.lg, marginBottom: spacing.xl },
     sectionHeader: {
       flexDirection: 'row',
@@ -232,7 +236,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
     },
     sectionTitle: {
       ...type.overline,
-      color: colors.textTertiary,
+      color: colors.mutedForeground,
       textTransform: 'uppercase',
     },
     countPill: {
@@ -240,10 +244,10 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingHorizontal: 6,
       paddingVertical: 1,
       borderRadius: radii.pill,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.muted,
       alignItems: 'center',
     },
-    countText: { ...type.microBold, color: colors.textTertiary },
+    countText: { ...type.microBold, color: colors.mutedForeground },
     cardSlot: { marginBottom: spacing.sm },
   });
 }

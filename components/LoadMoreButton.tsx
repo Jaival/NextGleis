@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = {
   label: string;
@@ -17,8 +17,9 @@ type Props = {
 // in that direction. Not infinite scroll: every page is an upstream request, so
 // it's the rider's call.
 export function LoadMoreButton({ label, direction, loading, disabled = false, onPress }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Pressable
@@ -42,7 +43,7 @@ export function LoadMoreButton({ label, direction, loading, disabled = false, on
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     button: {
       flexDirection: 'row',
@@ -52,7 +53,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingVertical: spacing.md,
       borderRadius: radii.md,
     },
-    pressed: { backgroundColor: colors.surfaceMuted },
+    pressed: { backgroundColor: colors.muted },
     label: { ...type.calloutMedium, color: colors.primary },
   });
 }
