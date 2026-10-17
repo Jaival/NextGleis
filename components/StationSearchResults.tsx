@@ -5,7 +5,7 @@ import { StationResultItem } from './StationResultItem';
 import { useT } from '@/lib/i18n';
 import { spacing } from '@/lib/theme';
 import type { StationSearch } from '@/lib/useStationSearch';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { useTheme } from '@/lib/useTheme';
 import type { StationSearchResult } from '@/types';
 
 type Props = {
@@ -23,7 +23,7 @@ export function StationSearchResults({
   idleMessage,
   itemLabel,
 }: Props) {
-  const { colors } = useThemeColors();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(), []);
   const t = useT();
   const { debounced, tooShort, data, isFetching, isError, isOffline } = search;

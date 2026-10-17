@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { css, useReducedMotion } from 'react-native-reanimated';
 import { useT } from '@/lib/i18n';
-import { radii, spacing } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 const ROWS = 6;
 
@@ -55,9 +55,9 @@ function SkeletonRow({
 }
 
 export function BoardSkeleton({ label }: { label?: string } = {}) {
-  const { colors } = useThemeColors();
+  const theme = useTheme();
   const t = useT();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View accessible accessibilityLabel={label ?? t('board.loading')} style={styles.container}>
@@ -68,7 +68,7 @@ export function BoardSkeleton({ label }: { label?: string } = {}) {
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, radii }: Theme) {
   return StyleSheet.create({
     container: { paddingTop: spacing.xs },
     row: {
@@ -79,7 +79,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingHorizontal: spacing.lg,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
     },
     lineBadge: {
       minWidth: 62,

@@ -38,8 +38,8 @@ import { needsLongDistanceTicket } from '@/lib/product';
 import { useSettingsStore } from '@/lib/settingsStore';
 import { duration, easing, spring } from '@/lib/motion';
 import { boardWarnings } from '@/lib/notices';
-import { spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { ArrivalRow, DepartureRow, HiddenDirection } from '@/types';
 
 type Mode = 'departures' | 'arrivals';
@@ -66,8 +66,9 @@ function mergePages(pages: Row[][]): Row[] {
 }
 
 export default function BoardScreen() {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const t = useT();
@@ -252,7 +253,7 @@ export default function BoardScreen() {
                 <Ionicons
                   name={isFavorite ? 'star' : 'star-outline'}
                   size={22}
-                  color={isFavorite ? colors.primary : colors.textSecondary}
+                  color={isFavorite ? colors.primary : colors.mutedForeground}
                 />
               </Animated.View>
             </Pressable>
@@ -424,7 +425,7 @@ export default function BoardScreen() {
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type }: Theme) {
   return StyleSheet.create({
     modeRow: {
       paddingHorizontal: spacing.lg,
@@ -443,7 +444,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
     },
     ticketNote: {
       ...type.caption,
-      color: colors.textTertiary,
+      color: colors.mutedForeground,
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.sm,
     },

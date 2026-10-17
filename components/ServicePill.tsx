@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, type ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useT, type Translate } from '@/lib/i18n';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { ServiceKind } from '@/types';
 
 const ICONS: Record<Exclude<ServiceKind, 'db'>, ComponentProps<typeof Ionicons>['name']> = {
@@ -21,8 +21,9 @@ export function serviceDescription(kind: ServiceKind, t: Translate): string {
 // pill on a board, in its brand red; the other two stay outlined and quiet so
 // the board doesn't turn into a wall of badges.
 export function ServicePill({ kind }: { kind: ServiceKind }) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
 
   if (kind === 'db') {
@@ -35,13 +36,13 @@ export function ServicePill({ kind }: { kind: ServiceKind }) {
 
   return (
     <View style={styles.pill}>
-      <Ionicons name={ICONS[kind]} size={11} color={colors.textSecondary} />
+      <Ionicons name={ICONS[kind]} size={11} color={colors.mutedForeground} />
       <Text style={styles.label}>{t(`service.${kind}`)}</Text>
     </View>
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     pill: {
       flexDirection: 'row',
@@ -49,12 +50,12 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       gap: 3,
       borderRadius: radii.pill,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.borderStrong,
+      borderColor: colors.input,
       paddingHorizontal: spacing.sm - 2,
       paddingVertical: 1,
     },
     db: { backgroundColor: colors.serviceDb, borderColor: colors.serviceDb },
-    label: { ...type.microBold, color: colors.textSecondary },
+    label: { ...type.microBold, color: colors.mutedForeground },
     dbLabel: { color: colors.serviceDbOn, letterSpacing: 0.4 },
   });
 }

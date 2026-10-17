@@ -5,8 +5,8 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { tap } from '@/lib/haptics';
 import { useT } from '@/lib/i18n';
 import { duration, easing } from '@/lib/motion';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { Notice } from '@/types';
 
 const DETAILS_IN = FadeIn.duration(duration.fast).easing(easing.out);
@@ -15,8 +15,9 @@ const DETAILS_IN = FadeIn.duration(duration.fast).easing(easing.out);
 // usually attached to every departure of the lines they affect — Frankfurt Hbf
 // had one on 49 rows. Shown once here, collapsed, instead of on each row.
 export function DisruptionBanner({ notices }: { notices: Notice[] }) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const [open, setOpen] = useState(false);
 
@@ -53,7 +54,7 @@ export function DisruptionBanner({ notices }: { notices: Notice[] }) {
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     banner: {
       marginHorizontal: spacing.lg,
@@ -73,7 +74,7 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
     headerText: { flex: 1, ...type.footnoteBold, color: colors.delay },
     list: { paddingHorizontal: spacing.md, paddingBottom: spacing.md, gap: spacing.md },
     item: { gap: 2 },
-    title: { ...type.footnoteBold, color: colors.textPrimary },
-    text: { ...type.footnote, color: colors.textSecondary, lineHeight: 18 },
+    title: { ...type.footnoteBold, color: colors.foreground },
+    text: { ...type.footnote, color: colors.mutedForeground, lineHeight: 18 },
   });
 }

@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { productKind } from '@/lib/product';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = { line: string; compact?: boolean };
 
@@ -9,8 +10,9 @@ type Props = { line: string; compact?: boolean };
 // Full size as a board's first column; compact where several sit in a row,
 // as in a journey summary.
 export function LineBadge({ line, compact = false }: Props) {
-  const { colors } = useThemeColors();
-  const product = colors.product[productKind(line)];
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const product = theme.colors.product[productKind(line)];
 
   return (
     <View style={[styles.badge, compact && styles.badgeCompact, { backgroundColor: product.bg }]}>
@@ -24,17 +26,21 @@ export function LineBadge({ line, compact = false }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  badge: {
-    borderRadius: radii.sm,
-    borderCurve: 'continuous',
-    paddingHorizontal: spacing.sm,
-    height: 30,
-    minWidth: 62,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeCompact: { height: 24, minWidth: 0, paddingHorizontal: spacing.sm - 2 },
-  text: { ...type.footnoteBold },
-  textCompact: { ...type.microBold },
-});
+function createStyles({ type, radii }: Theme) {
+  return StyleSheet.create({
+    // minHeight, not height: with a large system text size the label grows past
+    // 30pt and a fixed height would clip it.
+    badge: {
+      borderRadius: radii.sm,
+      borderCurve: 'continuous',
+      paddingHorizontal: spacing.sm,
+      minHeight: 30,
+      minWidth: 62,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeCompact: { minHeight: 24, minWidth: 0, paddingHorizontal: spacing.sm - 2 },
+    text: { ...type.footnoteBold },
+    textCompact: { ...type.microBold },
+  });
+}

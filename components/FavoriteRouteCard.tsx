@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { FavoriteCard } from './FavoriteCard';
 import { useT } from '@/lib/i18n';
-import { spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { FavoriteRoute } from '@/types';
 
 type Props = {
@@ -16,8 +16,9 @@ type Props = {
 };
 
 export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onRemove }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const label = t('favorites.routeLabel', favorite.fromName, favorite.toName);
 
@@ -35,7 +36,7 @@ export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onR
         {favorite.fromName}
       </Text>
       <View style={styles.leg}>
-        <Ionicons name="arrow-down" size={12} color={colors.textTertiary} />
+        <Ionicons name="arrow-down" size={12} color={colors.mutedForeground} />
         <Text style={styles.name} numberOfLines={1}>
           {favorite.toName}
         </Text>
@@ -44,9 +45,9 @@ export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onR
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type }: Theme) {
   return StyleSheet.create({
-    name: { ...type.subheadMedium, color: colors.textPrimary, flexShrink: 1 },
+    name: { ...type.subheadMedium, color: colors.foreground, flexShrink: 1 },
     leg: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   });
 }

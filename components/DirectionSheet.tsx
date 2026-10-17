@@ -4,8 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { tap } from '@/lib/haptics';
 import { useT } from '@/lib/i18n';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = {
   visible: boolean;
@@ -31,8 +31,9 @@ export function DirectionSheet({
   onShowAll,
   onClose,
 }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
 
   return (
@@ -60,7 +61,7 @@ export function DirectionSheet({
               <Ionicons
                 name={shown ? 'checkmark-circle' : 'ellipse-outline'}
                 size={22}
-                color={shown ? colors.primary : colors.textTertiary}
+                color={shown ? colors.primary : colors.mutedForeground}
               />
               <Text style={[styles.direction, !shown && styles.directionHidden]} numberOfLines={2}>
                 {direction}
@@ -73,9 +74,9 @@ export function DirectionSheet({
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
-    message: { ...type.footnote, color: colors.textSecondary, marginTop: -spacing.sm },
+    message: { ...type.footnote, color: colors.mutedForeground, marginTop: -spacing.sm },
     list: { flexGrow: 0 },
     listContent: { gap: spacing.xs },
     row: {
@@ -85,8 +86,8 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingVertical: spacing.sm,
       borderRadius: radii.sm,
     },
-    rowPressed: { backgroundColor: colors.surfaceMuted },
-    direction: { ...type.subheadMedium, color: colors.textPrimary, flex: 1 },
-    directionHidden: { color: colors.textTertiary },
+    rowPressed: { backgroundColor: colors.muted },
+    direction: { ...type.subheadMedium, color: colors.foreground, flex: 1 },
+    directionHidden: { color: colors.mutedForeground },
   });
 }

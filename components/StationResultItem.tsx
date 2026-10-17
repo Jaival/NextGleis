@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { StationSearchResult } from '@/types';
 
 type Props = {
@@ -15,8 +15,9 @@ type Props = {
 // used on inset cards — scaling an edge-to-edge row just exposes a sliver of
 // the screen background down both sides.
 export function StationResultItem({ station, onPress, accessibilityLabel }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Pressable
@@ -37,12 +38,12 @@ export function StationResultItem({ station, onPress, accessibilityLabel }: Prop
             apart. */}
         {station.network ? <Text style={styles.network}>{station.network}</Text> : null}
       </View>
-      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+      <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
     </Pressable>
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     row: {
       flexDirection: 'row',
@@ -52,19 +53,19 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       paddingHorizontal: spacing.lg,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
     },
-    rowPressed: { backgroundColor: colors.surfaceMuted },
+    rowPressed: { backgroundColor: colors.muted },
     well: {
       width: 32,
       height: 32,
       borderRadius: radii.pill,
-      backgroundColor: colors.primarySoft,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
     text: { flex: 1, gap: 2 },
-    name: { ...type.subheadMedium, color: colors.textPrimary },
-    network: { ...type.micro, color: colors.textTertiary },
+    name: { ...type.subheadMedium, color: colors.foreground },
+    network: { ...type.micro, color: colors.mutedForeground },
   });
 }

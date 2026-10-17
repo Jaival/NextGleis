@@ -26,13 +26,13 @@ import { tap } from '@/lib/haptics';
 import { useLanguage, useT, type Translate } from '@/lib/i18n';
 import { needsLongDistanceTicket } from '@/lib/product';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { radii, spacing, type } from '@/lib/theme';
+import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { formatClock, formatDay } from '@/lib/time';
 import { useStationSearch } from '@/lib/useStationSearch';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { useTheme } from '@/lib/useTheme';
 import type { Journey, Language, StationSearchResult } from '@/types';
 
-type Colors = ReturnType<typeof useThemeColors>['colors'];
+type Colors = ThemeColors;
 type Styles = ReturnType<typeof createStyles>;
 type Stop = { id: string; name: string };
 type End = 'from' | 'to';
@@ -61,8 +61,9 @@ function endLabels(end: End, t: Translate): { title: string; placeholder: string
 }
 
 export default function RoutesScreen() {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const language = useLanguage();
   const { fromEva, fromName, toEva, toName } = useLocalSearchParams<{
@@ -141,7 +142,9 @@ export default function RoutesScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('routes.title')}</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          {t('routes.title')}
+        </Text>
         {ready ? (
           <Pressable
             onPress={toggleSaved}
@@ -153,7 +156,7 @@ export default function RoutesScreen() {
             <Ionicons
               name={saved ? 'star' : 'star-outline'}
               size={22}
-              color={saved ? colors.primary : colors.textSecondary}
+              color={saved ? colors.primary : colors.mutedForeground}
             />
           </Pressable>
         ) : null}
@@ -201,12 +204,12 @@ export default function RoutesScreen() {
               <Ionicons
                 name="time-outline"
                 size={16}
-                color={tripTime.when ? colors.primary : colors.textSecondary}
+                color={tripTime.when ? colors.primary : colors.mutedForeground}
               />
               <Text style={[styles.timeText, tripTime.when !== null && styles.timeTextSet]}>
                 {tripTimeLabel(tripTime, language, t)}
               </Text>
-              <Ionicons name="chevron-down" size={14} color={colors.textTertiary} />
+              <Ionicons name="chevron-down" size={14} color={colors.mutedForeground} />
             </Pressable>
           ) : null}
           {deutschlandticket ? (
@@ -215,7 +218,7 @@ export default function RoutesScreen() {
               accessible
               accessibilityLabel={t('routes.deutschlandticketLabel')}
             >
-              <Ionicons name="ticket-outline" size={14} color={colors.textSecondary} />
+              <Ionicons name="ticket-outline" size={14} color={colors.mutedForeground} />
               <Text style={styles.ticketText}>{t('routes.deutschlandticket')}</Text>
             </View>
           ) : null}
@@ -312,7 +315,7 @@ function EndRow({
       <Ionicons
         name={end === 'from' ? 'radio-button-on' : 'location'}
         size={16}
-        color={active ? colors.primary : colors.textTertiary}
+        color={active ? colors.primary : colors.mutedForeground}
       />
       <View style={styles.fill}>
         <Text style={styles.endTitle}>{labels.title}</Text>
@@ -483,7 +486,7 @@ function JourneyList({
   );
 }
 
-function createStyles(colors: Colors) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     fill: { flex: 1 },
     header: {
@@ -494,10 +497,10 @@ function createStyles(colors: Colors) {
       paddingTop: spacing.md,
       paddingBottom: spacing.md,
     },
-    title: { ...type.largeTitle, color: colors.textPrimary },
+    title: { ...type.largeTitle, color: colors.foreground },
     ends: {
       marginHorizontal: spacing.lg,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
@@ -515,10 +518,10 @@ function createStyles(colors: Colors) {
       // Clears the swap button that floats over the right edge.
       paddingRight: 56,
     },
-    endRowPressed: { backgroundColor: colors.surfaceMuted },
-    endTitle: { ...type.micro, color: colors.textTertiary },
-    endName: { ...type.subheadMedium, color: colors.textPrimary },
-    endPlaceholder: { color: colors.textTertiary },
+    endRowPressed: { backgroundColor: colors.muted },
+    endTitle: { ...type.micro, color: colors.mutedForeground },
+    endName: { ...type.subheadMedium, color: colors.foreground },
+    endPlaceholder: { color: colors.mutedForeground },
     // Starts where the stop names do, so the two rows read as one list.
     divider: {
       height: StyleSheet.hairlineWidth,
@@ -531,7 +534,7 @@ function createStyles(colors: Colors) {
       width: 36,
       height: 36,
       borderRadius: radii.pill,
-      backgroundColor: colors.primarySoft,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -559,9 +562,9 @@ function createStyles(colors: Colors) {
       paddingVertical: spacing.sm,
       borderRadius: radii.pill,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.borderStrong,
+      borderColor: colors.input,
     },
-    ticketText: { ...type.footnoteMedium, color: colors.textSecondary },
+    ticketText: { ...type.footnoteMedium, color: colors.mutedForeground },
     timeButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -569,10 +572,10 @@ function createStyles(colors: Colors) {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       borderRadius: radii.pill,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.muted,
     },
     timeButtonPressed: { backgroundColor: colors.border },
-    timeText: { ...type.footnoteMedium, color: colors.textSecondary },
+    timeText: { ...type.footnoteMedium, color: colors.mutedForeground },
     timeTextSet: { color: colors.primary },
     loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     list: {

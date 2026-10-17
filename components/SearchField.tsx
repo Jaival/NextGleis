@@ -4,8 +4,8 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, css, useReducedMotion } from 'react-native-reanimated';
 import { duration as durations, curve, easing } from '@/lib/motion';
 import { useT } from '@/lib/i18n';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = {
   value: string;
@@ -33,9 +33,10 @@ export function SearchField({
   accessibilityLabel,
   autoFocus,
 }: Props) {
-  const { colors } = useThemeColors();
+  const theme = useTheme();
+  const { colors } = theme;
   const t = useT();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [focused, setFocused] = useState(false);
   const reduced = useReducedMotion();
 
@@ -46,13 +47,13 @@ export function SearchField({
       <Ionicons
         name="search"
         size={18}
-        color={focused ? colors.primary : colors.textTertiary}
+        color={focused ? colors.primary : colors.mutedForeground}
         style={styles.icon}
       />
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor={colors.textTertiary}
+        placeholderTextColor={colors.mutedForeground}
         value={value}
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
@@ -75,7 +76,7 @@ export function SearchField({
               accessibilityLabel={t('search.clear')}
               hitSlop={12}
             >
-              <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
+              <Ionicons name="close-circle" size={18} color={colors.mutedForeground} />
             </Pressable>
           </Animated.View>
         ) : null}
@@ -84,7 +85,7 @@ export function SearchField({
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     field: {
       flexDirection: 'row',
@@ -92,19 +93,19 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       // Resting state is a recessed well; focus lifts it onto `surface` and
       // draws the ring. The unfocused border matches the fill so the field
       // doesn't change size when the ring appears.
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.muted,
       borderWidth: 1,
-      borderColor: colors.surfaceMuted,
+      borderColor: colors.muted,
       borderRadius: radii.pill,
       paddingHorizontal: spacing.md,
       height: 46,
     },
-    fieldFocused: { borderColor: colors.primary, backgroundColor: colors.surface },
+    fieldFocused: { borderColor: colors.primary, backgroundColor: colors.card },
     icon: { marginRight: spacing.sm },
     input: {
       flex: 1,
       ...type.input,
-      color: colors.textPrimary,
+      color: colors.foreground,
       // Android's TextInput ships vertical padding that breaks the row's centring.
       paddingVertical: 0,
     },

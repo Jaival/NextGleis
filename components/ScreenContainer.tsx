@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = PropsWithChildren<{
   style?: ViewStyle;
@@ -19,7 +19,7 @@ type Props = PropsWithChildren<{
 }>;
 
 export function ScreenContainer({ children, style, edges = ['top'] }: Props) {
-  const { colors } = useThemeColors();
+  const { colors } = useTheme();
   const styles = useMemo(
     () => StyleSheet.create({ container: { flex: 1, backgroundColor: colors.background } }),
     [colors],

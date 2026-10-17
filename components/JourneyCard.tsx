@@ -10,11 +10,11 @@ import { departureStatus } from '@/lib/delay';
 import { useT, type Translate } from '@/lib/i18n';
 import { duration, easing } from '@/lib/motion';
 import { formatDuration, formatTime, minutesBetween } from '@/lib/time';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { Journey, JourneyLeg } from '@/types';
 
-type Colors = ReturnType<typeof useThemeColors>['colors'];
+type Colors = ThemeColors;
 type Styles = ReturnType<typeof createStyles>;
 
 const DETAILS_IN = FadeIn.duration(duration.fast).easing(easing.out);
@@ -27,8 +27,9 @@ function changesLabel(transfers: number, t: Translate): string {
 // long, how many changes, which lines. Tapping opens the leg-by-leg detail for
 // the one the rider settles on.
 function JourneyCardBase({ journey }: { journey: Journey }) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const [expanded, setExpanded] = useState(false);
 
@@ -84,7 +85,7 @@ function JourneyCardBase({ journey }: { journey: Journey }) {
         {riding.map((leg, index) => (
           <Fragment key={`${leg.line}-${leg.departure}-${index}`}>
             {index > 0 ? (
-              <Ionicons name="chevron-forward" size={12} color={colors.textTertiary} />
+              <Ionicons name="chevron-forward" size={12} color={colors.mutedForeground} />
             ) : null}
             <LineBadge compact line={leg.line ?? ''} />
           </Fragment>
@@ -92,7 +93,7 @@ function JourneyCardBase({ journey }: { journey: Journey }) {
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={16}
-          color={colors.textTertiary}
+          color={colors.mutedForeground}
           style={styles.expandIcon}
         />
       </View>
@@ -134,7 +135,7 @@ function LegDetail({
     const where = leg.destination && leg.destination !== leg.origin ? leg.destination : null;
     return (
       <View style={styles.walk}>
-        <Ionicons name="walk-outline" size={14} color={colors.textTertiary} />
+        <Ionicons name="walk-outline" size={14} color={colors.mutedForeground} />
         <Text style={styles.walkText} numberOfLines={1}>
           {minutes > 0 ? t('journey.walk', minutes, where) : t('journey.change', where)}
         </Text>
@@ -220,10 +221,10 @@ function StopLine({
   );
 }
 
-function createStyles(colors: Colors) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
@@ -233,12 +234,12 @@ function createStyles(colors: Colors) {
       gap: spacing.sm,
     },
     summary: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-    time: { ...type.time, color: colors.textPrimary },
-    timeCancelled: { textDecorationLine: 'line-through', color: colors.textSecondary },
-    duration: { ...type.subheadMedium, color: colors.textSecondary },
+    time: { ...type.time, color: colors.foreground },
+    timeCancelled: { textDecorationLine: 'line-through', color: colors.mutedForeground },
+    duration: { ...type.subheadMedium, color: colors.mutedForeground },
     subline: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     status: { ...type.captionBold },
-    changes: { ...type.caption, color: colors.textTertiary },
+    changes: { ...type.caption, color: colors.mutedForeground },
     badges: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
     expandIcon: { marginLeft: 'auto' },
     legs: {
@@ -249,19 +250,19 @@ function createStyles(colors: Colors) {
     },
     leg: { gap: spacing.xs },
     legHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    legDirection: { flex: 1, ...type.footnote, color: colors.textSecondary },
+    legDirection: { flex: 1, ...type.footnote, color: colors.mutedForeground },
     stopLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    stopTime: { ...type.timeSmall, color: colors.textPrimary, width: 44 },
+    stopTime: { ...type.timeSmall, color: colors.foreground, width: 44 },
     stopDelay: { ...type.captionBold },
-    stopPlace: { flex: 1, ...type.footnote, color: colors.textPrimary },
-    stopPlatform: { ...type.micro, color: colors.textTertiary },
+    stopPlace: { flex: 1, ...type.footnote, color: colors.foreground },
+    stopPlatform: { ...type.micro, color: colors.mutedForeground },
     stopPlatformChanged: { ...type.microBold, color: colors.delay },
     stopPlatformPlanned: {
       ...type.micro,
-      color: colors.textTertiary,
+      color: colors.mutedForeground,
       textDecorationLine: 'line-through',
     },
     walk: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    walkText: { flex: 1, ...type.caption, color: colors.textTertiary },
+    walkText: { flex: 1, ...type.caption, color: colors.mutedForeground },
   });
 }

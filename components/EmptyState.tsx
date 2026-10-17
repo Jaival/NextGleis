@@ -3,8 +3,8 @@ import { useMemo, type ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { duration, easing } from '@/lib/motion';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = {
   icon: ComponentProps<typeof Ionicons>['name'];
@@ -21,8 +21,9 @@ type Props = {
 const ENTER = FadeIn.duration(duration.base).easing(easing.out);
 
 export function EmptyState({ icon, title, message, fill = false }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Animated.View
@@ -31,7 +32,7 @@ export function EmptyState({ icon, title, message, fill = false }: Props) {
       accessibilityLiveRegion="polite"
     >
       <View style={styles.well}>
-        <Ionicons name={icon} size={26} color={colors.textTertiary} />
+        <Ionicons name={icon} size={26} color={colors.mutedForeground} />
       </View>
       {title ? <Text style={styles.title}>{title}</Text> : null}
       <Text style={styles.message}>{message}</Text>
@@ -39,7 +40,7 @@ export function EmptyState({ icon, title, message, fill = false }: Props) {
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     container: {
       alignItems: 'center',
@@ -53,15 +54,15 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       width: 56,
       height: 56,
       borderRadius: radii.pill,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.muted,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: spacing.xs,
     },
-    title: { ...type.headline, color: colors.textPrimary, textAlign: 'center' },
+    title: { ...type.headline, color: colors.foreground, textAlign: 'center' },
     message: {
       ...type.body,
-      color: colors.textSecondary,
+      color: colors.mutedForeground,
       textAlign: 'center',
       lineHeight: 20,
       maxWidth: 320,

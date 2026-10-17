@@ -4,8 +4,8 @@ import { Pressable, StyleSheet } from 'react-native';
 import Animated, { css, useReducedMotion } from 'react-native-reanimated';
 import { tap } from '@/lib/haptics';
 import { PRESS_SCALE, curve, duration } from '@/lib/motion';
-import { radii, spacing, type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { spacing, type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 type ChipProps = {
   label: string;
@@ -46,8 +46,9 @@ export function Chip({
   longPressLabel,
   partial = false,
 }: ChipProps) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [pressed, setPressed] = useState(false);
   const reduced = useReducedMotion();
 
@@ -100,7 +101,7 @@ export function Chip({
           <Ionicons
             name="funnel"
             size={10}
-            color={active ? colors.chipTextActive : colors.chipText}
+            color={active ? colors.accentForeground : colors.mutedForeground}
             style={styles.partial}
           />
         ) : null}
@@ -109,11 +110,12 @@ export function Chip({
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     chip: {
       paddingHorizontal: spacing.md,
-      height: 32,
+      // minHeight so large system text grows the chip instead of clipping it.
+      minHeight: 32,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -121,10 +123,10 @@ function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
       marginRight: spacing.sm,
       borderWidth: 1,
     },
-    chipActive: { backgroundColor: colors.chipBgActive, borderColor: colors.primary },
-    chipInactive: { backgroundColor: colors.chipBg, borderColor: colors.border },
-    text: { ...type.footnoteMedium, color: colors.chipText },
-    textActive: { color: colors.chipTextActive },
+    chipActive: { backgroundColor: colors.accent, borderColor: colors.primary },
+    chipInactive: { backgroundColor: colors.muted, borderColor: colors.border },
+    text: { ...type.footnoteMedium, color: colors.mutedForeground },
+    textActive: { color: colors.accentForeground },
     partial: { marginLeft: spacing.xs },
   });
 }

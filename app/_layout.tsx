@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -8,14 +9,15 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { type } from '@/lib/theme';
+
 import { useFavoritesStore } from '@/lib/favoritesStore';
 import { useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { useNavigationTheme } from '@/lib/navigationTheme';
 import { setupNetworkStatusForQueries } from '@/lib/network';
 import { queryClient } from '@/lib/queryClient';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { MODERN_FONTS } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 
 setupNetworkStatusForQueries();
 
@@ -24,14 +26,18 @@ setupNetworkStatusForQueries();
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { colors, isDark } = useThemeColors();
+  const { colors, isDark, type } = useTheme();
   const navigationTheme = useNavigationTheme();
   const reducedMotion = useReducedMotion();
 
   const favoritesHydrated = useFavoritesStore((s) => s.hydrated);
   const routesHydrated = useFavoriteRoutesStore((s) => s.hydrated);
   const settingsHydrated = useSettingsStore((s) => s.hydrated);
-  const hydrated = favoritesHydrated && routesHydrated && settingsHydrated;
+  // The Modern style's font files. Loaded whatever the style, so switching to
+  // it in Settings is instant; a failed load leaves Modern on the system font.
+  const [fontsLoaded, fontError] = useFonts(MODERN_FONTS);
+  const hydrated =
+    favoritesHydrated && routesHydrated && settingsHydrated && (fontsLoaded || !!fontError);
 
   useEffect(() => {
     useFavoritesStore.getState().hydrate();
@@ -66,8 +72,8 @@ export default function RootLayout() {
                 // chrome-heavy style this design is moving away from.
                 headerStyle: { backgroundColor: colors.background },
                 headerShadowVisible: false,
-                headerTintColor: colors.textPrimary,
-                headerTitleStyle: { ...type.headline, color: colors.textPrimary },
+                headerTintColor: colors.foreground,
+                headerTitleStyle: { ...type.headline, color: colors.foreground },
                 // Screen transitions stay native — never rebuilt in JS — so the
                 // interactive back gesture and platform timing come for free.
                 animation: reducedMotion ? 'fade' : 'default',

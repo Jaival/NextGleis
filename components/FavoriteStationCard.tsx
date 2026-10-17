@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { FavoriteCard } from './FavoriteCard';
 import { useT } from '@/lib/i18n';
-import { type } from '@/lib/theme';
-import { useThemeColors } from '@/lib/useThemeColors';
+import { type Theme } from '@/lib/theme';
+import { useTheme } from '@/lib/useTheme';
 import type { FavoriteStation } from '@/types';
 
 type Props = {
@@ -15,8 +15,8 @@ type Props = {
 };
 
 export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, onRemove }: Props) {
-  const { colors } = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const hiddenLines = favorite.hiddenLines.length;
   const hiddenDirections = favorite.hiddenDirections?.length ?? 0;
@@ -45,9 +45,9 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
   );
 }
 
-function createStyles(colors: ReturnType<typeof useThemeColors>['colors']) {
+function createStyles({ colors, type }: Theme) {
   return StyleSheet.create({
-    name: { ...type.headlineMedium, color: colors.textPrimary },
-    meta: { ...type.caption, color: colors.textTertiary },
+    name: { ...type.headlineMedium, color: colors.foreground },
+    meta: { ...type.caption, color: colors.mutedForeground },
   });
 }
