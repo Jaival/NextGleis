@@ -166,4 +166,7 @@ export type AppSettings = {
   // Leave out trains the Deutschlandticket doesn't cover (ICE, IC/EC, …) on
   // boards and routes.
   deutschlandticket: boolean;
+  // Off hides Nearby on Home and "current location" in Routes, and stops the
+  // app from reading the position at all.
+  locationEnabled: boolean;
 };

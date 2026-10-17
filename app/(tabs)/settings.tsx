@@ -6,6 +6,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PRIVACY_POLICY_URL } from '@/lib/api';
 import { useT } from '@/lib/i18n';
+import { useLocationPermission } from '@/lib/location';
 import { useSettingsStore } from '@/lib/settingsStore';
 import {
   spacing,
@@ -94,8 +95,22 @@ export default function SettingsScreen() {
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const deutschlandticket = useSettingsStore((s) => s.deutschlandticket);
   const setDeutschlandticket = useSettingsStore((s) => s.setDeutschlandticket);
+  const locationEnabled = useSettingsStore((s) => s.locationEnabled);
+  const setLocationEnabled = useSettingsStore((s) => s.setLocationEnabled);
+  const { permission, request: requestPermission } = useLocationPermission();
   const t = useT();
   const version = Constants.expoConfig?.version ?? '1.0.0';
+  const locationBlocked = permission?.granted === false && !permission.canAskAgain;
+
+  // Turning location on is the moment the user expects to be asked, so the
+  // system prompt follows straight away rather than waiting for a screen to
+  // need it.
+  const toggleLocation = async (enabled: boolean) => {
+    await setLocationEnabled(enabled);
+    if (!enabled || permission?.granted) return;
+    if (locationBlocked) Linking.openSettings();
+    else await requestPermission();
+  };
 
   return (
     <ScreenContainer>
@@ -222,6 +237,37 @@ export default function SettingsScreen() {
         </Card>
 
         <Card
+          icon="navigate-outline"
+          title={t('settings.location')}
+          styles={styles}
+          colors={colors}
+        >
+          <View style={[styles.cardBody, styles.switchRow]}>
+            <View style={styles.switchText}>
+              <Text style={styles.switchLabel}>{t('settings.useLocation')}</Text>
+              <Text style={styles.paragraph}>{t('settings.useLocationText')}</Text>
+            </View>
+            <Switch
+              value={locationEnabled}
+              onValueChange={toggleLocation}
+              accessibilityLabel={t('settings.useLocation')}
+              trackColor={{ false: colors.input, true: colors.primary }}
+              thumbColor={colors.card}
+            />
+          </View>
+          {locationEnabled && locationBlocked ? (
+            <Pressable
+              onPress={() => Linking.openSettings()}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
+            >
+              <Text style={[styles.paragraph, styles.fill]}>{t('settings.locationBlocked')}</Text>
+              <Text style={styles.linkText}>{t('nearby.openSettings')}</Text>
+            </Pressable>
+          ) : null}
+        </Card>
+
+        <Card
           icon="server-outline"
           title={t('settings.dataSources')}
           styles={styles}
@@ -312,6 +358,7 @@ function createStyles({ colors, type, radii }: Theme) {
     cardTitle: { ...type.headline, color: colors.foreground },
     cardBody: { paddingHorizontal: spacing.md, paddingBottom: spacing.md, gap: spacing.sm },
     paragraph: { ...type.body, color: colors.mutedForeground, lineHeight: 20 },
+    fill: { flex: 1 },
     switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     switchText: { flex: 1, gap: spacing.xs },
     switchLabel: { ...type.subheadMedium, color: colors.foreground },
@@ -346,6 +393,7 @@ function createStyles({ colors, type, radii }: Theme) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      gap: spacing.md,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       borderTopWidth: StyleSheet.hairlineWidth,

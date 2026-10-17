@@ -183,6 +183,14 @@ export const en = {
   'routes.today': 'today',
   'routes.tomorrow': 'tomorrow',
   'routes.timeLabel': (current: string) => `${current}. Tap to change the time.`,
+  'routes.currentLocation': 'Current location',
+  'routes.currentLocationHint': 'Use the stop nearest to you',
+  'routes.locating': 'Finding the nearest stop…',
+  'routes.locationDenied': 'Location access was not allowed. Tap to ask again.',
+  'routes.locationBlocked': 'Location access is off. Tap to open settings.',
+  'routes.locationNoStops': 'No stop within a short walk.',
+  'routes.locationError': 'Could not find your location. Tap to try again.',
+  'routes.nearestStop': (distance: string) => `nearest stop, ${distance}`,
   'routes.timeTitle': 'When?',
   'routes.timeModeLabel': 'Depart at or arrive by',
   'routes.depart': 'Depart at',
@@ -241,8 +249,13 @@ export const en = {
   'settings.deutschlandticket': 'Deutschlandticket mode',
   'settings.deutschlandticketText':
     "Leaves ICE, IC/EC and other trains the Deutschlandticket doesn't cover out of boards and routes. A few IC routes that accept the ticket regionally are hidden too.",
+  'settings.location': 'Location',
+  'settings.useLocation': 'Use my location',
+  'settings.useLocationText':
+    'Shows stops near you on Home and lets Routes start from where you are. When off, the app never reads your position.',
+  'settings.locationBlocked': 'Location access is blocked in your system settings.',
   'settings.privacyText':
-    'No account is required. Favorite stations, favorite routes, and preferences are stored only on this device. If you use "Nearby", your location is sent to the NextGleis server once to find stops and is not stored.',
+    'No account is required. Favorite stations, favorite routes, and preferences are stored only on this device. If you use "Nearby" or "Current location" in Routes, your location is sent to the NextGleis server once to find stops and is not stored.',
   'settings.privacyPolicy': 'Privacy policy',
 
   // Onboarding

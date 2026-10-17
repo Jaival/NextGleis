@@ -191,6 +191,14 @@ export const de: Messages = {
   'routes.today': 'heute',
   'routes.tomorrow': 'morgen',
   'routes.timeLabel': (current) => `${current}. Zum Ändern der Zeit tippen.`,
+  'routes.currentLocation': 'Aktueller Standort',
+  'routes.currentLocationHint': 'Die nächste Haltestelle verwenden',
+  'routes.locating': 'Nächste Haltestelle wird gesucht …',
+  'routes.locationDenied': 'Standortzugriff wurde nicht erlaubt. Zum erneuten Fragen tippen.',
+  'routes.locationBlocked': 'Standortzugriff ist aus. Zum Öffnen der Einstellungen tippen.',
+  'routes.locationNoStops': 'Keine Haltestelle in Fußnähe.',
+  'routes.locationError': 'Standort konnte nicht ermittelt werden. Zum erneuten Versuchen tippen.',
+  'routes.nearestStop': (distance) => `nächste Haltestelle, ${distance}`,
   'routes.timeTitle': 'Wann?',
   'routes.timeModeLabel': 'Abfahrt oder Ankunft',
   'routes.depart': 'Abfahrt',
@@ -248,9 +256,14 @@ export const de: Messages = {
   'settings.deutschlandticket': 'Deutschlandticket-Modus',
   'settings.deutschlandticketText':
     'Blendet ICE, IC/EC und andere Züge, in denen das Deutschlandticket nicht gilt, auf Tafeln und Routen aus. Auch die wenigen IC-Strecken, die das Ticket regional anerkennen, werden ausgeblendet.',
+  'settings.location': 'Standort',
+  'settings.useLocation': 'Meinen Standort verwenden',
+  'settings.useLocationText':
+    'Zeigt Haltestellen in deiner Nähe auf der Startseite und lässt Routen dort beginnen, wo du bist. Wenn aus, liest die App deinen Standort nie aus.',
+  'settings.locationBlocked': 'Standortzugriff ist in den Systemeinstellungen gesperrt.',
   'settings.privacy': 'Datenschutz',
   'settings.privacyText':
-    'Du brauchst kein Konto. Favorisierte Haltestellen, Routen und Einstellungen werden nur auf diesem Gerät gespeichert. Wenn du „In der Nähe“ nutzt, wird dein Standort einmalig an den NextGleis-Server gesendet, um Haltestellen zu finden, und nicht gespeichert.',
+    'Du brauchst kein Konto. Favorisierte Haltestellen, Routen und Einstellungen werden nur auf diesem Gerät gespeichert. Wenn du „In der Nähe“ oder „Aktueller Standort“ in Routen nutzt, wird dein Standort einmalig an den NextGleis-Server gesendet, um Haltestellen zu finden, und nicht gespeichert.',
   'settings.privacyPolicy': 'Datenschutzerklärung',
 
   // Onboarding
