@@ -169,4 +169,6 @@ export type AppSettings = {
   // Off hides Nearby on Home and "current location" in Routes, and stops the
   // app from reading the position at all.
   locationEnabled: boolean;
+  // Off stops error reports and start-up timings from being sent (expo-observe).
+  diagnosticsEnabled: boolean;
 };

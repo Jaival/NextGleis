@@ -81,6 +81,9 @@ export default function HomeScreen() {
         fromName: route.fromName,
         toEva: route.toEva,
         toName: route.toName,
+        // The timestamp makes reopening the same saved route count as a new
+        // request, so it replaces edits made on the Routes screen.
+        opened: String(Date.now()),
       },
     });
   }, []);

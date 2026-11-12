@@ -149,6 +149,7 @@ App (repo root):
 | `npm run android` / `npm run ios` | Build and run the native app |
 | `npm run android:emu` | Windows: boot an emulator, forward ports, build and run |
 | `npm run web` | Run in the browser |
+| `npm test` | Unit tests for the app's pure helpers in `lib/` (Node's test runner, no extra dependency) |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint` / `npm run lint:fix` | ESLint |
 | `npm run format` / `npm run format:check` | Prettier |
