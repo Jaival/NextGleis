@@ -154,6 +154,9 @@ Left out:
 - The backend caches results to keep traffic to the networks low: search for 5
   minutes, boards for 25 seconds, routes for 60 seconds, and stop positions for
   a day.
+- Successful responses also carry `Vercel-CDN-Cache-Control` with the same
+  lifetime, so Vercel's CDN serves repeats across instances. Concurrent requests
+  for the same key share one upstream call. Failures are never cached.
 
 ## Disruption notices
 
