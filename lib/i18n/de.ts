@@ -30,6 +30,11 @@ export const de: Messages = {
         : `${hours} Std. ${minutes} Min.`,
   'common.distance': (metres) => (metres < 1000 ? `${metres} m` : `${decimal(metres / 1000)} km`),
 
+  // Errors
+  'error.title': 'Etwas ist schiefgelaufen',
+  'error.message': 'In der App ist ein Fehler aufgetreten. Deine Favoriten sind sicher.',
+  'error.retry': 'Erneut versuchen',
+
   // Home
   'home.subtitle': 'Deine Abfahrten und Routen, nur einen Tipp entfernt',
   'home.stations': 'Haltestellen',
@@ -266,6 +271,9 @@ export const de: Messages = {
   'settings.privacy': 'Datenschutz',
   'settings.privacyText':
     'Du brauchst kein Konto. Favorisierte Haltestellen, Routen und Einstellungen werden nur auf diesem Gerät gespeichert. Wenn du „In der Nähe“ oder „Aktueller Standort“ in Routen nutzt, wird dein Standort einmalig an den NextGleis-Server gesendet, um Haltestellen zu finden, und nicht gespeichert.',
+  'settings.diagnostics': 'Fehlerberichte senden',
+  'settings.diagnosticsText':
+    'Sendet Fehlerberichte und Startzeiten, damit Probleme behoben werden können. Keine Haltestellen, Suchen, Routen oder Standorte.',
   'settings.privacyPolicy': 'Datenschutzerklärung',
 
   // Onboarding
