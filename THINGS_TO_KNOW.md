@@ -148,6 +148,9 @@ Left out:
   needed.
 - DB blocked the equivalent access to its own planner (db-vendo-client) in
   2026. Any of these networks could start refusing requests the same way.
+- Licensed alternatives (DELFI GTFS / GTFS-RT, Transitous, MobiData BW, RMV's
+  API) and which could back up a blocked network are compared in
+  `docs/research/licensed-data-sources.md` (snapshot of 2026-11-12).
 - If one network fails, search keeps working with the others. Where the network
   that covers a spot doesn't answer, another network's copy of the stop stands
   in.
