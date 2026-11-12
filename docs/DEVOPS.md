@@ -425,6 +425,7 @@ Use rollouts (`--rollout-percentage`) for anything risky, and
 | Signal | Where |
 | --- | --- |
 | Backend errors, latency, timeouts | Vercel → project → Logs / Observability |
+| JS errors and startup time | expo.dev → project → Observe, or `eas observe:metrics-summary` |
 | Crashes and ANRs | Play Console → Android vitals |
 | Build failures | expo.dev → project → Builds |
 | User reports | Play Console reviews |
@@ -496,4 +497,3 @@ can reset a lost upload key, but it takes days.
 | No automated tests | Regressions found manually | Start with backend unit tests for `normalize.ts`, `merge.ts`, `lines.ts` |
 | Per-instance cache | Lower hit rate under load | Shared KV store |
 | No iOS `bundleIdentifier` | Can't build for iOS | Add `ios.bundleIdentifier` to `app.json` |
-| No crash reporting in-app | Only Play vitals | Add Sentry (`@sentry/react-native`) or EAS Observe |

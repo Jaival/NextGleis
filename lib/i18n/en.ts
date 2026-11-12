@@ -25,6 +25,11 @@ export const en = {
   'common.distance': (metres: number) =>
     metres < 1000 ? `${metres} m` : `${(metres / 1000).toFixed(1)} km`,
 
+  // Errors
+  'error.title': 'Something went wrong',
+  'error.message': 'The app hit an error. Your favorites are safe.',
+  'error.retry': 'Try again',
+
   // Home
   'home.subtitle': 'Your boards and routes, one tap away',
   'home.stations': 'Stations',
@@ -76,6 +81,7 @@ export const en = {
   'board.error': 'Could not load this board',
   'board.filteredTitle': 'Everything is filtered out',
   'board.filteredMessage': 'Tap a line above to bring its departures back.',
+  'board.filteredDirectionsMessage': 'Long-press a line above to show its directions again.',
   'board.emptyTitle': 'Nothing scheduled',
   'board.emptyMessage': 'No departures from this stop in the next couple of hours.',
   'board.emptyMessageArrivals': 'No arrivals at this stop in the next couple of hours.',
@@ -256,6 +262,9 @@ export const en = {
   'settings.locationBlocked': 'Location access is blocked in your system settings.',
   'settings.privacyText':
     'No account is required. Favorite stations, favorite routes, and preferences are stored only on this device. If you use "Nearby" or "Current location" in Routes, your location is sent to the NextGleis server once to find stops and is not stored.',
+  'settings.diagnostics': 'Send error reports',
+  'settings.diagnosticsText':
+    'Sends error reports and start-up times to help fix problems. No stops, searches, routes or location.',
   'settings.privacyPolicy': 'Privacy policy',
 
   // Onboarding

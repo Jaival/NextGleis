@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -102,6 +102,7 @@ export default function BoardScreen() {
 
   // Each page is a two-hour window; `null` is the one starting now, and the
   // next starts at the minute of the last row so far.
+  const isFocused = useIsFocused();
   const {
     data,
     isLoading,
@@ -125,6 +126,9 @@ export default function BoardScreen() {
       // whose sources can't look ahead), has nothing later to offer.
       return next && next > (lastParam ?? '') ? next : undefined;
     },
+    // A board under the trip screen (or after leaving it) shouldn't keep
+    // polling; on return it refetches once if stale.
+    subscribed: isFocused,
     refetchInterval: 30_000,
   });
   const isOffline = fetchStatus === 'paused';
@@ -322,7 +326,7 @@ export default function BoardScreen() {
       ) : (
         <FlatList
           data={visibleRows}
-          keyExtractor={(item, index) => `${item.line}-${item.scheduledTime}-${index}`}
+          keyExtractor={rowKey}
           renderItem={({ item }) =>
             mode === 'departures' ? (
               <DepartureListItem
@@ -367,9 +371,12 @@ export default function BoardScreen() {
           refreshControl={
             <RefreshControl
               // isRefetching also covers a page being added, which has its own
-              // spinner on the button.
+              // spinner on the button. A refetch would cancel that page load
+              // (TanStack's cancelRefetch), so a pull during one is ignored.
               refreshing={isRefetching && !isFetchingNextPage}
-              onRefresh={refetch}
+              onRefresh={() => {
+                if (!isFetchingNextPage) refetch();
+              }}
               colors={[colors.primary]}
               tintColor={colors.primary}
             />
@@ -391,12 +398,16 @@ export default function BoardScreen() {
                 title={t('board.error')}
                 message={t('common.pullToRetry')}
               />
-            ) : hiddenLines.length > 0 ? (
+            ) : rows.length > 0 ? (
               <EmptyState
                 fill
                 icon="filter-outline"
                 title={t('board.filteredTitle')}
-                message={t('board.filteredMessage')}
+                message={
+                  hiddenLines.length > 0
+                    ? t('board.filteredMessage')
+                    : t('board.filteredDirectionsMessage')
+                }
               />
             ) : (
               <EmptyState

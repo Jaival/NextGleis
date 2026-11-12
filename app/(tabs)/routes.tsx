@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -71,11 +71,12 @@ export default function RoutesScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const language = useLanguage();
-  const { fromEva, fromName, toEva, toName } = useLocalSearchParams<{
+  const { fromEva, fromName, toEva, toName, opened } = useLocalSearchParams<{
     fromEva?: string;
     fromName?: string;
     toEva?: string;
     toName?: string;
+    opened?: string;
   }>();
 
   const [from, setFrom] = useState<Stop | null>(null);
@@ -89,8 +90,10 @@ export default function RoutesScreen() {
 
   // A saved route opened from Home arrives as params and replaces whatever
   // was on screen. Applied during render (rather than in an effect) so the
-  // first frame already shows the route instead of an empty picker.
-  const paramsKey = fromEva && fromName && toEva && toName ? `${fromEva}>${toEva}` : null;
+  // first frame already shows the route instead of an empty picker. The
+  // `opened` timestamp from Home makes reopening the same route a new request.
+  const paramsKey =
+    fromEva && fromName && toEva && toName ? `${fromEva}>${toEva}@${opened ?? ''}` : null;
   const [appliedParams, setAppliedParams] = useState<string | null>(null);
   if (paramsKey && paramsKey !== appliedParams && fromEva && fromName && toEva && toName) {
     setAppliedParams(paramsKey);
@@ -435,6 +438,7 @@ function JourneyList({
   colors: Colors;
 }) {
   const t = useT();
+  const isFocused = useIsFocused();
   const {
     data,
     isLoading,
@@ -468,6 +472,8 @@ function JourneyList({
       last.laterRef ? { later: last.laterRef } : undefined,
     // Connections shift with realtime delays; a minute is fresh enough while
     // the list is open.
+    // The Routes tab stays mounted while another tab is open; don't poll then.
+    subscribed: isFocused,
     refetchInterval: 60_000,
   });
   const isOffline = fetchStatus === 'paused';
@@ -521,9 +527,12 @@ function JourneyList({
       refreshControl={
         <RefreshControl
           // isRefetching is also true while a page is added; that has its own
-          // spinner on the button.
+          // spinner on the button. A refetch would cancel that page load
+          // (TanStack's cancelRefetch), so a pull during one is ignored.
           refreshing={isRefetching && !isFetchingPreviousPage && !isFetchingNextPage}
-          onRefresh={refetch}
+          onRefresh={() => {
+            if (!fetchingPage) refetch();
+          }}
           colors={[colors.primary]}
           tintColor={colors.primary}
         />

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -69,9 +69,13 @@ export default function TripScreen() {
     side?: 'departures' | 'arrivals';
   }>();
 
+  const isFocused = useIsFocused();
   const { data, isLoading, isError, isRefetching, refetch, fetchStatus } = useQuery({
     queryKey: ['trip', id],
     queryFn: ({ signal }) => getTrip(id, signal),
+    // Stop polling while another screen covers this one; refetch once on
+    // return if stale.
+    subscribed: isFocused,
     refetchInterval: 30_000,
   });
   const isOffline = fetchStatus === 'paused';
