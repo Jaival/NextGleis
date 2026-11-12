@@ -326,7 +326,7 @@ export default function BoardScreen() {
       ) : (
         <FlatList
           data={visibleRows}
-          keyExtractor={(item, index) => `${item.line}-${item.scheduledTime}-${index}`}
+          keyExtractor={rowKey}
           renderItem={({ item }) =>
             mode === 'departures' ? (
               <DepartureListItem
