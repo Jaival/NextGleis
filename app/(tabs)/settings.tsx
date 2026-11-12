@@ -97,6 +97,8 @@ export default function SettingsScreen() {
   const setDeutschlandticket = useSettingsStore((s) => s.setDeutschlandticket);
   const locationEnabled = useSettingsStore((s) => s.locationEnabled);
   const setLocationEnabled = useSettingsStore((s) => s.setLocationEnabled);
+  const diagnosticsEnabled = useSettingsStore((s) => s.diagnosticsEnabled);
+  const setDiagnosticsEnabled = useSettingsStore((s) => s.setDiagnosticsEnabled);
   const { permission, request: requestPermission } = useLocationPermission();
   const t = useT();
   const version = Constants.expoConfig?.version ?? '1.0.0';
@@ -306,6 +308,19 @@ export default function SettingsScreen() {
         >
           <View style={styles.cardBody}>
             <Text style={styles.paragraph}>{t('settings.privacyText')}</Text>
+          </View>
+          <View style={[styles.cardBody, styles.switchRow]}>
+            <View style={styles.switchText}>
+              <Text style={styles.switchLabel}>{t('settings.diagnostics')}</Text>
+              <Text style={styles.paragraph}>{t('settings.diagnosticsText')}</Text>
+            </View>
+            <Switch
+              value={diagnosticsEnabled}
+              onValueChange={setDiagnosticsEnabled}
+              accessibilityLabel={t('settings.diagnostics')}
+              trackColor={{ false: colors.input, true: colors.primary }}
+              thumbColor={colors.card}
+            />
           </View>
           <LinkRow
             label={t('settings.privacyPolicy')}
