@@ -218,3 +218,8 @@ Timetable data comes from the public journey planners of German transport
 networks (RMV, NVV, VBB, VBN, VOS, VSN, NAH.SH, INSA, VMT, RSAG, AVV,
 Saarfahrplan, S-Bahn München, INVG, VVS, KVV, MVV, VGN) and, as a fallback, the
 Deutsche Bahn Timetables API (Deutsche Bahn AG / DB InfraGO AG, CC BY 4.0).
+
+## License
+
+The code is under the [MIT License](LICENSE). Timetable data is not covered by
+it: it stays under the terms of each source listed above.

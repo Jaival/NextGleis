@@ -61,5 +61,6 @@
     "build:apk:eas-local": "eas build --platform android --profile local --local",
     "version": "node scripts/sync-app-version.mjs && git add app.json"
   },
+  "license": "MIT",
   "private": true
 }
