@@ -371,9 +371,12 @@ export default function BoardScreen() {
           refreshControl={
             <RefreshControl
               // isRefetching also covers a page being added, which has its own
-              // spinner on the button.
+              // spinner on the button. A refetch would cancel that page load
+              // (TanStack's cancelRefetch), so a pull during one is ignored.
               refreshing={isRefetching && !isFetchingNextPage}
-              onRefresh={refetch}
+              onRefresh={() => {
+                if (!isFetchingNextPage) refetch();
+              }}
               colors={[colors.primary]}
               tintColor={colors.primary}
             />

@@ -527,9 +527,12 @@ function JourneyList({
       refreshControl={
         <RefreshControl
           // isRefetching is also true while a page is added; that has its own
-          // spinner on the button.
+          // spinner on the button. A refetch would cancel that page load
+          // (TanStack's cancelRefetch), so a pull during one is ignored.
           refreshing={isRefetching && !isFetchingPreviousPage && !isFetchingNextPage}
-          onRefresh={refetch}
+          onRefresh={() => {
+            if (!fetchingPage) refetch();
+          }}
           colors={[colors.primary]}
           tintColor={colors.primary}
         />
