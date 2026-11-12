@@ -9,14 +9,14 @@ your row when done.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| [001](001-backend-cache-dedupe-and-cdn.md) | Backend cache dedupes in-flight work, stays bounded, CDN serves repeats | P1 | S–M | — | TODO |
-| [002](002-app-unit-test-runner.md) | App unit test suite for pure `lib/` logic, in CI | P1 | M | — | TODO |
-| [003](003-app-ui-bug-batch.md) | Fix four small app UI bugs | P2 | S | — (not in parallel with 004) | TODO |
-| [004](004-pause-polling-off-screen.md) | Stop polling screens that are not in view | P2 | S | — (not in parallel with 003) | TODO |
-| [005](005-backend-upstream-robustness.md) | Malformed remark / slow upstream can't break or hang a response | P3 | S | — | TODO |
-| [006](006-ci-smoke-and-docs-cleanup.md) | Smoke test all endpoints, fix docs, add agent Checks section | P3 | S | 002 optional | TODO |
-| [007](007-error-reporting-eas-observe.md) | Error reporting with EAS Observe, opt-out switch, privacy policy and data-safety answers (roadmap 0.4) | P1 | M | — (after 003; before 006) | TODO |
-| [008](008-licensed-data-source-spike.md) | Research: can licensed open data replace or back up the planner feeds? | P2 | M | — | TODO |
+| [001](001-backend-cache-dedupe-and-cdn.md) | Backend cache dedupes in-flight work, stays bounded, CDN serves repeats | P1 | S–M | — | DONE (2026-11-12, `batch/a-backend`; CDN HIT check needs a deploy) |
+| [002](002-app-unit-test-runner.md) | App unit test suite for pure `lib/` logic, in CI | P1 | M | — | DONE (2026-11-12, `batch/b-app`) |
+| [003](003-app-ui-bug-batch.md) | Fix four small app UI bugs | P2 | S | — (not in parallel with 004) | DONE (2026-11-12, `batch/b-app`; device checks A–D open) |
+| [004](004-pause-polling-off-screen.md) | Stop polling screens that are not in view | P2 | S | — (not in parallel with 003) | DONE (2026-11-12, `batch/b-app`; request-log check on device open) |
+| [005](005-backend-upstream-robustness.md) | Malformed remark / slow upstream can't break or hang a response | P3 | S | — | DONE (2026-11-12, `batch/a-backend`) |
+| [006](006-ci-smoke-and-docs-cleanup.md) | Smoke test all endpoints, fix docs, add agent Checks section | P3 | S | 002 optional | DONE (2026-11-12, `batch/c-ci-docs`) |
+| [007](007-error-reporting-eas-observe.md) | Error reporting with EAS Observe, opt-out switch, privacy policy and data-safety answers (roadmap 0.4) | P1 | M | — (after 003; before 006) | DONE (2026-11-12, `batch/b-app`; build + Observe dashboard check open, batch H) |
+| [008](008-licensed-data-source-spike.md) | Research: can licensed open data replace or back up the planner feeds? | P2 | M | — | DONE (2026-11-12, `batch/d-research`; owner picks an option) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
