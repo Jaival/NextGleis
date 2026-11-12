@@ -68,36 +68,32 @@ Worktrees used (can be removed with `git worktree remove`):
 | App `npm test` | Pass, 27/27 |
 | App `npm run lint` | 0 errors, 1 warning (`no-console` in `scripts/sync-app-version.mjs`, pre-existing) |
 | App `npm run format:check` | Pass |
-| App `npx expo install --check` | **Fails** — 8 Expo packages one patch behind SDK 57 (`expo`, `expo-router`, `expo-constants`, `expo-dev-client`, `expo-linking`, `expo-location`, `expo-splash-screen`, `@expo/metro-runtime`). Also fails on `advisor/plans`, so not caused by this work. CI runs this check, so CI will fail until fixed. |
+| App `npx expo install --check` | Pass, after the owner-approved patch update (`3f3c6da`); it failed before, also on `advisor/plans` |
+| App `npx expo-doctor` | Pass, 21/21 |
 | Backend `npm run typecheck` | Pass |
 | Backend `npm test` | Pass, 54/54 |
 | Workflow syntax (`deploy-backend.yml`) | Validated by the C worker with `@action-validator/cli` |
 
-Not run: `npx expo-doctor` on integration (B worker saw the same 8 packages);
-the deploy smoke test (needs a deploy); `npm audit`.
+Not run: the deploy smoke test (needs a deploy); `npm audit`.
 
 ## What is next
 
-1. Owner decides on the Expo patch bumps (open decision 1). Without them CI's
-   `expo install --check` step fails on the PR.
-2. Push `batch/integration` (or the batch branches) and open PRs. Suggested
+1. Push `batch/integration` (or the batch branches) and open PRs. Suggested
    split, as in `plans/README.md`: A (backend), B (app), C (CI/docs), D (note).
    Merge A and B's backend part first so the new privacy policy is live before
    any build with `expo-observe` reaches the store.
-3. Batch H (below).
-4. Plan 008 follow-up: owner picks an option; then a plan is written for it.
+2. Batch H (below).
+3. Plan 008 follow-up: owner picks an option; then a plan is written for it.
 
 ## Open decisions
 
-1. **Expo patch updates**: run `npx expo install --fix` before the next build?
-   Low risk (patch versions within SDK 57), but outside every plan, so not done.
-2. **Open-source licence for the repo**: the research note's recommended
-   fallback (Transitous) only serves open-source, non-commercial apps. The repo
-   is public but has no licence file.
-3. **Commercial or not**: affects Transitous and RMV terms.
-4. **Permission requests**: send the German draft in the research note to VBB,
+Decided on 2026-11-12: Expo patch update done (`3f3c6da`); the code is
+licensed MIT (`88f660b`), which meets Transitous's open-source rule.
+
+1. **Commercial or not**: affects Transitous and RMV terms.
+2. **Permission requests**: send the German draft in the research note to VBB,
    RMV and NVBW; apply for an RMV API key.
-5. **PR shape**: one PR per batch (README plan) or one PR from integration.
+3. **PR shape**: one PR per batch (README plan) or one PR from integration.
 
 ## Batch H — owner only, still open
 
