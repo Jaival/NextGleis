@@ -1,3 +1,8 @@
+> **Historical.** This was the original MVP brief. The app now gets its data
+> from HAFAS networks (hafas-client) and four EFA servers, with DB Timetables
+> only as a legacy fallback, and the backend runs on Vercel. See `README.md`
+> and `THINGS_TO_KNOW.md` for how it works today.
+
 # Transit Board — Product & Technical Spec (Android, MVP)
 
 > Working title only — **do not ship this as "ÖPNV Navigator."** That name, its logo, and its exact UI belong to an independent iOS developer's published app. This project is *inspired by* the concept (a German transit departure app), built from scratch with your own name, icon, and visual design, on your own Android/React Native codebase and DB's public data feed. Pick your own name before you build the icon/store listing — a few unclaimed-sounding ideas: **Gleisblick, Abfahrtszeit, NextGleis, Bahnblick, Haltepunkt.**

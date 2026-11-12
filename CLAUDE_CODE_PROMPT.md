@@ -1,3 +1,8 @@
+> **Historical.** This was the original MVP brief. The app now gets its data
+> from HAFAS networks (hafas-client) and four EFA servers, with DB Timetables
+> only as a legacy fallback, and the backend runs on Vercel. See `README.md`
+> and `THINGS_TO_KNOW.md` for how it works today.
+
 Read PRODUCT_SPEC.md in this repo fully before writing any code — it's the spec for the whole project, including an important scope note about what the free DB Timetables API can and can't do.
 
 Build an Expo (React Native + TypeScript) Android app called "[YOUR APP NAME]" per that spec. Work in phases, and stop after each phase for me to review before continuing:
