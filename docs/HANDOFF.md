@@ -4,7 +4,9 @@ Date: 2026-11-12. Orchestrator and reviewer: Claude (Opus 5.5). Workers:
 Sonnet-class subagents, one per batch. Plans and batch order:
 `plans/README.md`.
 
-Nothing is pushed. No PR is open. No deploy or EAS build ran.
+Shipped as one PR per batch. The deploy workflow shipped the backend on the
+merges of #15, #14 and #17 (all three runs green, smoke test included); no EAS
+build ran.
 
 ## What is done
 
@@ -22,22 +24,21 @@ Nothing is pushed. No PR is open. No deploy or EAS build ran.
 Device checks, the CDN check and the Observe dashboard check are **not** done;
 see "Batch H" below.
 
-## Branches and commits
+## Pull requests
 
-All local. Each batch branch starts at `advisor/plans` (`afc2470`), except C,
-which starts from the integration branch after A, B and D were merged.
+| PR | Branch | Content | State |
+| --- | --- | --- | --- |
+| #15 | `batch/b-app` | `plans/`, plans 002, 004, 003, 007, Expo SDK 57 patch update | Merged first (it carries the Expo update the other PRs' CI needed) |
+| #14 | `batch/a-backend` | Plans 001, 005 | Merged |
+| #16 | `batch/d-research` | Plan 008 note + `THINGS_TO_KNOW.md` pointer | Merged |
+| #17 | `chore/mit-license` | MIT licence | Merged |
+| — | `batch/c-ci-docs` | Plan 006, review fix, `plans/README.md` status rows, this note | PR open (rebased on `main` after the four merges) |
 
-| Branch | Head | Content |
-| --- | --- | --- |
-| `batch/a-backend` | `bd95826` | 9 commits, plans 001 then 005 |
-| `batch/b-app` | `5d4e458` | 17 commits, plans 002, 004, 003, 007 |
-| `batch/d-research` | `59d220e` | 1 commit, `docs/research/licensed-data-sources.md` |
-| `batch/c-ci-docs` | `b2a6b08` | 2 plan commits + 1 review fix |
-| `batch/integration` | this commit | A, B, D, C merged (`--no-ff`), plus a `THINGS_TO_KNOW.md` pointer to the research note, the README status rows and this note |
-
-Worktrees used (can be removed with `git worktree remove`):
+`batch/integration` was the local branch where all batches were merged and
+checked together before the PRs; it is not pushed and can be deleted. Local
+worktrees can be removed with `git worktree remove`:
 `D:\Projects\NextGleis-a-backend`, `-b-app`, `-c-ci-docs`, `-d-research`,
-`-integration`.
+`-integration`, `-license`.
 
 ## Review notes
 
@@ -78,28 +79,25 @@ Not run: the deploy smoke test (needs a deploy); `npm audit`.
 
 ## What is next
 
-1. Push `batch/integration` (or the batch branches) and open PRs. Suggested
-   split, as in `plans/README.md`: A (backend), B (app), C (CI/docs), D (note).
-   Merge A and B's backend part first so the new privacy policy is live before
-   any build with `expo-observe` reaches the store.
-2. Batch H (below).
+1. Merge the batch C PR.
+2. Batch H (below). The new privacy policy is live since the #15 deploy, so a
+   build with `expo-observe` may now go to the store.
 3. Plan 008 follow-up: owner picks an option; then a plan is written for it.
 
 ## Open decisions
 
-Decided on 2026-11-12: Expo patch update done (`3f3c6da`); the code is
-licensed MIT (`88f660b`), which meets Transitous's open-source rule.
+Decided on 2026-11-12: Expo patch update done (in #15); the code is licensed
+MIT (#17), which meets Transitous's open-source rule; one PR per batch.
 
 1. **Commercial or not**: affects Transitous and RMV terms.
 2. **Permission requests**: send the German draft in the research note to VBB,
    RMV and NVBW; apply for an RMV API key.
-3. **PR shape**: one PR per batch (README plan) or one PR from integration.
 
 ## Batch H — owner only, still open
 
 1. `eas env:set` for `EXPO_PUBLIC_API_BASE_URL` (roadmap 0.1).
-2. Deploy the backend (carries the new privacy policy and plan 001/005), then
-   check `x-vercel-cache: HIT` on a repeated request within 25 s (plan 001).
+2. The backend is deployed. Check `x-vercel-cache: HIT` on a repeated request
+   within 25 s (plan 001).
 3. `eas build --platform android --profile preview`; on a device run:
    - plan 004: backend request log shows board, trip and routes polling stop
      off screen;
