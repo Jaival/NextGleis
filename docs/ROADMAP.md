@@ -38,7 +38,7 @@ Not features, but needed before the first store release.
 | 0.1 | Set `EXPO_PUBLIC_API_BASE_URL` in EAS and pin `environment` per build profile | ◐ | Profiles are pinned in `eas.json`; the variable itself still has to be set on the EAS account (`eas env:set`). Otherwise store builds can't reach the backend. DEVOPS.md §3 |
 | 0.2 | CI on pull requests, and a tag-triggered release pipeline | ☑ | `.github/workflows/`, DEVOPS.md §8 |
 | 0.3 | Backend unit tests for `normalize.ts`, `lines.ts`, `stopId.ts` | ☑ | `npm test` in `backend/` (Node's test runner, no new dependency); runs in CI |
-| 0.4 | Crash reporting | ☐ | Sentry or EAS Observe |
+| 0.4 | Crash reporting | ☑ | EAS Observe (`expo-observe`): JS and render errors, startup timings; opt-out in Settings. Native crashes and ANRs stay with Android vitals. Needs a new native build |
 | 0.5 | Store listing: screenshots (DE + EN), feature graphic, data-safety form | ☐ | Data safety must mention location once 1.3 ships |
 | 0.6 | Privacy policy: add location use | ☑ | Location is sent to the backend for a nearby search and not stored |
 
