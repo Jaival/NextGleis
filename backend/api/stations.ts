@@ -1,5 +1,5 @@
 import { cached } from '../lib/cache.js';
-import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
+import { cacheOnCdn, queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
 import { searchStops } from '../lib/search.js';
 
 // Stop names barely change, and every search fans out to all networks — a few
@@ -26,6 +26,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const results = await cached(`stations:${query.toLowerCase()}`, SEARCH_TTL_MS, () =>
       searchStops(query),
     );
+    cacheOnCdn(res, SEARCH_TTL_MS / 1000);
     res.status(200).json(results);
   } catch (err) {
     sendError(res, err);

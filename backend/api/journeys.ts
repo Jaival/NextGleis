@@ -2,7 +2,7 @@ import { cached } from '../lib/cache.js';
 import { findJourneys, parsePageRef, type JourneyQuery } from '../lib/hafas/journeys.js';
 import { resolveStopId } from '../lib/hafas/resolve.js';
 import { parseStopId } from '../lib/hafas/stopId.js';
-import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
+import { cacheOnCdn, queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
 
 // A cross-country search can try two networks, each after matching both stops
 // up in it, and a single upstream routing call alone took ~7.6s in testing.
@@ -74,6 +74,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       const [origin, destination] = await Promise.all([resolveStopId(from), resolveStopId(to)]);
       return findJourneys(origin, destination, query, { regionalOnly });
     });
+    cacheOnCdn(res, 60);
     res.status(200).json(queryParam(req, 'paged') === '1' ? page : page.journeys);
   } catch (err) {
     sendError(res, err);

@@ -1,6 +1,6 @@
 import { cached } from '../lib/cache.js';
 import { nearbyStops } from '../lib/hafas/nearby.js';
-import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
+import { cacheOnCdn, queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
 
 // Stops don't move, and rounding the position to ~100 m lets everyone standing
 // around the same stop share one lookup.
@@ -31,6 +31,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const stops = await cached(`nearby:${rounded.latitude},${rounded.longitude}`, NEARBY_TTL_MS, () =>
       nearbyStops(rounded),
     );
+    cacheOnCdn(res, NEARBY_TTL_MS / 1000);
     res.status(200).json(stops);
   } catch (err) {
     sendError(res, err);
