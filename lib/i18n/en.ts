@@ -76,6 +76,7 @@ export const en = {
   'board.error': 'Could not load this board',
   'board.filteredTitle': 'Everything is filtered out',
   'board.filteredMessage': 'Tap a line above to bring its departures back.',
+  'board.filteredDirectionsMessage': 'Long-press a line above to show its directions again.',
   'board.emptyTitle': 'Nothing scheduled',
   'board.emptyMessage': 'No departures from this stop in the next couple of hours.',
   'board.emptyMessageArrivals': 'No arrivals at this stop in the next couple of hours.',

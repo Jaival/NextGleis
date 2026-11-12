@@ -395,12 +395,16 @@ export default function BoardScreen() {
                 title={t('board.error')}
                 message={t('common.pullToRetry')}
               />
-            ) : hiddenLines.length > 0 ? (
+            ) : rows.length > 0 ? (
               <EmptyState
                 fill
                 icon="filter-outline"
                 title={t('board.filteredTitle')}
-                message={t('board.filteredMessage')}
+                message={
+                  hiddenLines.length > 0
+                    ? t('board.filteredMessage')
+                    : t('board.filteredDirectionsMessage')
+                }
               />
             ) : (
               <EmptyState

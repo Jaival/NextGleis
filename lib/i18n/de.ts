@@ -85,6 +85,8 @@ export const de: Messages = {
   'board.error': 'Abfahrten konnten nicht geladen werden',
   'board.filteredTitle': 'Alles ausgeblendet',
   'board.filteredMessage': 'Tippe oben auf eine Linie, um ihre Abfahrten wieder einzublenden.',
+  'board.filteredDirectionsMessage':
+    'Halte oben eine Linie gedrückt, um ihre Richtungen wieder einzublenden.',
   'board.emptyTitle': 'Keine Abfahrten',
   'board.emptyMessage': 'In den nächsten Stunden fährt hier nichts ab.',
   'board.emptyMessageArrivals': 'In den nächsten Stunden kommt hier nichts an.',
