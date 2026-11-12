@@ -89,7 +89,8 @@ jobs:
 
           # A route between two stops found by search, so no stop id is hard-coded twice.
           get() {
-            curl --fail --silent --show-error --retry 4 --retry-all-errors --retry-delay 10               --max-time 30 "$BACKEND_URL$1"
+            curl --fail --silent --show-error --retry 4 --retry-all-errors --retry-delay 10 \
+              --max-time 30 "$BACKEND_URL$1"
           }
           from=$(get "/api/stations?query=Frankfurt%20Hauptwache" | jq -r '.[0].evaNo')
           to=$(get "/api/stations?query=Frankfurt%20Hbf" | jq -r '.[0].evaNo')

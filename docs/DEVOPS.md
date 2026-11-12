@@ -39,9 +39,9 @@ There are two deployable units, and they ship independently:
 - **Caching.** Every search fans out to ~14 networks. The proxy caches results
   (search 5 min, boards 25 s, routes 60 s, stop positions 1 day) so the
   networks see far fewer requests than users make.
-- **A stable contract.** The app knows six JSON endpoints (stations, nearby, board,
-  arrivals, trip, journeys). Upstream
-  formats (HAFAS, DB XML) are normalized server-side.
+- **A stable contract.** The app knows six JSON endpoints (stations, nearby,
+  board, arrivals, trip, journeys). Upstream formats (HAFAS, EFA, DB XML) are
+  normalized server-side.
 
 ### Why Vercel
 
@@ -307,7 +307,7 @@ Two workflows in `.github/workflows/`:
 
 | Workflow | Runs on | Does |
 | --- | --- | --- |
-| `ci.yml` | Every pull request and push to `main` | App: typecheck, lint, Prettier, `expo install --check`, `expo-doctor`. Backend: typecheck, unit tests, `npm audit --omit=dev` |
+| `ci.yml` | Every pull request and push to `main` | App: typecheck, unit tests, lint, Prettier, `expo install --check`, `expo-doctor`. Backend: typecheck, unit tests, `npm audit --omit=dev` |
 | `deploy-backend.yml` | Pushes to `main` that touch `backend/`, manually, and from `release.yml` | CI checks → Vercel production deploy → smoke test |
 | `cut-release.yml` | Manually | CI checks on `main` → `npm version` → push commit and tag → start `release.yml` |
 | `release.yml` | Pushing a `v*.*.*` tag, or manually for an existing tag | CI checks → version check → backend deploy + smoke test → EAS builds → Google Play (internal) → GitHub Release |
