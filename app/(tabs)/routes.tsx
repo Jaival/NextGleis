@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -435,6 +435,7 @@ function JourneyList({
   colors: Colors;
 }) {
   const t = useT();
+  const isFocused = useIsFocused();
   const {
     data,
     isLoading,
@@ -468,6 +469,8 @@ function JourneyList({
       last.laterRef ? { later: last.laterRef } : undefined,
     // Connections shift with realtime delays; a minute is fresh enough while
     // the list is open.
+    // The Routes tab stays mounted while another tab is open; don't poll then.
+    subscribed: isFocused,
     refetchInterval: 60_000,
   });
   const isOffline = fetchStatus === 'paused';

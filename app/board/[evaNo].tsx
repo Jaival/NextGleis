@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -102,6 +102,7 @@ export default function BoardScreen() {
 
   // Each page is a two-hour window; `null` is the one starting now, and the
   // next starts at the minute of the last row so far.
+  const isFocused = useIsFocused();
   const {
     data,
     isLoading,
@@ -125,6 +126,9 @@ export default function BoardScreen() {
       // whose sources can't look ahead), has nothing later to offer.
       return next && next > (lastParam ?? '') ? next : undefined;
     },
+    // A board under the trip screen (or after leaving it) shouldn't keep
+    // polling; on return it refetches once if stale.
+    subscribed: isFocused,
     refetchInterval: 30_000,
   });
   const isOffline = fetchStatus === 'paused';
