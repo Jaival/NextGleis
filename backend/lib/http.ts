@@ -16,6 +16,14 @@ export interface ApiResponse extends ServerResponse {
   json(body: unknown): ApiResponse;
 }
 
+// Lets Vercel's CDN answer repeats of this exact URL for `seconds`, across
+// every instance and user, before a function runs at all. Only the CDN reads
+// this header; the app and other proxies don't cache. Set it on success only,
+// so an upstream error is never pinned.
+export function cacheOnCdn(res: ApiResponse, seconds: number): void {
+  res.setHeader('Vercel-CDN-Cache-Control', `max-age=${seconds}`);
+}
+
 export function queryParam(req: ApiRequest, name: string): string | undefined {
   const raw = req.query[name];
   return (Array.isArray(raw) ? raw[0] : raw)?.trim() || undefined;
@@ -29,7 +37,10 @@ function isHafasError(err: unknown): err is Error & { code?: string } {
 
 export function sendError(res: ApiResponse, err: unknown): void {
   if (err instanceof DbApiError) {
-    res.status(err.status >= 500 ? 502 : err.status).json({ error: err.message });
+    // A 401/403 here is the server's own credential problem, not the client's,
+    // so only "not found" passes through and the detail stays in the log.
+    console.error(err.message);
+    res.status(err.status === 404 ? 404 : 502).json({ error: 'Timetable service request failed' });
     return;
   }
   if (err instanceof StopNotFoundError) {

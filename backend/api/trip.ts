@@ -1,5 +1,5 @@
 import { cached } from '../lib/cache.js';
-import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
+import { cacheOnCdn, queryParam, sendError, type ApiRequest, type ApiResponse } from '../lib/http.js';
 import { hafasTrip, parseTripId } from '../lib/hafas/trip.js';
 
 // GET /api/trip?id=<network>:<HAFAS trip id> — every stop of one run, with
@@ -17,6 +17,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   try {
     // Same freshness as a board: the delays are the point.
     const trip = await cached(`trip:${tripId}`, 25_000, () => hafasTrip(ref));
+    cacheOnCdn(res, 25);
     res.status(200).json(trip);
   } catch (err) {
     sendError(res, err);

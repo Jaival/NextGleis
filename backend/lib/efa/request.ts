@@ -1,5 +1,5 @@
 import { HAFAS_USER_AGENT } from '../env.js';
-import { withTimeout } from '../hafas/networks.js';
+import { UpstreamTimeoutError } from '../hafas/networks.js';
 import type { EfaNetwork } from './networks.js';
 
 const REQUEST_TIMEOUT_MS = 5_000;
@@ -33,13 +33,19 @@ export async function efaRequest<T>(
   url.searchParams.set('coordOutputFormat', 'WGS84[dd.ddddd]');
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-  const res = await withTimeout(
-    fetch(url, { headers: { 'User-Agent': HAFAS_USER_AGENT, Accept: 'application/json' } }),
-    REQUEST_TIMEOUT_MS,
-  );
-  if (!res.ok) {
-    throw new EfaRequestError(`${network.label} request to ${request} failed with ${res.status}`);
+  // The signal covers the body as well as the headers, and aborts the socket
+  // rather than leaving it running.
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': HAFAS_USER_AGENT, Accept: 'application/json' },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      throw new EfaRequestError(`${network.label} request to ${request} failed with ${res.status}`);
+    }
+    return (await res.json()) as T;
+  } catch (err) {
+    if (err instanceof Error && err.name === 'TimeoutError') throw new UpstreamTimeoutError(REQUEST_TIMEOUT_MS);
+    throw err;
   }
-
-  return (await res.json()) as T;
 }

@@ -4,7 +4,7 @@ import { efaBoard } from '../../lib/efa/board.js';
 import { hasDbCredentials } from '../../lib/env.js';
 import { hafasBoard } from '../../lib/hafas/board.js';
 import { preferOwner, resolveEva } from '../../lib/hafas/resolve.js';
-import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../../lib/http.js';
+import { cacheOnCdn, queryParam, sendError, type ApiRequest, type ApiResponse } from '../../lib/http.js';
 import { parseStopId, type ParsedStopId } from '../../lib/stopId.js';
 import { timetablesBoard } from '../../lib/timetables.js';
 import type { DepartureRow } from '../../types/index.js';
@@ -50,6 +50,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const rows = await cached(`board:${stopId}@${whenParam ?? 'now'}`, 25_000, () =>
       loadBoard(stop, when),
     );
+    cacheOnCdn(res, 25);
     res.status(200).json(rows);
   } catch (err) {
     sendError(res, err);

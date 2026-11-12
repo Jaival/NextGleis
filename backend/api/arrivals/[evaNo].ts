@@ -2,7 +2,7 @@ import { fromBerlinWallClock } from '../../lib/berlinTime.js';
 import { cached } from '../../lib/cache.js';
 import { hafasArrivalBoard } from '../../lib/hafas/board.js';
 import { preferOwner } from '../../lib/hafas/resolve.js';
-import { queryParam, sendError, type ApiRequest, type ApiResponse } from '../../lib/http.js';
+import { cacheOnCdn, queryParam, sendError, type ApiRequest, type ApiResponse } from '../../lib/http.js';
 import { parseStopId } from '../../lib/stopId.js';
 
 // GET /api/arrivals/<stop id>[?when=<Berlin wall-clock>] — see the board route.
@@ -33,6 +33,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const rows = await cached(`arrivals:${stopId}@${whenParam ?? 'now'}`, 25_000, async () =>
       hafasArrivalBoard(await preferOwner(stop.ref), when),
     );
+    cacheOnCdn(res, 25);
     res.status(200).json(rows);
   } catch (err) {
     sendError(res, err);
