@@ -71,11 +71,12 @@ export default function RoutesScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const language = useLanguage();
-  const { fromEva, fromName, toEva, toName } = useLocalSearchParams<{
+  const { fromEva, fromName, toEva, toName, opened } = useLocalSearchParams<{
     fromEva?: string;
     fromName?: string;
     toEva?: string;
     toName?: string;
+    opened?: string;
   }>();
 
   const [from, setFrom] = useState<Stop | null>(null);
@@ -89,8 +90,10 @@ export default function RoutesScreen() {
 
   // A saved route opened from Home arrives as params and replaces whatever
   // was on screen. Applied during render (rather than in an effect) so the
-  // first frame already shows the route instead of an empty picker.
-  const paramsKey = fromEva && fromName && toEva && toName ? `${fromEva}>${toEva}` : null;
+  // first frame already shows the route instead of an empty picker. The
+  // `opened` timestamp from Home makes reopening the same route a new request.
+  const paramsKey =
+    fromEva && fromName && toEva && toName ? `${fromEva}>${toEva}@${opened ?? ''}` : null;
   const [appliedParams, setAppliedParams] = useState<string | null>(null);
   if (paramsKey && paramsKey !== appliedParams && fromEva && fromName && toEva && toName) {
     setAppliedParams(paramsKey);
