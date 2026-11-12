@@ -39,12 +39,13 @@ There are two deployable units, and they ship independently:
 - **Caching.** Every search fans out to ~14 networks. The proxy caches results
   (search 5 min, boards 25 s, routes 60 s, stop positions 1 day) so the
   networks see far fewer requests than users make.
-- **A stable contract.** The app only knows three JSON endpoints. Upstream
+- **A stable contract.** The app knows six JSON endpoints (stations, nearby, board,
+  arrivals, trip, journeys). Upstream
   formats (HAFAS, DB XML) are normalized server-side.
 
 ### Why Vercel
 
-The backend is three stateless HTTP handlers. Vercel runs each `api/*.ts` file
+The backend is six stateless HTTP handlers. Vercel runs each `api/*.ts` file
 as a function with no server to manage, has a free tier that fits this load,
 and gives preview deployments per branch. `backend/lib/http.ts` uses small
 local types rather than `@vercel/node`, so the code isn't tied to Vercel; the
@@ -181,6 +182,7 @@ Run these before every PR. They are what CI should run (section 8).
 
 ```sh
 npm run typecheck           # tsc --noEmit, strict + noUncheckedIndexedAccess
+npm test                    # node:test unit tests
 npm run lint                # eslint-config-expo + prettier, exhaustive-deps as error
 npm run format:check        # prettier
 npx expo install --check    # dependency versions match SDK 57
@@ -188,6 +190,7 @@ npx expo-doctor             # project health checks
 
 cd backend
 npm run typecheck
+npm test                    # node:test unit tests
 npm audit --omit=dev        # only what gets deployed
 ```
 
@@ -202,8 +205,9 @@ Why each one matters:
 - **npm audit --omit=dev** — dev-only advisories don't ship; don't let them
   block a release.
 
-There are no automated tests yet. Until there are, smoke-test on a device
-before releasing (section 7, step 4).
+Unit tests run in CI (`backend/test/` and `test/`). The app's screens have no
+automated tests, so smoke-test on a device before releasing (section 7,
+step 4).
 
 ---
 
@@ -303,7 +307,7 @@ Two workflows in `.github/workflows/`:
 
 | Workflow | Runs on | Does |
 | --- | --- | --- |
-| `ci.yml` | Every pull request and push to `main` | App: typecheck, lint, Prettier, `expo install --check`, `expo-doctor`. Backend: typecheck, `npm audit --omit=dev` |
+| `ci.yml` | Every pull request and push to `main` | App: typecheck, lint, Prettier, `expo install --check`, `expo-doctor`. Backend: typecheck, unit tests, `npm audit --omit=dev` |
 | `deploy-backend.yml` | Pushes to `main` that touch `backend/`, manually, and from `release.yml` | CI checks → Vercel production deploy → smoke test |
 | `cut-release.yml` | Manually | CI checks on `main` → `npm version` → push commit and tag → start `release.yml` |
 | `release.yml` | Pushing a `v*.*.*` tag, or manually for an existing tag | CI checks → version check → backend deploy + smoke test → EAS builds → Google Play (internal) → GitHub Release |
@@ -494,6 +498,6 @@ can reset a lost upload key, but it takes days.
 | --- | --- | --- |
 | API URL not set in EAS yet | Cloud builds fall back to `10.0.2.2` | `eas env:set`, section 3 |
 | No OTA updates | Every JS fix needs a store release | Section 9 |
-| No automated tests | Regressions found manually | Start with backend unit tests for `normalize.ts`, `merge.ts`, `lines.ts` |
+| No UI tests | Screen regressions found manually | Unit-test logic extracted to lib/; consider component tests later |
 | Per-instance cache | Lower hit rate under load | Shared KV store |
 | No iOS `bundleIdentifier` | Can't build for iOS | Add `ios.bundleIdentifier` to `app.json` |
