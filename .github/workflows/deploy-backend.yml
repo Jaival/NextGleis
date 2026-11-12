@@ -67,7 +67,8 @@ jobs:
         # The Vercel project is just backend/, the same as `cd backend && vercel --prod`.
         working-directory: backend
         run: |
-          npm install --global vercel@latest
+          # Pinned to a major so a CLI release cannot change deploy behavior unseen.
+          npm install --global vercel@65
           vercel deploy --prod --yes --token="$VERCEL_TOKEN"
 
       # Check the live backend answers the endpoints the app calls.
@@ -84,5 +85,22 @@ jobs:
           check "/api/stations?query=Alexanderplatz" 'length > 0'
           check "/api/nearby?lat=50.107&lon=8.664" 'length > 0'
           check "/api/board/rmv:3000010" 'type == "array"'
+          check "/api/arrivals/rmv:3000010" 'type == "array"'
+
+          # A route between two stops found by search, so no stop id is hard-coded twice.
+          get() {
+            curl --fail --silent --show-error --retry 4 --retry-all-errors --retry-delay 10               --max-time 30 "$BACKEND_URL$1"
+          }
+          from=$(get "/api/stations?query=Frankfurt%20Hauptwache" | jq -r '.[0].evaNo')
+          to=$(get "/api/stations?query=Frankfurt%20Hbf" | jq -r '.[0].evaNo')
+          check "/api/journeys?from=$(jq -rn --arg v "$from" '$v|@uri')&to=$(jq -rn --arg v "$to" '$v|@uri')&paged=1" '.journeys | type == "array"'
+
+          # Trip details for any departure on the board that has one.
+          trip=$(get "/api/board/rmv:3000010" | jq -r 'map(select(.tripId))[0].tripId // empty')
+          if [ -n "$trip" ]; then
+            check "/api/trip?id=$(jq -rn --arg v "$trip" '$v|@uri')" '.stops | length > 0'
+          else
+            echo "No departure with a trip id right now; skipping /api/trip"
+          fi
           curl --fail --silent --show-error --max-time 30 "$BACKEND_URL/privacy-policy.html" > /dev/null
           echo "Backend OK"
