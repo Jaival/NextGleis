@@ -28,11 +28,12 @@ function plainText(html: string | undefined): string {
     .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<[^>]*>/g, '')
     .replace(/&(#\d+|#x[\da-f]+|\w+);/gi, (match, entity: string) => {
-      if (entity.startsWith('#x') || entity.startsWith('#X')) {
-        return String.fromCodePoint(parseInt(entity.slice(2), 16));
-      }
-      if (entity.startsWith('#')) return String.fromCodePoint(parseInt(entity.slice(1), 10));
-      return ENTITIES[entity.toLowerCase()] ?? match;
+      if (!entity.startsWith('#')) return ENTITIES[entity.toLowerCase()] ?? match;
+      const hex = entity[1] === 'x' || entity[1] === 'X';
+      const codePoint = parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
+      // A malformed entity from a network stays as text rather than throwing
+      // and failing every board that carries the remark.
+      return codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : match;
     })
     .replace(/\s+/g, ' ')
     .trim();
