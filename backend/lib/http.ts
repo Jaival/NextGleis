@@ -37,7 +37,10 @@ function isHafasError(err: unknown): err is Error & { code?: string } {
 
 export function sendError(res: ApiResponse, err: unknown): void {
   if (err instanceof DbApiError) {
-    res.status(err.status >= 500 ? 502 : err.status).json({ error: err.message });
+    // A 401/403 here is the server's own credential problem, not the client's,
+    // so only "not found" passes through and the detail stays in the log.
+    console.error(err.message);
+    res.status(err.status === 404 ? 404 : 502).json({ error: 'Timetable service request failed' });
     return;
   }
   if (err instanceof StopNotFoundError) {
