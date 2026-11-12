@@ -1,3 +1,4 @@
+import { Observe } from 'expo-observe';
 import { Appearance } from 'react-native';
 import { create } from 'zustand';
 import { getSettings, saveSettings } from './storage';
@@ -14,6 +15,14 @@ function applyColorScheme(mode: ThemeMode) {
   Appearance.setColorScheme?.(mode === 'system' ? 'unspecified' : mode);
 }
 
+// The one switch for everything expo-observe sends: error reports and startup
+// timings. While off, pending data is dropped, not queued. Observe sends when
+// the app goes to the background, so applying the stored value during
+// hydration is early enough to honour an opt-out from the previous session.
+function applyDiagnostics(enabled: boolean) {
+  Observe.configure({ dispatchingEnabled: enabled });
+}
+
 type SettingsState = AppSettings & {
   hydrated: boolean;
   hydrate: () => Promise<void>;
@@ -25,6 +34,7 @@ type SettingsState = AppSettings & {
   completeOnboarding: () => Promise<void>;
   setDeutschlandticket: (deutschlandticket: boolean) => Promise<void>;
   setLocationEnabled: (locationEnabled: boolean) => Promise<void>;
+  setDiagnosticsEnabled: (diagnosticsEnabled: boolean) => Promise<void>;
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => {
@@ -41,6 +51,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       onboarded,
       deutschlandticket,
       locationEnabled,
+      diagnosticsEnabled,
     } = get();
     await saveSettings({
       themeMode,
@@ -51,6 +62,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       onboarded,
       deutschlandticket,
       locationEnabled,
+      diagnosticsEnabled,
     });
   };
 
@@ -63,6 +75,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     onboarded: false,
     deutschlandticket: false,
     locationEnabled: true,
+    diagnosticsEnabled: true,
     hydrated: false,
 
     hydrate: async () => {
@@ -70,6 +83,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
         const settings = await getSettings();
         set({ ...settings });
         applyColorScheme(settings.themeMode);
+        applyDiagnostics(settings.diagnosticsEnabled);
       } finally {
         set({ hydrated: true });
       }
@@ -93,5 +107,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     setDeutschlandticket: (deutschlandticket) => update({ deutschlandticket }),
 
     setLocationEnabled: (locationEnabled) => update({ locationEnabled }),
+
+    setDiagnosticsEnabled: async (diagnosticsEnabled) => {
+      applyDiagnostics(diagnosticsEnabled);
+      await update({ diagnosticsEnabled });
+    },
   };
 });
