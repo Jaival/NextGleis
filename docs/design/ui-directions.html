@@ -1,0 +1,1140 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NextGleis — three UI directions (2026-11-13)</title>
+    <style>
+      /* Standalone fallbacks: the page was drawn for a host that supplies these. */
+      :root {
+        --font-sans:
+          system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        --foreground: #eceff8;
+        --muted-foreground: #98a1b8;
+        --border: #2a2f3d;
+      }
+      body {
+        background: #0a0c13;
+        margin: 24px auto;
+        max-width: 760px;
+        padding: 0 16px;
+      }
+      .note {
+        font: 400 13px/1.5 var(--font-sans);
+        color: var(--muted-foreground);
+        margin: 0 0 28px;
+      }
+      .note b {
+        color: var(--foreground);
+      }
+    </style>
+
+    <style>
+      .dir {
+        margin: 0 0 36px;
+      }
+      .dir h2 {
+        font: 700 17px/1.2 var(--font-sans);
+        color: var(--foreground);
+        margin: 0 0 4px;
+      }
+      .dir p.idea {
+        font: 400 13px/1.45 var(--font-sans);
+        color: var(--muted-foreground);
+        margin: 0 0 14px;
+        max-width: 640px;
+      }
+      .row {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .col {
+        flex: 1 1 200px;
+        min-width: 200px;
+      }
+      .cap {
+        font: 600 11px/1 var(--font-sans);
+        color: var(--muted-foreground);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 8px 2px 0;
+      }
+      .phone {
+        height: 470px;
+        border-radius: 26px;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid var(--border);
+        font-size: 10px;
+        line-height: 1.3;
+        box-sizing: border-box;
+      }
+      .phone * {
+        box-sizing: border-box;
+      }
+      .tabs {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        font-weight: 700;
+        font-size: 9px;
+        letter-spacing: 0.04em;
+      }
+
+      /* ───────── A · ANZEIGER ───────── */
+      .a {
+        background: #0a0a0b;
+        color: #f2efe6;
+        font-family: var(--font-mono), ui-monospace, Menlo, Consolas, monospace;
+      }
+      .a .top {
+        padding: 18px 14px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .a .clock {
+        color: #ffb400;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .a .brand {
+        font-size: 9px;
+        letter-spacing: 0.22em;
+        color: #8a8678;
+      }
+      .a .find {
+        margin: 0 14px 12px;
+        border: 1px solid #2a2a2c;
+        padding: 8px 10px;
+        color: #8a8678;
+        letter-spacing: 0.06em;
+      }
+      .a .find b {
+        color: #ffb400;
+        font-weight: 400;
+      }
+      .a .hd {
+        display: flex;
+        padding: 5px 14px;
+        font-size: 8px;
+        letter-spacing: 0.16em;
+        color: #8a8678;
+        border-top: 1px solid #1d1d1f;
+        border-bottom: 1px solid #1d1d1f;
+      }
+      .a .r {
+        display: flex;
+        align-items: center;
+        padding: 7px 14px;
+        border-bottom: 1px solid #161618;
+      }
+      .a .t {
+        width: 42px;
+        color: #ffb400;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .a .l {
+        width: 48px;
+      }
+      .a .l span {
+        display: inline-block;
+        padding: 1px 5px;
+        font-weight: 700;
+        font-size: 9px;
+        color: #0a0a0b;
+        background: #f2efe6;
+      }
+      .a .d {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .a .g {
+        width: 26px;
+        height: 20px;
+        background: #0b3d91;
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-family: var(--font-sans), Arial, sans-serif;
+      }
+      .a .late {
+        color: #ff5a3c;
+        font-size: 9px;
+      }
+      .a .sect {
+        padding: 12px 14px 5px;
+        font-size: 8px;
+        letter-spacing: 0.2em;
+        color: #ffb400;
+      }
+      .a .tabs {
+        background: #0a0a0b;
+        border-top: 1px solid #2a2a2c;
+        color: #8a8678;
+        letter-spacing: 0.16em;
+      }
+      .a .tabs .on {
+        color: #ffb400;
+      }
+      .a .od {
+        padding: 4px 14px 10px;
+      }
+      .a .od div {
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 11px;
+      }
+      .a .od div + div::before {
+        content: '→ ';
+        color: #ffb400;
+      }
+      .a .trip {
+        padding: 9px 14px;
+        border-bottom: 1px solid #161618;
+      }
+      .a .trip .big {
+        color: #ffb400;
+        font-size: 15px;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+      }
+      .a .trip .big i {
+        font-style: normal;
+        color: #8a8678;
+        font-size: 10px;
+        font-weight: 400;
+      }
+      .a .trip .ls {
+        margin-top: 5px;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .a .trip .ls span {
+        padding: 1px 5px;
+        background: #f2efe6;
+        color: #0a0a0b;
+        font-weight: 700;
+        font-size: 9px;
+      }
+      .a .trip .ls em {
+        margin-left: auto;
+        font-style: normal;
+        color: #8a8678;
+      }
+      .a .step {
+        display: flex;
+        padding: 6px 14px;
+        align-items: center;
+      }
+      .a .chg {
+        margin: 5px 14px;
+        padding: 6px 8px;
+        border: 1px dashed #ffb400;
+        color: #ffb400;
+        display: flex;
+        justify-content: space-between;
+        letter-spacing: 0.06em;
+        font-size: 9px;
+      }
+      .a .via {
+        padding: 0 14px 0 56px;
+        color: #8a8678;
+        font-size: 9px;
+        text-transform: uppercase;
+      }
+
+      /* ───────── B · NETZPLAN ───────── */
+      .b {
+        background: #f3efe6;
+        color: #15130f;
+        font-family: var(--font-sans), 'Helvetica Neue', Arial, sans-serif;
+      }
+      .b .top {
+        padding: 20px 16px 6px;
+      }
+      .b .top h3 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+      .b .top small {
+        font-size: 9px;
+        color: #7a7466;
+        letter-spacing: 0.04em;
+      }
+      .b .find {
+        margin: 10px 16px 6px;
+        border-bottom: 2px solid #15130f;
+        padding: 6px 0;
+        font-size: 12px;
+        color: #7a7466;
+      }
+      .b .lab {
+        padding: 12px 16px 4px;
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+      }
+      .b .strip {
+        margin: 0 16px 6px;
+        display: flex;
+        align-items: center;
+        height: 38px;
+        position: relative;
+      }
+      .b .strip::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 5px;
+        margin-top: -2.5px;
+        border-radius: 3px;
+        background: var(--c);
+      }
+      .b .strip .pt {
+        position: relative;
+        background: #f3efe6;
+        padding-right: 6px;
+        font-weight: 700;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .b .strip .pt::before,
+      .b .strip .pt.e::after {
+        content: '';
+        width: 9px;
+        height: 9px;
+        border: 2.5px solid #15130f;
+        border-radius: 50%;
+        background: #fff;
+        flex: none;
+      }
+      .b .strip .pt::before {
+        display: block;
+      }
+      .b .strip .pt.e {
+        margin-left: auto;
+        padding: 0 0 0 6px;
+      }
+      .b .strip .pt.e::after {
+        display: block;
+      }
+      .b .strip .pt.e::before {
+        display: none;
+      }
+      .b .strip .n {
+        position: relative;
+        margin-left: auto;
+        background: #15130f;
+        color: #f3efe6;
+        font-weight: 800;
+        padding: 3px 7px;
+        border-radius: 10px;
+        font-size: 9px;
+        white-space: nowrap;
+      }
+      .b .tabs {
+        background: #15130f;
+        color: #8f8a7d;
+      }
+      .b .tabs .on {
+        color: #f3efe6;
+      }
+      .b .trip {
+        margin: 0 16px;
+        padding: 10px 0;
+        border-bottom: 1px solid #d8d2c2;
+      }
+      .b .trip .h {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+      .b .trip .h b {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      .b .trip .h span {
+        font-size: 9px;
+        color: #7a7466;
+      }
+      .b .bar {
+        display: flex;
+        height: 16px;
+        margin-top: 6px;
+        gap: 2px;
+      }
+      .b .bar i {
+        font-style: normal;
+        color: #fff;
+        font-weight: 800;
+        font-size: 8px;
+        display: flex;
+        align-items: center;
+        padding: 0 5px;
+        border-radius: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .b .bar u {
+        text-decoration: none;
+        width: 7px;
+      }
+      .b .map {
+        padding: 6px 16px 0 16px;
+      }
+      .b .st {
+        display: flex;
+        align-items: center;
+        height: 26px;
+        position: relative;
+        padding-left: 62px;
+        font-weight: 700;
+        font-size: 11px;
+      }
+      .b .st time {
+        position: absolute;
+        left: 0;
+        width: 34px;
+        text-align: right;
+        font-weight: 800;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .b .st::before {
+        content: '';
+        position: absolute;
+        left: 44px;
+        width: 11px;
+        height: 11px;
+        border: 3px solid #15130f;
+        background: #fff;
+        border-radius: 50%;
+        z-index: 2;
+      }
+      .b .st .pl {
+        margin-left: auto;
+        white-space: nowrap;
+        font-size: 9px;
+        font-weight: 800;
+        border: 1.5px solid #15130f;
+        padding: 1px 5px;
+      }
+      .b .seg {
+        height: 34px;
+        position: relative;
+        padding-left: 62px;
+        display: flex;
+        align-items: center;
+        font-size: 9px;
+        color: #5c5749;
+      }
+      .b .seg::before {
+        content: '';
+        position: absolute;
+        left: 47px;
+        top: -8px;
+        bottom: -8px;
+        width: 5px;
+        background: var(--c);
+        border-radius: 3px;
+      }
+      .b .seg b {
+        color: #fff;
+        background: var(--c);
+        padding: 1px 6px;
+        border-radius: 8px;
+        margin-right: 6px;
+        font-size: 9px;
+      }
+      .b .x {
+        height: 30px;
+        position: relative;
+        padding-left: 62px;
+        display: flex;
+        align-items: center;
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .b .x::before {
+        content: '';
+        position: absolute;
+        left: 46px;
+        top: -9px;
+        bottom: -9px;
+        width: 7px;
+        border-radius: 4px;
+        border: 2px solid #15130f;
+        background: #fff;
+        z-index: 1;
+      }
+      .b .x span {
+        background: #15130f;
+        color: #f3efe6;
+        padding: 2px 7px;
+        border-radius: 10px;
+      }
+      .b .x em {
+        font-style: normal;
+        margin-left: 6px;
+        color: #5c5749;
+        font-weight: 400;
+      }
+
+      /* ───────── C · BAHNSTEIG ───────── */
+      .c {
+        background: #f7f8fa;
+        color: #0c1a33;
+        font-family: var(--font-sans), 'Helvetica Neue', Arial, sans-serif;
+      }
+      .c .sign {
+        background: #0b2f7a;
+        color: #fff;
+        padding: 20px 16px 14px;
+      }
+      .c .sign small {
+        font-size: 8px;
+        letter-spacing: 0.14em;
+        opacity: 0.7;
+        font-weight: 700;
+      }
+      .c .sign h3 {
+        margin: 3px 0 0;
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .c .sign .q {
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 11px;
+        opacity: 0.9;
+      }
+      .c .lab {
+        padding: 12px 16px 5px;
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        color: #6a7690;
+      }
+      .c .card {
+        margin: 0 12px 7px;
+        background: #fff;
+        border-radius: 12px;
+        display: flex;
+        align-items: stretch;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(12, 26, 51, 0.08);
+      }
+      .c .gl {
+        width: 50px;
+        background: #0b2f7a;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+      }
+      .c .gl small {
+        font-size: 7px;
+        letter-spacing: 0.12em;
+        opacity: 0.75;
+        font-weight: 700;
+      }
+      .c .gl b {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .c .gl.y {
+        background: #ffd21f;
+        color: #0c1a33;
+      }
+      .c .gl.w {
+        background: #e6e9ef;
+        color: #0c1a33;
+      }
+      .c .bd {
+        flex: 1;
+        padding: 8px 10px;
+        min-width: 0;
+      }
+      .c .bd .ln {
+        font-weight: 800;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .c .bd .sb {
+        font-size: 9px;
+        color: #6a7690;
+        margin-top: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .c .in {
+        padding: 8px 10px;
+        text-align: right;
+        flex: none;
+      }
+      .c .in b {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        display: block;
+        line-height: 1;
+      }
+      .c .in small {
+        font-size: 8px;
+        color: #6a7690;
+      }
+      .c .in .ok {
+        color: #12824a;
+        font-weight: 700;
+      }
+      .c .in .bad {
+        color: #c8321e;
+        font-weight: 700;
+      }
+      .c .tabs {
+        background: #fff;
+        border-top: 1px solid #e3e6ec;
+        color: #6a7690;
+      }
+      .c .tabs .on {
+        color: #0b2f7a;
+      }
+      .c .pill {
+        display: inline-block;
+        font-size: 8px;
+        font-weight: 800;
+        padding: 1px 5px;
+        border-radius: 4px;
+        color: #fff;
+        margin-right: 3px;
+      }
+      .c .now {
+        margin: 0 12px 7px;
+        background: #ffd21f;
+        border-radius: 12px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .c .now .num {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 0.9;
+      }
+      .c .now small {
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        display: block;
+      }
+      .c .now b {
+        font-size: 12px;
+        font-weight: 800;
+        display: block;
+      }
+      .c .now span {
+        font-size: 9px;
+      }
+      .c .sw {
+        margin: 0 12px 7px;
+        padding: 6px 10px;
+        border: 1.5px dashed #9aa5bb;
+        border-radius: 10px;
+        font-size: 9px;
+        display: flex;
+        justify-content: space-between;
+        font-weight: 700;
+        color: #3a4762;
+      }
+      .c .sw b {
+        color: #0c1a33;
+      }
+      .c .prog {
+        display: flex;
+        gap: 3px;
+        padding: 10px 16px 2px;
+      }
+      .c .prog i {
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+        background: #d5dae4;
+      }
+      .c .prog i.d {
+        background: #0b2f7a;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="note">
+      <b>Decision (2026-11-13):</b> C · Bahnsteig is the base design and the one layout of the app,
+      with the proportional line bar from B on the connection list. A · Anzeiger and B · Netzplan
+      become skins of that layout (colour, type, shape only) &mdash; their own layouts below are
+      reference, not a build target. Plan: <code>plans/009-ui-skins-redesign.md</code>. Data is a
+      real search from 2026-11-12 (Frankfurt Hbf &rarr; Darmstadt Schloss).
+    </p>
+
+    <!-- ═════════ A ═════════ -->
+    <section class="dir">
+      <h2>A · Anzeiger</h2>
+      <p class="idea">
+        The app is a station departure board. Black, amber, monospace, one row per fact. The
+        platform is always the blue sign on the right. Very fast to scan; nothing else on the store
+        looks like it.
+      </p>
+      <div class="row">
+        <div class="col">
+          <div class="phone a">
+            <div class="top">
+              <span class="clock">19:18</span><span class="brand">NEXTGLEIS</span>
+            </div>
+            <div class="find"><b>&gt;</b> STOP OR DESTINATION_</div>
+            <div class="sect">FRANKFURT HBF · 180 M</div>
+            <div class="hd">
+              <span style="width: 42px">ZEIT</span><span style="width: 48px">LINIE</span
+              ><span style="flex: 1">ZIEL</span><span>GL</span>
+            </div>
+            <div class="r">
+              <span class="t">19:24</span><span class="l"><span>RB 82</span></span
+              ><span class="d">Erbach (Odw.)</span><span class="g">11</span>
+            </div>
+            <div class="r">
+              <span class="t">19:26</span><span class="l"><span>S 3</span></span
+              ><span class="d">Darmstadt Hbf</span><span class="g">103</span>
+            </div>
+            <div class="r">
+              <span class="t">19:29</span><span class="l"><span>ICE 596</span></span
+              ><span class="d">Berlin Gesundbr. <span class="late">+12</span></span
+              ><span class="g">7</span>
+            </div>
+            <div class="r">
+              <span class="t">19:34</span><span class="l"><span>RE 60</span></span
+              ><span class="d">Mannheim Hbf</span><span class="g">10</span>
+            </div>
+            <div class="sect">MY ROUTES</div>
+            <div class="r">
+              <span class="t">19:24</span><span class="d">Ffm Hbf → Da. Schloss</span
+              ><span class="g">11</span>
+            </div>
+            <div class="r">
+              <span class="t">19:41</span><span class="d">Ffm Hbf → Mainz Hbf</span
+              ><span class="g">20</span>
+            </div>
+            <div class="tabs">
+              <span class="on">BOARD</span><span>ROUTE</span><span>SETUP</span>
+            </div>
+          </div>
+          <div class="cap">Home</div>
+        </div>
+        <div class="col">
+          <div class="phone a">
+            <div class="top"><span class="clock">19:18</span><span class="brand">ROUTE</span></div>
+            <div class="od">
+              <div>Frankfurt Hbf</div>
+              <div>Darmstadt Schloss</div>
+            </div>
+            <div class="hd"><span style="flex: 1">AB — AN</span><span>DAUER · GL</span></div>
+            <div class="trip">
+              <div class="big">19:24 — 19:59 <i>36 MIN</i></div>
+              <div class="ls">
+                <span>RB 82</span>›<span>TRAM 6</span>›<span>WE2</span><em>GL 11</em>
+              </div>
+            </div>
+            <div class="trip">
+              <div class="big">19:24 — 20:00 <i>41 MIN</i></div>
+              <div class="ls"><span>RB 82</span>›<span>BUS 672</span><em>GL 11</em></div>
+            </div>
+            <div class="trip">
+              <div class="big">19:34 — 20:06 <i>32 MIN</i></div>
+              <div class="ls"><span>RE 60</span>›<span>TRAM 2</span><em>GL 10</em></div>
+            </div>
+            <div class="trip">
+              <div class="big">20:06 — 20:38 <i>32 MIN</i></div>
+              <div class="ls">
+                <span>RB 68</span>›<span>BUS K</span>›<span>TRAM 5</span><em>GL 10</em>
+              </div>
+            </div>
+            <div class="trip">
+              <div class="big">20:06 — 20:38 <i>32 MIN</i></div>
+              <div class="ls"><span>RB 68</span>›<span>BUS K</span><em>GL 10</em></div>
+            </div>
+            <div class="tabs">
+              <span>BOARD</span><span class="on">ROUTE</span><span>SETUP</span>
+            </div>
+          </div>
+          <div class="cap">Connections</div>
+        </div>
+        <div class="col">
+          <div class="phone a">
+            <div class="top">
+              <span class="clock">19:24</span><span class="brand">36 MIN · 2×</span>
+            </div>
+            <div class="hd">
+              <span style="width: 42px">ZEIT</span><span style="flex: 1">HALT</span><span>GL</span>
+            </div>
+            <div class="step">
+              <span class="t">19:24</span><span class="d">Frankfurt Hbf</span
+              ><span class="g">11</span>
+            </div>
+            <div class="via"><span style="color: #f2efe6">RB 82</span> › Erbach · 19 min</div>
+            <div class="step">
+              <span class="t">19:43</span><span class="d">Da. Nordbahnhof</span
+              ><span class="g">4</span>
+            </div>
+            <div class="chg"><span>UMSTIEG 5 MIN</span><span>GL 4 → 13</span></div>
+            <div class="step">
+              <span class="t">19:48</span><span class="d">Da. Nordbahnhof</span
+              ><span class="g">13</span>
+            </div>
+            <div class="via"><span style="color: #f2efe6">TRAM 6</span> › Eberstadt · 7 min</div>
+            <div class="step">
+              <span class="t">19:55</span><span class="d">Luisenplatz</span><span class="g">5</span>
+            </div>
+            <div class="chg"><span>UMSTIEG 3 MIN</span><span>GL 5 → 2</span></div>
+            <div class="step">
+              <span class="t">19:57</span
+              ><span class="d">Luisenplatz <span class="late">+1</span></span
+              ><span class="g">2</span>
+            </div>
+            <div class="via"><span style="color: #f2efe6">BUS WE2</span> › Schloss · 2 min</div>
+            <div class="step">
+              <span class="t">19:59</span><span class="d">Darmstadt Schloss</span
+              ><span class="g">4</span>
+            </div>
+          </div>
+          <div class="cap">One connection</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════ B ═════════ -->
+    <section class="dir">
+      <h2>B · Netzplan</h2>
+      <p class="idea">
+        The app is a network map. Paper background, heavy grotesk type, and every ride is a thick
+        line in its product colour. A connection reads like a metro diagram: lines, stations,
+        interchanges. Warm and editorial; light by default.
+      </p>
+      <div class="row">
+        <div class="col">
+          <div class="phone b">
+            <div class="top">
+              <small>THU 12 NOV · 19:18</small>
+              <h3>Where to?</h3>
+            </div>
+            <div class="find">Stop or destination</div>
+            <div class="lab">MY ROUTES</div>
+            <div class="strip" style="--c: #c8102e">
+              <span class="pt">Ffm Hbf</span><span class="n">19:24 · Gl. 11</span
+              ><span class="pt e">Schloss</span>
+            </div>
+            <div class="strip" style="--c: #1f8a4c">
+              <span class="pt">Ffm Hbf</span><span class="n">19:41 · Gl. 20</span
+              ><span class="pt e">Mainz</span>
+            </div>
+            <div class="lab">MY STOPS</div>
+            <div class="trip">
+              <div class="h"><b style="font-size: 13px">Frankfurt Hbf</b><span>180 m</span></div>
+              <div class="bar">
+                <i style="background: #c8102e">RB 82 · 19:24</i
+                ><i style="background: #1f8a4c">S 3 · 19:26</i
+                ><i style="background: #15130f">ICE · 19:29</i>
+              </div>
+            </div>
+            <div class="trip">
+              <div class="h"><b style="font-size: 13px">Luisenplatz</b><span>Darmstadt</span></div>
+              <div class="bar">
+                <i style="background: #b0127a">Tram 6 · 19:21</i
+                ><i style="background: #6a3fb5">Bus K · 19:23</i>
+              </div>
+            </div>
+            <div class="tabs">
+              <span class="on">HOME</span><span>PLAN</span><span>SETTINGS</span>
+            </div>
+          </div>
+          <div class="cap">Home</div>
+        </div>
+        <div class="col">
+          <div class="phone b">
+            <div class="top">
+              <small>FRANKFURT HBF →</small>
+              <h3>Darmstadt Schloss</h3>
+            </div>
+            <div class="lab">LEAVE NOW ▾</div>
+            <div class="trip">
+              <div class="h"><b>19:24 – 19:59</b><span>36 min · Gl. 11</span></div>
+              <div class="bar">
+                <i style="background: #c8102e; flex: 19">RB 82</i><u></u
+                ><i style="background: #b0127a; flex: 9">Tram 6</i><u></u
+                ><i style="background: #6a3fb5; flex: 5">WE2</i>
+              </div>
+            </div>
+            <div class="trip">
+              <div class="h"><b>19:24 – 20:00</b><span>41 min · Gl. 11</span></div>
+              <div class="bar">
+                <i style="background: #c8102e; flex: 19">RB 82</i><u></u
+                ><i style="background: #6a3fb5; flex: 14">Bus 672</i>
+              </div>
+            </div>
+            <div class="trip">
+              <div class="h"><b>19:34 – 20:06</b><span>32 min · Gl. 10</span></div>
+              <div class="bar">
+                <i style="background: #c8102e; flex: 16">RE 60</i><u></u
+                ><i style="background: #b0127a; flex: 9">Tram 2</i>
+              </div>
+            </div>
+            <div class="trip">
+              <div class="h"><b>20:06 – 20:38</b><span>32 min · Gl. 10</span></div>
+              <div class="bar">
+                <i style="background: #c8102e; flex: 15">RB 68</i><u></u
+                ><i style="background: #6a3fb5; flex: 6">K</i><u></u
+                ><i style="background: #b0127a; flex: 6">Tram 5</i>
+              </div>
+            </div>
+            <div class="trip">
+              <div class="h"><b>20:06 – 20:38</b><span>32 min · Gl. 10</span></div>
+              <div class="bar">
+                <i style="background: #c8102e; flex: 15">RB 68</i><u></u
+                ><i style="background: #6a3fb5; flex: 12">Bus K</i>
+              </div>
+            </div>
+            <div class="tabs">
+              <span>HOME</span><span class="on">PLAN</span><span>SETTINGS</span>
+            </div>
+          </div>
+          <div class="cap">Connections</div>
+        </div>
+        <div class="col">
+          <div class="phone b">
+            <div class="top">
+              <small>36 MIN · 2 CHANGES · ON TIME</small>
+              <h3>19:24 – 19:59</h3>
+            </div>
+            <div class="map">
+              <div class="st"><time>19:24</time>Frankfurt Hbf<span class="pl">Gl. 11</span></div>
+              <div class="seg" style="--c: #c8102e"><b>RB 82</b>to Erbach · 19 min</div>
+              <div class="st"><time>19:43</time>Da. Nordbahnhof<span class="pl">Gl. 4</span></div>
+              <div class="x"><span>5 min</span><em>Gl. 4 → Gl. 13</em></div>
+              <div class="st"><time>19:48</time>Da. Nordbahnhof<span class="pl">Gl. 13</span></div>
+              <div class="seg" style="--c: #b0127a"><b>Tram 6</b>to Eberstadt · 7 min</div>
+              <div class="st"><time>19:55</time>Luisenplatz<span class="pl">Gl. 5</span></div>
+              <div class="x"><span>3 min</span><em>Gl. 5 → Gl. 2</em></div>
+              <div class="st"><time>19:57</time>Luisenplatz<span class="pl">Gl. 2</span></div>
+              <div class="seg" style="--c: #6a3fb5"><b>WE2</b>to Schloss · 2 min</div>
+              <div class="st"><time>19:59</time>Da. Schloss<span class="pl">Gl. 4</span></div>
+            </div>
+          </div>
+          <div class="cap">One connection</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════ C ═════════ -->
+    <section class="dir">
+      <h2>C · Bahnsteig</h2>
+      <p class="idea">
+        The app answers one question: which platform, and how long do I have? The platform number is
+        the largest thing on every row, in station-sign blue. A connection is a list of steps; the
+        step you are on now is the yellow one.
+      </p>
+      <div class="row">
+        <div class="col">
+          <div class="phone c">
+            <div class="sign">
+              <small>NEXTGLEIS</small>
+              <h3>Where to?</h3>
+              <div class="q">Stop or destination</div>
+            </div>
+            <div class="lab">YOUR ROUTES</div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>11</b></div>
+              <div class="bd">
+                <div class="ln">Darmstadt Schloss</div>
+                <div class="sb">from Frankfurt Hbf · RB 82</div>
+              </div>
+              <div class="in"><b>6</b><small>min</small></div>
+            </div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>20</b></div>
+              <div class="bd">
+                <div class="ln">Mainz Hbf</div>
+                <div class="sb">from Frankfurt Hbf · S 8</div>
+              </div>
+              <div class="in"><b>23</b><small>min</small></div>
+            </div>
+            <div class="lab">FRANKFURT HBF · 180 M</div>
+            <div class="card">
+              <div class="gl w"><small>GLEIS</small><b>103</b></div>
+              <div class="bd">
+                <div class="ln">S 3 Darmstadt Hbf</div>
+                <div class="sb">19:26</div>
+              </div>
+              <div class="in"><b>8</b><small class="ok">on time</small></div>
+            </div>
+            <div class="card">
+              <div class="gl w"><small>GLEIS</small><b>7</b></div>
+              <div class="bd">
+                <div class="ln">ICE 596 Berlin</div>
+                <div class="sb">19:29</div>
+              </div>
+              <div class="in"><b>23</b><small class="bad">+12 min</small></div>
+            </div>
+            <div class="tabs">
+              <span class="on">HOME</span><span>PLAN</span><span>SETTINGS</span>
+            </div>
+          </div>
+          <div class="cap">Home</div>
+        </div>
+        <div class="col">
+          <div class="phone c">
+            <div class="sign">
+              <small>FRANKFURT HBF →</small>
+              <h3>Darmstadt Schloss</h3>
+              <div class="q">Leave now ▾</div>
+            </div>
+            <div class="lab">NEXT CONNECTIONS</div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>11</b></div>
+              <div class="bd">
+                <div class="ln">19:24 – 19:59</div>
+                <div class="sb">
+                  <span class="pill" style="background: #c8102e">RB 82</span
+                  ><span class="pill" style="background: #b0127a">6</span
+                  ><span class="pill" style="background: #6a3fb5">WE2</span>
+                </div>
+              </div>
+              <div class="in"><b>6</b><small>min</small></div>
+            </div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>11</b></div>
+              <div class="bd">
+                <div class="ln">19:24 – 20:00</div>
+                <div class="sb">
+                  <span class="pill" style="background: #c8102e">RB 82</span
+                  ><span class="pill" style="background: #6a3fb5">672</span>
+                </div>
+              </div>
+              <div class="in"><b>6</b><small>min</small></div>
+            </div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>10</b></div>
+              <div class="bd">
+                <div class="ln">19:34 – 20:06</div>
+                <div class="sb">
+                  <span class="pill" style="background: #c8102e">RE 60</span
+                  ><span class="pill" style="background: #b0127a">2</span>
+                </div>
+              </div>
+              <div class="in"><b>16</b><small>min</small></div>
+            </div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>10</b></div>
+              <div class="bd">
+                <div class="ln">20:06 – 20:38</div>
+                <div class="sb">
+                  <span class="pill" style="background: #c8102e">RB 68</span
+                  ><span class="pill" style="background: #6a3fb5">K</span
+                  ><span class="pill" style="background: #b0127a">5</span>
+                </div>
+              </div>
+              <div class="in"><b>48</b><small>min</small></div>
+            </div>
+            <div class="tabs">
+              <span>HOME</span><span class="on">PLAN</span><span>SETTINGS</span>
+            </div>
+          </div>
+          <div class="cap">Connections</div>
+        </div>
+        <div class="col">
+          <div class="phone c">
+            <div class="sign">
+              <small>19:24 – 19:59 · 36 MIN · 2 CHANGES</small>
+              <h3>To Darmstadt Schloss</h3>
+            </div>
+            <div class="prog"><i class="d"></i><i></i><i></i></div>
+            <div class="lab">NOW</div>
+            <div class="now">
+              <div>
+                <small>GLEIS</small>
+                <div class="num">11</div>
+              </div>
+              <div><b>RB 82 to Erbach</b><span>Frankfurt Hbf · leaves 19:24 · in 6 min</span></div>
+            </div>
+            <div class="lab">THEN</div>
+            <div class="card">
+              <div class="gl w"><small>EXIT</small><b>4</b></div>
+              <div class="bd">
+                <div class="ln">Da. Nordbahnhof</div>
+                <div class="sb">arrive 19:43</div>
+              </div>
+            </div>
+            <div class="sw">
+              <span>Change · <b>5 min</b></span
+              ><span>Gleis 4 → <b>13</b></span>
+            </div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>13</b></div>
+              <div class="bd">
+                <div class="ln">Tram 6 to Eberstadt</div>
+                <div class="sb">19:48 → Luisenplatz 19:55</div>
+              </div>
+            </div>
+            <div class="sw">
+              <span>Change · <b>3 min</b></span
+              ><span>Gleis 5 → <b>2</b></span>
+            </div>
+            <div class="card">
+              <div class="gl"><small>GLEIS</small><b>2</b></div>
+              <div class="bd">
+                <div class="ln">Bus WE2 to Schloss</div>
+                <div class="sb">19:57 → Schloss 19:59</div>
+              </div>
+            </div>
+          </div>
+          <div class="cap">One connection</div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
