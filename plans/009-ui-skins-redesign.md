@@ -19,13 +19,12 @@
 - **Effort**: L — five phases
 - **Risk**: MEDIUM. No backend change, no new native module. All screens are touched.
 - **Depends on**: the connection-screen work on the local branch
-  `feat/routes-journey-detail` being committed and rebased onto `main` (see
-  "Prerequisite"). It is not on `main` and not pushed.
+  `feat/routes-journey-detail` being committed (see "Prerequisite"). On
+  2026-11-13 it was uncommitted, local only, on top of `main` at `ea5028c`.
 - **Category**: design / UI
 - **Planned at**: 2026-11-13, against the working tree of
-  `feat/routes-journey-detail` (base commit `ed2548c` plus uncommitted
-  connection-screen work). `main` was at `ea5028c`, which contains `ed2548c`
-  plus Expo patch updates, the MIT licence and handoff notes.
+  `feat/routes-journey-detail`: `main` at `ea5028c` plus the uncommitted
+  connection-screen work.
 
 ## Decisions already made by the owner (2026-11-13) — do not reopen
 
@@ -62,10 +61,9 @@ work this plan builds on: `app/journey.tsx`, `lib/journeySteps.ts`,
 
 - If `git status --short` on `feat/routes-journey-detail` is not clean: ask
   the owner to commit it. Do not commit it yourself unless the owner says so.
-- Rebase it onto `main`: `git fetch origin && git rebase origin/main`. No
-  conflict is expected (`main`'s newer commits touch package versions, docs
-  and CI). Then `npm install` and run every command in "Commands you will
-  need". On a conflict or a red check, STOP.
+- If `main` has moved past `ea5028c`: `git fetch origin && git rebase
+  origin/main`, then `npm install` and run every command in "Commands you
+  will need". On a conflict or a red check, STOP.
 - Then: `git switch -c feat/ui-skins feat/routes-journey-detail`.
 - If those files are already on `main` when you start (the owner merged the
   connection-screen work), skip the above and branch from `origin/main`.
