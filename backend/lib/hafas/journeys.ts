@@ -80,7 +80,7 @@ export async function findJourneys(
         }),
         JOURNEYS_TIMEOUT_MS,
       );
-      const journeys = (result.journeys ?? []).flatMap((journey, index) => toJourney(journey, index) ?? []);
+      const journeys = (result.journeys ?? []).flatMap((journey, index) => toJourney(journey, index, network) ?? []);
       if (journeys.length > 0 || page) {
         return {
           journeys,

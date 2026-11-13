@@ -108,16 +108,19 @@ describe('HAFAS toJourney', () => {
         legs: [
           { origin: { name: 'A' }, destination: { name: 'B' }, plannedDeparture: '2026-10-09T10:00:00+02:00', plannedArrival: '2026-10-09T10:20:00+02:00', line: TRAM },
           { origin: { name: 'B' }, destination: { name: 'C' }, plannedDeparture: '2026-10-09T10:20:00+02:00', plannedArrival: '2026-10-09T10:25:00+02:00', walking: true, distance: 300 },
-          { origin: { name: 'C' }, destination: { name: 'D' }, plannedDeparture: '2026-10-09T10:30:00+02:00', plannedArrival: '2026-10-09T11:10:00+02:00', departureDelay: 120, line: ICE },
+          { origin: { name: 'C' }, destination: { name: 'D' }, plannedDeparture: '2026-10-09T10:30:00+02:00', plannedArrival: '2026-10-09T11:10:00+02:00', departureDelay: 120, line: ICE, tripId: '1|234|0|80|9102026' },
         ],
       } as unknown as HafasJourney,
       0,
+      'rmv',
     );
     assert.equal(journey?.transfers, 1);
     assert.equal(journey?.durationMinutes, 70);
     assert.equal(journey?.departure, '2026-10-09T10:00:00');
     assert.equal(journey?.legs.length, 3);
     assert.equal(journey?.legs[2]?.departureDelayMinutes, 2);
+    assert.equal(journey?.legs[2]?.tripId, 'rmv:1|234|0|80|9102026');
+    assert.equal(journey?.legs[0]?.tripId, undefined);
   });
 });
 
