@@ -52,6 +52,8 @@ Not features, but needed before the first store release.
 | 2.4 | **Trip details** — tap a departure to see all its stops with live times ☑ | hafas-client `trip()`; new `/api/trip` and a trip screen |
 | 2.5 | **Filter by direction** — hide "Tram 6 → X" but keep "Tram 6 → Y" ☑ | Extends `hiddenLines` on favorites; long-press a chip (spec §7.4) |
 | 2.6 | **Deutschlandticket mode** — hide ICE/IC/EC/FlixTrain on boards and routes ☑ | Uses existing product classification; a setting |
+| 2.9 | **Connection screen** — tap a connection to see each change, its platforms and time to change; tap a ride for all its stops ☑ | `app/journey.tsx`; legs carry `tripId` from `/api/journeys` |
+| 2.10 | **Three tabs** — stop search moved into Home, Search tab removed; saved routes listed on an empty Routes screen ☑ | Routes is the planner; Home is boards |
 | 2.7 | **Share** a board or route as a link that opens the app | `nextgleis://` scheme exists; add web fallback page on the backend |
 | 2.8 | **Offline last-known board** | Persist the React Query cache for favorites |
 

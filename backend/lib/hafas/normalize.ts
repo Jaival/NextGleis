@@ -22,6 +22,7 @@ import { classifyService, lineLabel } from '../lines.js';
 import type { NetworkId } from './networks.js';
 import { toNotices } from './remarks.js';
 import { formatStopId } from './stopId.js';
+import { formatTripId } from './trip.js';
 
 // HAFAS timestamps are ISO with an offset. Every network here runs on
 // Europe/Berlin, so dropping the offset leaves Berlin wall-clock time — the
@@ -123,7 +124,7 @@ export function toArrivalRow(arrival: Alternative): ArrivalRow | null {
   return row;
 }
 
-function toLeg(leg: Leg): JourneyLeg | null {
+function toLeg(leg: Leg, network: NetworkId): JourneyLeg | null {
   const departure = leg.plannedDeparture ?? leg.departure;
   const arrival = leg.plannedArrival ?? leg.arrival;
   if (!departure || !arrival) return null;
@@ -159,6 +160,7 @@ function toLeg(leg: Leg): JourneyLeg | null {
   if (plannedArrivalPlatform) out.plannedArrivalPlatform = plannedArrivalPlatform;
   const notices = toNotices(leg.remarks);
   if (notices) out.notices = notices;
+  if (leg.tripId) out.tripId = formatTripId(network, leg.tripId);
   return out;
 }
 
@@ -205,14 +207,14 @@ export function toTrip(trip: HafasTrip, network: NetworkId): Trip {
   return out;
 }
 
-export function toJourney(journey: HafasJourney, index: number): Journey | null {
+export function toJourney(journey: HafasJourney, index: number, network: NetworkId): Journey | null {
   const first = journey.legs[0];
   const last = journey.legs[journey.legs.length - 1];
   const plannedDeparture = first?.plannedDeparture ?? first?.departure;
   const plannedArrival = last?.plannedArrival ?? last?.arrival;
   if (!first || !last || !plannedDeparture || !plannedArrival) return null;
 
-  const legs = journey.legs.flatMap((leg) => toLeg(leg) ?? []);
+  const legs = journey.legs.flatMap((leg) => toLeg(leg, network) ?? []);
   const riding = legs.filter((leg) => !leg.walking);
   // Realtime where the network has it, so the duration matches what the
   // rider will actually sit through.

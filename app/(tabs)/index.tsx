@@ -7,6 +7,8 @@ import { FavoriteRouteCard } from '@/components/FavoriteRouteCard';
 import { FavoriteStationCard } from '@/components/FavoriteStationCard';
 import { NearbySection } from '@/components/NearbySection';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { SearchField } from '@/components/SearchField';
+import { StationSearchResults } from '@/components/StationSearchResults';
 import { useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { useFavoritesStore } from '@/lib/favoritesStore';
 import { useT } from '@/lib/i18n';
@@ -14,6 +16,7 @@ import { duration, easing } from '@/lib/motion';
 import { moveItem } from '@/lib/reorder';
 import { useSettingsStore } from '@/lib/settingsStore';
 import { spacing, type Theme } from '@/lib/theme';
+import { useStationSearch } from '@/lib/useStationSearch';
 import { useTheme } from '@/lib/useTheme';
 
 // Layout-animation builders live at module scope: rebuilt inline in JSX they
@@ -43,6 +46,12 @@ export default function HomeScreen() {
   const favoriteRoutes = useFavoriteRoutesStore((s) => s.favoriteRoutes);
   const removeFavoriteRoute = useFavoriteRoutesStore((s) => s.removeFavoriteRoute);
   const reorderFavoriteRoutes = useFavoriteRoutesStore((s) => s.reorderFavoriteRoutes);
+
+  // Typing in the search field swaps the favourites for matching stops; a
+  // stop's board is one tap from there, so it needs no tab of its own.
+  const [input, setInput] = useState('');
+  const searching = input.trim().length > 0;
+  const search = useStationSearch(input, searching);
 
   const [revealing, setRevealing] = useState(() => !launchRevealed);
   useEffect(() => {
@@ -115,82 +124,103 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text accessibilityRole="header" style={styles.title}>
-            NextGleis
-          </Text>
-          <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
-        </View>
+      <View style={styles.header}>
+        <Text accessibilityRole="header" style={styles.title}>
+          NextGleis
+        </Text>
+        <SearchField
+          value={input}
+          onChangeText={setInput}
+          placeholder={t('search.placeholder')}
+          accessibilityLabel={t('search.label')}
+        />
+      </View>
 
-        {locationEnabled ? (
-          <Section title={t('nearby.title')} count={0} styles={styles}>
-            <NearbySection onOpen={(stop) => openBoard(stop.evaNo, stop.name)} />
+      {searching ? (
+        <StationSearchResults
+          search={search}
+          onSelect={(station) => openBoard(station.evaNo, station.name)}
+          idleTitle={t('search.idleTitle')}
+          idleMessage={t('search.idleMessage')}
+        />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          {locationEnabled ? (
+            <Section title={t('nearby.title')} count={0} styles={styles}>
+              <NearbySection onOpen={(stop) => openBoard(stop.evaNo, stop.name)} />
+            </Section>
+          ) : null}
+
+          <Section title={t('home.stations')} count={sortedStations.length} styles={styles}>
+            {sortedStations.length === 0 ? (
+              <EmptyState
+                icon="train-outline"
+                title={t('home.noStations')}
+                message={t('home.noStationsMessage')}
+              />
+            ) : (
+              sortedStations.map((station, index) => (
+                <Animated.View
+                  key={station.evaNo}
+                  entering={entering(index)}
+                  exiting={CARD_OUT}
+                  layout={REFLOW}
+                  style={styles.cardSlot}
+                >
+                  <FavoriteStationCard
+                    favorite={station}
+                    onPress={() => openBoard(station.evaNo, station.name)}
+                    onMoveUp={index > 0 ? () => moveStation(index, index - 1) : undefined}
+                    onMoveDown={
+                      index < sortedStations.length - 1
+                        ? () => moveStation(index, index + 1)
+                        : undefined
+                    }
+                    onRemove={() => removeFavorite(station.evaNo)}
+                  />
+                </Animated.View>
+              ))
+            )}
           </Section>
-        ) : null}
 
-        <Section title={t('home.stations')} count={sortedStations.length} styles={styles}>
-          {sortedStations.length === 0 ? (
-            <EmptyState
-              icon="train-outline"
-              title={t('home.noStations')}
-              message={t('home.noStationsMessage')}
-            />
-          ) : (
-            sortedStations.map((station, index) => (
-              <Animated.View
-                key={station.evaNo}
-                entering={entering(index)}
-                exiting={CARD_OUT}
-                layout={REFLOW}
-                style={styles.cardSlot}
-              >
-                <FavoriteStationCard
-                  favorite={station}
-                  onPress={() => openBoard(station.evaNo, station.name)}
-                  onMoveUp={index > 0 ? () => moveStation(index, index - 1) : undefined}
-                  onMoveDown={
-                    index < sortedStations.length - 1
-                      ? () => moveStation(index, index + 1)
-                      : undefined
-                  }
-                  onRemove={() => removeFavorite(station.evaNo)}
-                />
-              </Animated.View>
-            ))
-          )}
-        </Section>
-
-        <Section title={t('home.routes')} count={sortedRoutes.length} styles={styles}>
-          {sortedRoutes.length === 0 ? (
-            <EmptyState
-              icon="git-network-outline"
-              title={t('home.noRoutes')}
-              message={t('home.noRoutesMessage')}
-            />
-          ) : (
-            sortedRoutes.map((route, index) => (
-              <Animated.View
-                key={route.id}
-                entering={entering(index)}
-                exiting={CARD_OUT}
-                layout={REFLOW}
-                style={styles.cardSlot}
-              >
-                <FavoriteRouteCard
-                  favorite={route}
-                  onPress={() => openRoute(route)}
-                  onMoveUp={index > 0 ? () => moveRoute(index, index - 1) : undefined}
-                  onMoveDown={
-                    index < sortedRoutes.length - 1 ? () => moveRoute(index, index + 1) : undefined
-                  }
-                  onRemove={() => removeFavoriteRoute(route.id)}
-                />
-              </Animated.View>
-            ))
-          )}
-        </Section>
-      </ScrollView>
+          <Section title={t('home.routes')} count={sortedRoutes.length} styles={styles}>
+            {sortedRoutes.length === 0 ? (
+              <EmptyState
+                icon="git-network-outline"
+                title={t('home.noRoutes')}
+                message={t('home.noRoutesMessage')}
+              />
+            ) : (
+              sortedRoutes.map((route, index) => (
+                <Animated.View
+                  key={route.id}
+                  entering={entering(index)}
+                  exiting={CARD_OUT}
+                  layout={REFLOW}
+                  style={styles.cardSlot}
+                >
+                  <FavoriteRouteCard
+                    favorite={route}
+                    onPress={() => openRoute(route)}
+                    onMoveUp={index > 0 ? () => moveRoute(index, index - 1) : undefined}
+                    onMoveDown={
+                      index < sortedRoutes.length - 1
+                        ? () => moveRoute(index, index + 1)
+                        : undefined
+                    }
+                    onRemove={() => removeFavoriteRoute(route.id)}
+                  />
+                </Animated.View>
+              ))
+            )}
+          </Section>
+        </ScrollView>
+      )}
     </ScreenContainer>
   );
 }
@@ -225,14 +255,14 @@ function Section({
 
 function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
-    scroll: { paddingBottom: spacing.xxl, flexGrow: 1 },
+    scroll: { paddingTop: spacing.sm, paddingBottom: spacing.xxl, flexGrow: 1 },
     header: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
-      paddingBottom: spacing.lg,
+      paddingBottom: spacing.md,
+      gap: spacing.md,
     },
     title: { ...type.largeTitle, color: colors.foreground },
-    subtitle: { ...type.body, color: colors.mutedForeground, marginTop: spacing.xs },
     section: { paddingHorizontal: spacing.lg, marginBottom: spacing.xl },
     sectionHeader: {
       flexDirection: 'row',

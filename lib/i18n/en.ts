@@ -10,7 +10,6 @@ function plural(count: number, one: string, other: string): string {
 export const en = {
   // Tabs
   'tabs.home': 'Home',
-  'tabs.search': 'Search',
   'tabs.routes': 'Routes',
   'tabs.settings': 'Settings',
 
@@ -31,11 +30,11 @@ export const en = {
   'error.retry': 'Try again',
 
   // Home
-  'home.subtitle': 'Your boards and routes, one tap away',
   'home.stations': 'Stations',
   'home.routes': 'Routes',
   'home.noStations': 'No stations yet',
-  'home.noStationsMessage': 'Search for a stop and star it to get one-tap access to its board.',
+  'home.noStationsMessage':
+    'Search for a stop above and star it to get one-tap access to its board.',
   'home.noRoutes': 'No routes yet',
   'home.noRoutesMessage': 'Find a route in the Routes tab and tap the star to save it here.',
 
@@ -54,7 +53,6 @@ export const en = {
     `View departures for ${name}, ${distance} away`,
 
   // Search
-  'search.title': 'Search',
   'search.placeholder': 'Stop or station, e.g. Frankfurt Hbf',
   'search.label': 'Stop or station search',
   'search.clear': 'Clear search',
@@ -136,8 +134,17 @@ export const en = {
   'journey.departureDelayed': (minutes: number) => `departure delayed ${minutes} minutes`,
   'journey.then': ', then ',
   'journey.hasNotices': 'has disruption notices',
-  'journey.expandHint': 'Shows each leg of this connection',
-  'journey.collapseHint': 'Hides the legs of this connection',
+  'journey.openHint': 'Shows every change and platform of this connection',
+  'journey.title': 'Connection',
+  'journey.changeAt': (station: string) => `Change at ${station}`,
+  'journey.changeTime': (minutes: number) => `${minutes} min to change`,
+  'journey.platformChange': (from: string, to: string) => `Platform ${from} → Platform ${to}`,
+  'journey.samePlatform': (platform: string) => `Same platform (${platform})`,
+  'journey.nextPlatform': (platform: string) => `Continues from platform ${platform}`,
+  'journey.tight': 'Tight connection',
+  'journey.missed': 'This connection will probably be missed',
+  'journey.goneTitle': 'Connection not available',
+  'journey.goneMessage': 'It may have left already. Go back and search again.',
 
   // Trip
   'trip.openHint': 'Shows every stop of this service',
@@ -168,6 +175,7 @@ export const en = {
   'routes.chooseAs': (name: string, role: string) => `Choose ${name} as ${role}`,
   'routes.endLabel': (title: string, name: string) => `${title} ${name}. Tap to change.`,
   'routes.chooseEnd': (role: string) => `Choose ${role}`,
+  'routes.saved': 'Saved routes',
   'routes.planTitle': 'Plan a trip',
   'routes.planMessage':
     "Choose where you start and where you're going to see connections by train, bus, and tram.",

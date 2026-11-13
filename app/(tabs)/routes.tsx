@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useIsFocused, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +9,7 @@ import {
   Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -21,15 +21,14 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { SearchField } from '@/components/SearchField';
 import { StationSearchResults } from '@/components/StationSearchResults';
 import { TripTimeSheet, type TripTime } from '@/components/TripTimeSheet';
-import { getJourneys, type JourneyQuery } from '@/lib/api';
 import { routeId, useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { tap } from '@/lib/haptics';
 import { useLanguage, useT, type Translate } from '@/lib/i18n';
 import { findNearestStop, LocationUnavailableError } from '@/lib/location';
-import { needsLongDistanceTicket } from '@/lib/product';
 import { useSettingsStore } from '@/lib/settingsStore';
 import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { formatClock, formatDay } from '@/lib/time';
+import { useJourneys } from '@/lib/useJourneys';
 import { useNearbyStops } from '@/lib/useNearbyStops';
 import { useStationSearch } from '@/lib/useStationSearch';
 import { useTheme } from '@/lib/useTheme';
@@ -117,6 +116,11 @@ export default function RoutesScreen() {
       from !== null &&
       to !== null &&
       s.favoriteRoutes.some((r) => r.id === routeId(from.id, to.id)),
+  );
+  const favoriteRoutes = useFavoriteRoutesStore((s) => s.favoriteRoutes);
+  const savedRoutes = useMemo(
+    () => [...favoriteRoutes].sort((a, b) => a.order - b.order),
+    [favoriteRoutes],
   );
   const addFavoriteRoute = useFavoriteRoutesStore((s) => s.addFavoriteRoute);
   const removeFavoriteRoute = useFavoriteRoutesStore((s) => s.removeFavoriteRoute);
@@ -272,12 +276,47 @@ export default function RoutesScreen() {
           />
         </View>
       ) : !from || !to ? (
-        <EmptyState
-          fill
-          icon="git-network-outline"
-          title={t('routes.planTitle')}
-          message={t('routes.planMessage')}
-        />
+        savedRoutes.length > 0 ? (
+          <ScrollView contentContainerStyle={styles.saved}>
+            <Text accessibilityRole="header" style={styles.savedTitle}>
+              {t('routes.saved')}
+            </Text>
+            {savedRoutes.map((route) => (
+              <Pressable
+                key={route.id}
+                onPress={() => {
+                  tap.light();
+                  setFrom({ id: route.fromEva, name: route.fromName });
+                  setTo({ id: route.toEva, name: route.toName });
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t(
+                  'favorites.openRoute',
+                  t('favorites.routeLabel', route.fromName, route.toName),
+                )}
+                style={({ pressed }) => [styles.savedRow, pressed && styles.endRowPressed]}
+              >
+                <Ionicons name="star" size={16} color={colors.primary} />
+                <View style={styles.fill}>
+                  <Text style={styles.endName} numberOfLines={1}>
+                    {route.fromName}
+                  </Text>
+                  <Text style={styles.savedTo} numberOfLines={1}>
+                    {t('departure.to', route.toName)}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : (
+          <EmptyState
+            fill
+            icon="git-network-outline"
+            title={t('routes.planTitle')}
+            message={t('routes.planMessage')}
+          />
+        )
       ) : !ready ? (
         <EmptyState
           fill
@@ -439,8 +478,13 @@ function JourneyList({
 }) {
   const t = useT();
   const isFocused = useIsFocused();
+  const { query, journeys } = useJourneys(
+    { fromId: from.id, toId: to.id, when: time.when, arrival: time.arrival, regionalOnly },
+    // The Routes tab stays mounted while another tab or screen is open; don't
+    // poll then.
+    isFocused,
+  );
   const {
-    data,
     isLoading,
     isError,
     isRefetching,
@@ -452,52 +496,30 @@ function JourneyList({
     fetchNextPage,
     isFetchingPreviousPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: [
-      'journeys',
-      from.id,
-      to.id,
-      time.arrival,
-      time.when?.toISOString() ?? 'now',
-      regionalOnly,
-    ],
-    queryFn: ({ pageParam, signal }) =>
-      getJourneys(from.id, to.id, pageParam, regionalOnly, signal),
-    initialPageParam: (time.when
-      ? { when: time.when, arrival: time.arrival }
-      : { arrival: false }) as JourneyQuery,
-    getPreviousPageParam: (first): JourneyQuery | undefined =>
-      first.earlierRef ? { earlier: first.earlierRef } : undefined,
-    getNextPageParam: (last): JourneyQuery | undefined =>
-      last.laterRef ? { later: last.laterRef } : undefined,
-    // Connections shift with realtime delays; a minute is fresh enough while
-    // the list is open.
-    // The Routes tab stays mounted while another tab is open; don't poll then.
-    subscribed: isFocused,
-    refetchInterval: 60_000,
-  });
+  } = query;
   const isOffline = fetchStatus === 'paused';
 
-  // Neighbouring pages can repeat a connection where they meet. In
-  // Deutschlandticket mode the backend already asks for regional trains only;
-  // this catches a long-distance train a network files under a regional
-  // product.
-  const journeys = useMemo(() => {
-    const seen = new Set<string>();
-    const all: Journey[] = [];
-    for (const journey of data?.pages.flatMap((page) => page.journeys) ?? []) {
-      if (seen.has(journey.id)) continue;
-      if (
-        regionalOnly &&
-        journey.legs.some((leg) => !leg.walking && leg.line && needsLongDistanceTicket(leg.line))
-      ) {
-        continue;
-      }
-      seen.add(journey.id);
-      all.push(journey);
-    }
-    return all;
-  }, [data, regionalOnly]);
+  // The connection screen runs the same search (see useJourneys), so it finds
+  // this connection in the cache by its id.
+  const openJourney = useCallback(
+    (journey: Journey) => {
+      router.push({
+        pathname: '/journey',
+        params: {
+          id: journey.id,
+          fromId: from.id,
+          toId: to.id,
+          fromName: from.name,
+          toName: to.name,
+          ...(time.when ? { when: time.when.toISOString() } : {}),
+          ...(time.arrival ? { arrival: '1' } : {}),
+          ...(regionalOnly ? { regional: '1' } : {}),
+        },
+      });
+    },
+    [from, to, time, regionalOnly],
+  );
+
   const hasJourneys = journeys.length > 0;
   // Starting one page fetch cancels the other, so a quick tap on "Earlier"
   // would silently drop a "Later" still loading: one at a time.
@@ -522,7 +544,7 @@ function JourneyList({
     <FlatList
       data={journeys}
       keyExtractor={(journey) => journey.id}
-      renderItem={({ item }) => <JourneyCard journey={item} />}
+      renderItem={({ item }) => <JourneyCard journey={item} onOpen={openJourney} />}
       contentContainerStyle={styles.list}
       refreshControl={
         <RefreshControl
@@ -701,6 +723,25 @@ function createStyles({ colors, type, radii }: Theme) {
     timeButtonPressed: { backgroundColor: colors.border },
     timeText: { ...type.footnoteMedium, color: colors.mutedForeground },
     timeTextSet: { color: colors.primary },
+    saved: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm },
+    savedTitle: {
+      ...type.overline,
+      color: colors.mutedForeground,
+      textTransform: 'uppercase',
+      marginBottom: spacing.xs,
+    },
+    savedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      padding: spacing.md,
+      backgroundColor: colors.card,
+      borderRadius: radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    savedTo: { ...type.footnote, color: colors.mutedForeground },
     loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     list: {
       paddingHorizontal: spacing.lg,

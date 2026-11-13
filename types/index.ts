@@ -113,6 +113,9 @@ export type JourneyLeg = {
   distance?: number; // metres, walking legs only
   cancelled: boolean;
   notices?: Notice[];
+  // "<network>:<HAFAS trip id>" for GET /api/trip: every stop of this leg's
+  // service. Riding legs only, where the network gives one.
+  tripId?: string;
 };
 
 export type Journey = {
