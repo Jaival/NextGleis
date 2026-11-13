@@ -32,11 +32,6 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="search">
-        <NativeTabs.Trigger.Label>{t('tabs.search')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="routes">
         <NativeTabs.Trigger.Label>{t('tabs.routes')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="arrow.triangle.branch" md="route" />

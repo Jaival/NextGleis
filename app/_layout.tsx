@@ -122,6 +122,7 @@ function RootLayout() {
                 />
                 <Stack.Screen name="board/[evaNo]" options={{ headerShown: true }} />
                 <Stack.Screen name="trip/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="journey" options={{ headerShown: true }} />
               </Stack>
             </ObserveErrorBoundary>
           </ThemeProvider>

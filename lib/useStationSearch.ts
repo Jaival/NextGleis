@@ -5,7 +5,7 @@ import { searchStations } from './api';
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 2;
 
-// Debounced stop search, shared by the Search tab and the Routes tab's stop
+// Debounced stop search, shared by Home's search field and the Routes tab's stop
 // picker. Every search fans out to all networks on the backend, so it waits
 // for the typing to settle rather than firing on each keystroke.
 export function useStationSearch(input: string, enabled = true) {

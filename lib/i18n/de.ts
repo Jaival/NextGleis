@@ -12,7 +12,6 @@ function decimal(value: number): string {
 export const de: Messages = {
   // Tabs
   'tabs.home': 'Start',
-  'tabs.search': 'Suche',
   'tabs.routes': 'Routen',
   'tabs.settings': 'Einstellungen',
 
@@ -36,12 +35,11 @@ export const de: Messages = {
   'error.retry': 'Erneut versuchen',
 
   // Home
-  'home.subtitle': 'Deine Abfahrten und Routen, nur einen Tipp entfernt',
   'home.stations': 'Haltestellen',
   'home.routes': 'Routen',
   'home.noStations': 'Noch keine Haltestellen',
   'home.noStationsMessage':
-    'Such eine Haltestelle und markiere sie mit dem Stern, um ihre Abfahrten direkt zu öffnen.',
+    'Such oben eine Haltestelle und markiere sie mit dem Stern, um ihre Abfahrten direkt zu öffnen.',
   'home.noRoutes': 'Noch keine Routen',
   'home.noRoutesMessage':
     'Such eine Verbindung im Tab „Routen“ und tippe auf den Stern, um sie hier zu speichern.',
@@ -62,7 +60,6 @@ export const de: Messages = {
   'nearby.itemLabel': (name, distance) => `Abfahrten für ${name} anzeigen, ${distance} entfernt`,
 
   // Search
-  'search.title': 'Suche',
   'search.placeholder': 'Haltestelle, z. B. Frankfurt Hbf',
   'search.label': 'Haltestellensuche',
   'search.clear': 'Suche löschen',
@@ -145,8 +142,17 @@ export const de: Messages = {
   'journey.departureDelayed': (minutes) => `Abfahrt ${minutes} Minuten verspätet`,
   'journey.then': ', dann ',
   'journey.hasNotices': 'mit Störungsmeldungen',
-  'journey.expandHint': 'Zeigt die einzelnen Abschnitte dieser Verbindung',
-  'journey.collapseHint': 'Blendet die Abschnitte dieser Verbindung aus',
+  'journey.openHint': 'Zeigt jeden Umstieg und jedes Gleis dieser Verbindung',
+  'journey.title': 'Verbindung',
+  'journey.changeAt': (station) => `Umstieg in ${station}`,
+  'journey.changeTime': (minutes) => `${minutes} Min. Umsteigezeit`,
+  'journey.platformChange': (from, to) => `Gleis ${from} → Gleis ${to}`,
+  'journey.samePlatform': (platform) => `Gleiches Gleis (${platform})`,
+  'journey.nextPlatform': (platform) => `Weiter ab Gleis ${platform}`,
+  'journey.tight': 'Knapper Anschluss',
+  'journey.missed': 'Dieser Anschluss wird voraussichtlich verpasst',
+  'journey.goneTitle': 'Verbindung nicht verfügbar',
+  'journey.goneMessage': 'Vielleicht ist sie schon abgefahren. Geh zurück und such erneut.',
 
   // Trip
   'trip.openHint': 'Zeigt alle Halte dieser Fahrt',
@@ -177,6 +183,7 @@ export const de: Messages = {
   'routes.chooseAs': (name, role) => `${name} als ${role} wählen`,
   'routes.endLabel': (title, name) => `${title} ${name}. Zum Ändern tippen.`,
   'routes.chooseEnd': (role) => `${role} wählen`,
+  'routes.saved': 'Gespeicherte Routen',
   'routes.planTitle': 'Fahrt planen',
   'routes.planMessage':
     'Wähle Start und Ziel, um Verbindungen mit Zug, Bus und Straßenbahn zu sehen.',

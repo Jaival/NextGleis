@@ -19,6 +19,8 @@ and web also run.
 - **Favorites**: save stops and routes, reorder them, open them in one tap
 - **Route search** from A to B, depart at / arrive by, with earlier and later
   connections
+- **Connection details**: tap a connection to see where to change, the platforms
+  and the time to change
 - **Trip details**: tap a departure to see every stop it serves, with live times
 - **Deutschlandticket mode**: hides ICE, IC/EC, night trains and FlixTrain
 - German and English UI, light and dark themes
@@ -58,7 +60,7 @@ backend in [`backend/`](backend/), which:
 ## Project structure
 
 ```
-app/            Screens (Expo Router): tabs, board/[evaNo], trip/[id], onboarding
+app/            Screens (Expo Router): tabs, board/[evaNo], trip/[id], journey, onboarding
 components/     Reusable UI components
 lib/            API client, stores, theme, i18n, hooks, helpers
 types/          Shared app types
