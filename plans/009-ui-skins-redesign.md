@@ -18,13 +18,12 @@
 - **Priority**: P1 (the look the app launches with)
 - **Effort**: L — five phases
 - **Risk**: MEDIUM. No backend change, no new native module. All screens are touched.
-- **Depends on**: the connection-screen work on the local branch
-  `feat/routes-journey-detail` being committed (see "Prerequisite"). On
-  2026-11-13 it was uncommitted, local only, on top of `main` at `ea5028c`.
+- **Depends on**: the connection-screen work on branch
+  `feat/routes-journey-detail` (see "Prerequisite"). Committed and pushed on
+  2026-11-13 at `6822601`, three commits on top of `main` at `ea5028c`. Not
+  merged to `main` yet.
 - **Category**: design / UI
-- **Planned at**: 2026-11-13, against the working tree of
-  `feat/routes-journey-detail`: `main` at `ea5028c` plus the uncommitted
-  connection-screen work.
+- **Planned at**: 2026-11-13, against `feat/routes-journey-detail` at `6822601`.
 
 ## Decisions already made by the owner (2026-11-13) — do not reopen
 
@@ -52,21 +51,19 @@ station is "which platform, and how long do I have". The new layout answers
 that first on every row. The two extra skins give the app a recognisable
 identity without three sets of screens to maintain.
 
-## Prerequisite (Phase 0, owner or first executor)
+## Prerequisite (Phase 0) — done 2026-11-13
 
-The working tree of `feat/routes-journey-detail` holds uncommitted, tested
-work this plan builds on: `app/journey.tsx`, `lib/journeySteps.ts`,
+Branch `feat/routes-journey-detail` (pushed, head `6822601`) holds the work
+this plan builds on: `app/journey.tsx`, `lib/journeySteps.ts`,
 `lib/useJourneys.ts`, `test/journeySteps.test.ts`, a rewritten
 `components/JourneyCard.tsx`, three tabs instead of four, stop search on Home.
 
-- If `git status --short` on `feat/routes-journey-detail` is not clean: ask
-  the owner to commit it. Do not commit it yourself unless the owner says so.
-- If `main` has moved past `ea5028c`: `git fetch origin && git rebase
-  origin/main`, then `npm install` and run every command in "Commands you
-  will need". On a conflict or a red check, STOP.
-- Then: `git switch -c feat/ui-skins feat/routes-journey-detail`.
-- If those files are already on `main` when you start (the owner merged the
-  connection-screen work), skip the above and branch from `origin/main`.
+- If those files are on `main` when you start (the owner merged the branch):
+  `git switch -c feat/ui-skins origin/main`.
+- Otherwise: `git switch -c feat/ui-skins origin/feat/routes-journey-detail`.
+  If `main` has moved past `ea5028c`, rebase onto `origin/main` first, then
+  `npm install` and run every command in "Commands you will need". On a
+  conflict or a red check, STOP.
 
 ## Phases
 
@@ -187,7 +184,7 @@ fails with CRLF errors (`Delete ␍`) and `scripts/sync-app-version.mjs` has one
 - Live departures of nearby stops on Home (the mockup shows them; not now).
 - A "plan a route from here" button on a board.
 - The rule for the "Tight connection" warning (`TIGHT_MINUTES` in
-  `lib/journeySteps.ts`) — open owner decision, leave as is.
+  `lib/journeySteps.ts`) — the owner decided it stays as is.
 - iOS-specific tuning. Keep iOS compiling; do not test it.
 - Any new native module or anything that needs a native rebuild.
 
@@ -788,16 +785,14 @@ Executor: Opus with the emulator. No new features.
 - You are about to change behaviour: query keys, polling intervals,
   navigation targets, stored data other than `skin`.
 
-## Open decisions for the owner (defaults are in the plan; say if they change)
+## Decisions confirmed by the owner on 2026-11-13 (1–3) and naming note (4)
 
 1. **Fonts**: IBM Plex Mono (Anzeiger) and Archivo (Netzplan). Both are SIL
-   Open Font License. Any other pair works if it has the same weights.
+   Open Font License. Confirmed.
 2. **Live route cards (Phase 4)**: cap of three, one search per minute each.
-   Drop the phase if the upstream load is a concern (see
-   `docs/research/licensed-data-sources.md` on the planners' terms).
-3. **"Tight connection" rule**: today any change of two minutes or less is
-   flagged, also ones the planner itself proposed. Alternative: flag only
-   when a delay made it shorter. Not part of this plan.
+   Confirmed: build it.
+3. **"Tight connection" rule**: any change of two minutes or less is
+   flagged, also ones the planner itself proposed. Confirmed: stays as is.
 4. **Skin names** in Settings are the German words in both languages
    (Bahnsteig, Anzeiger, Netzplan). They are names, like the app's.
 
