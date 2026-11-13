@@ -17,6 +17,7 @@ your row when done.
 | [006](006-ci-smoke-and-docs-cleanup.md) | Smoke test all endpoints, fix docs, add agent Checks section | P3 | S | 002 optional | DONE (2026-11-12, `batch/c-ci-docs`) |
 | [007](007-error-reporting-eas-observe.md) | Error reporting with EAS Observe, opt-out switch, privacy policy and data-safety answers (roadmap 0.4) | P1 | M | — (after 003; before 006) | DONE (2026-11-12, `batch/b-app`; build + Observe dashboard check open, batch H) |
 | [008](008-licensed-data-source-spike.md) | Research: can licensed open data replace or back up the planner feeds? | P2 | M | — | DONE (2026-11-12, `batch/d-research`; owner picks an option) |
+| [009](009-ui-skins-redesign.md) | New UI: one layout ("Bahnsteig"), three skins (Bahnsteig, Anzeiger, Netzplan); mockups in `docs/design/ui-directions.html` | P1 | L (5 phases) | branch `feat/routes-journey-detail` (pushed 2026-11-13, not merged) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
