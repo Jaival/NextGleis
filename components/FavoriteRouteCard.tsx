@@ -7,7 +7,7 @@ import { FavoriteCard } from './FavoriteCard';
 import { useT } from '@/lib/i18n';
 import { nextJourney } from '@/lib/journeySteps';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { formatTime } from '@/lib/time';
+import { addMinutes, formatTime } from '@/lib/time';
 import { spacing, type Theme } from '@/lib/theme';
 import { useJourneys } from '@/lib/useJourneys';
 import { useTheme } from '@/lib/useTheme';
@@ -67,8 +67,12 @@ function RouteCardView({
   const ride = next?.legs.find((leg) => !leg.walking);
   const platform = ride?.departurePlatform;
   const plannedPlatform = ride?.plannedDeparturePlatform;
-  // A ride without a line label shows only its time.
-  const trainText = ride ? [ride.line, formatTime(ride.departure)].filter(Boolean).join(' · ') : '';
+  // The time is when the train leaves with its delay, what the rider has to catch.
+  // The countdown beside it counts to the connection's start, so the two differ
+  // when a walk comes first.
+  const trainTime = ride
+    ? formatTime(addMinutes(ride.departure, ride.departureDelayMinutes ?? 0))
+    : '';
 
   const openLabel =
     next && ride
@@ -109,9 +113,15 @@ function RouteCardView({
         // The countdown shares this row, not a column of its own: the names above
         // keep the full width of the card.
         <View style={styles.next}>
-          <Text style={styles.train} numberOfLines={1}>
-            {trainText}
-          </Text>
+          {/* The line gives way to a narrow card, the time does not: it is the part to read. */}
+          <View style={styles.train}>
+            {ride?.line ? (
+              <Text style={styles.trainText} numberOfLines={1}>
+                {ride.line} ·{' '}
+              </Text>
+            ) : null}
+            <Text style={[styles.trainText, styles.trainTime]}>{trainTime}</Text>
+          </View>
           <Countdown time={next.departure} delayMinutes={next.departureDelayMinutes} now={now} />
         </View>
       ) : null}
@@ -129,6 +139,8 @@ function createStyles({ colors, type }: Theme) {
       justifyContent: 'space-between',
       gap: spacing.sm,
     },
-    train: { ...type.caption, color: colors.mutedForeground, flexShrink: 1 },
+    train: { flexDirection: 'row', flexShrink: 1 },
+    trainText: { ...type.caption, color: colors.mutedForeground, flexShrink: 1 },
+    trainTime: { flexShrink: 0 },
   });
 }
