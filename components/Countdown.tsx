@@ -9,6 +9,10 @@ type Props = {
   delayMinutes?: number;
   now: string;
   cancelled?: boolean;
+  // 'highlight' is for a countdown drawn on `colors.highlight`. The delay colour
+  // has no contrast guarantee on that fill, so every part takes its text colour
+  // and the row says "+3" in words instead.
+  tone?: 'default' | 'highlight';
 };
 
 // The realtime clock time, "in 6 minutes" or "now": what a row's countdown
@@ -28,7 +32,7 @@ export function countdownLabel(
 
 // Minutes to go in the right-hand column of a row: the number when it is close
 // enough to count down, the clock time when it is not.
-export function Countdown({ time, delayMinutes, now, cancelled }: Props) {
+export function Countdown({ time, delayMinutes, now, cancelled, tone = 'default' }: Props) {
   const theme = useTheme();
   const { colors, type } = theme;
   const t = useT();
@@ -36,7 +40,14 @@ export function Countdown({ time, delayMinutes, now, cancelled }: Props) {
   if (cancelled) return null;
 
   const minutes = minutesUntil(time, delayMinutes, now);
-  const color = (delayMinutes ?? 0) > 0 ? colors.delay : colors.foreground;
+  const onHighlight = tone === 'highlight';
+  const color = onHighlight
+    ? colors.highlightForeground
+    : (delayMinutes ?? 0) > 0
+      ? colors.delay
+      : colors.foreground;
+  // The "min" caption stays muted even on a delayed row: only the number turns.
+  const caption = onHighlight ? colors.highlightForeground : colors.mutedForeground;
 
   if (minutes < 0 || minutes >= 60) {
     return (
@@ -61,7 +72,7 @@ export function Countdown({ time, delayMinutes, now, cancelled }: Props) {
       <Text style={[type.title, { color }]} numberOfLines={1}>
         {minutes}
       </Text>
-      <Text style={[type.micro, { color: colors.mutedForeground }]} numberOfLines={1}>
+      <Text style={[type.micro, { color: caption }]} numberOfLines={1}>
         {t('countdown.min')}
       </Text>
     </View>

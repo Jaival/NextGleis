@@ -16,11 +16,21 @@ type Props = {
   tone?: 'sign' | 'quiet' | 'highlight';
   // Defaults to the translated "Platform".
   label?: string;
+  // Sits flush against the edge of a card that clips its corners: the tile
+  // then has none of its own, or the card colour would show in the notches.
+  flush?: boolean;
 };
 
 // The station sign: the platform number, the biggest thing on a row. Not an
 // accessibility element itself; the row it sits in carries the label.
-export function PlatformTile({ platform, plannedPlatform, kind, tone = 'quiet', label }: Props) {
+export function PlatformTile({
+  platform,
+  plannedPlatform,
+  kind,
+  tone = 'quiet',
+  label,
+  flush = false,
+}: Props) {
   const theme = useTheme();
   const { colors, type } = theme;
   const t = useT();
@@ -30,7 +40,7 @@ export function PlatformTile({ platform, plannedPlatform, kind, tone = 'quiet', 
     // Most bus and tram stops have no platform. The glyph is always quiet, so
     // a row of them does not shout where there is nothing to read.
     return (
-      <View style={[styles.tile, { backgroundColor: colors.muted }]}>
+      <View style={[styles.tile, flush && styles.flush, { backgroundColor: colors.muted }]}>
         <Ionicons
           name={kind === 'db' || kind === 'rail' ? 'train-outline' : 'bus-outline'}
           size={24}
@@ -52,8 +62,14 @@ export function PlatformTile({ platform, plannedPlatform, kind, tone = 'quiet', 
         : { bg: colors.muted, fg: colors.foreground };
 
   return (
-    <View style={[styles.tile, { backgroundColor: palette.bg }]}>
-      <Text style={[type.microBold, styles.label, { color: palette.fg }]} numberOfLines={1}>
+    <View style={[styles.tile, flush && styles.flush, { backgroundColor: palette.bg }]}>
+      <Text
+        style={[type.microBold, styles.label, { color: palette.fg }]}
+        numberOfLines={1}
+        // "Ausstieg" in capitals and a wide mono face does not fit 56pt.
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+      >
         {label ?? t('platform.label')}
       </Text>
       <Text
@@ -87,6 +103,7 @@ function createStyles({ radii }: Theme) {
       borderRadius: radii.md,
       borderCurve: 'continuous',
     },
+    flush: { borderRadius: 0 },
     label: { textTransform: 'uppercase', opacity: 0.75 },
     planned: { textDecorationLine: 'line-through', opacity: 0.75 },
   });

@@ -174,6 +174,7 @@ export const en = {
   'routes.swap': 'Swap start and destination',
   'routes.save': 'Save route to favorites',
   'routes.unsave': 'Remove route from favorites',
+  'routes.clear': 'Clear start and destination',
   'routes.searchLabel': (role: string) => `Search for the ${role} stop`,
   'routes.chooseStart': 'Choose a start',
   'routes.chooseDestination': 'Choose a destination',

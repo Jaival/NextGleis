@@ -182,6 +182,7 @@ export const de: Messages = {
   'routes.swap': 'Start und Ziel tauschen',
   'routes.save': 'Route zu Favoriten hinzufügen',
   'routes.unsave': 'Route aus Favoriten entfernen',
+  'routes.clear': 'Start und Ziel löschen',
   'routes.searchLabel': (role) => `Haltestelle für ${role} suchen`,
   'routes.chooseStart': 'Start wählen',
   'routes.chooseDestination': 'Ziel wählen',
