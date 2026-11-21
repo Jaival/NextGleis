@@ -20,7 +20,7 @@ import { useNavigationTheme } from '@/lib/navigationTheme';
 import { setupNetworkStatusForQueries } from '@/lib/network';
 import { queryClient } from '@/lib/queryClient';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { MODERN_FONTS } from '@/lib/theme';
+import { SKIN_FONTS } from '@/lib/theme';
 import { useTheme } from '@/lib/useTheme';
 
 setupNetworkStatusForQueries();
@@ -61,9 +61,10 @@ function RootLayout() {
   const favoritesHydrated = useFavoritesStore((s) => s.hydrated);
   const routesHydrated = useFavoriteRoutesStore((s) => s.hydrated);
   const settingsHydrated = useSettingsStore((s) => s.hydrated);
-  // The Modern style's font files. Loaded whatever the style, so switching to
-  // it in Settings is instant; a failed load leaves Modern on the system font.
-  const [fontsLoaded, fontError] = useFonts(MODERN_FONTS);
+  // The Anzeiger and Netzplan font files. Loaded whatever the skin, so
+  // switching in Settings is instant; a failed load leaves a skin on the system
+  // font.
+  const [fontsLoaded, fontError] = useFonts(SKIN_FONTS);
   const hydrated =
     favoritesHydrated && routesHydrated && settingsHydrated && (fontsLoaded || !!fontError);
 

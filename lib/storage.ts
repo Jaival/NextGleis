@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AppSettings, FavoriteRoute, FavoriteStation } from '@/types';
-import { THEME_NAMES, UI_STYLES } from './theme';
+import { SKINS } from './palettes';
 
 const FAVORITES_KEY = 'favorites';
 const FAVORITE_ROUTES_KEY = 'favoriteRoutes';
@@ -52,8 +52,7 @@ export async function saveFavoriteRoutes(routes: FavoriteRoute[]): Promise<void>
 
 const defaultSettings: AppSettings = {
   themeMode: 'system',
-  colorTheme: 'indigo',
-  uiStyle: 'classic',
+  skin: 'bahnsteig',
   highContrast: false,
   language: 'system',
   onboarded: false,
@@ -63,12 +62,20 @@ const defaultSettings: AppSettings = {
 };
 
 export async function getSettings(): Promise<AppSettings> {
-  const stored = await readJson<Partial<AppSettings>>(SETTINGS_KEY, {});
+  // `colorTheme` and `uiStyle` are from the five-theme design; the app was not
+  // on the store then, so they are dropped rather than migrated.
+  const {
+    colorTheme: _colorTheme,
+    uiStyle: _uiStyle,
+    ...stored
+  } = await readJson<Partial<AppSettings> & { colorTheme?: unknown; uiStyle?: unknown }>(
+    SETTINGS_KEY,
+    {},
+  );
   const settings = { ...defaultSettings, ...stored };
-  // A theme or style removed in a later version must not leave the app
-  // looking up a palette that no longer exists.
-  if (!THEME_NAMES.includes(settings.colorTheme)) settings.colorTheme = defaultSettings.colorTheme;
-  if (!UI_STYLES.includes(settings.uiStyle)) settings.uiStyle = defaultSettings.uiStyle;
+  // A skin removed in a later version must not leave the app looking up a
+  // palette that no longer exists.
+  if (!SKINS.includes(settings.skin)) settings.skin = defaultSettings.skin;
   return settings;
 }
 

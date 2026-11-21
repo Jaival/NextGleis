@@ -474,7 +474,7 @@ function createStyles({ colors, type, radii }: Theme) {
     dot: {
       width: 14,
       height: 14,
-      borderRadius: radii.pill,
+      borderRadius: radii.round,
       borderWidth: 3,
       borderColor: colors.primary,
       backgroundColor: colors.card,

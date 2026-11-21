@@ -360,7 +360,7 @@ function createStyles({ colors, type, radii }: Theme) {
     dot: {
       width: 12,
       height: 12,
-      borderRadius: radii.pill,
+      borderRadius: radii.round,
       borderWidth: 2,
       backgroundColor: colors.background,
     },
