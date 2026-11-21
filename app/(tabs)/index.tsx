@@ -8,6 +8,7 @@ import { FavoriteStationCard } from '@/components/FavoriteStationCard';
 import { NearbySection } from '@/components/NearbySection';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SearchField } from '@/components/SearchField';
+import { SignHeader } from '@/components/SignHeader';
 import { StationSearchResults } from '@/components/StationSearchResults';
 import { useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { useFavoritesStore } from '@/lib/favoritesStore';
@@ -123,18 +124,17 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScreenContainer>
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.title}>
-          NextGleis
-        </Text>
+    // The header owns the top inset.
+    <ScreenContainer edges={[]}>
+      <SignHeader title="NextGleis">
         <SearchField
+          tone="header"
           value={input}
           onChangeText={setInput}
           placeholder={t('search.placeholder')}
           accessibilityLabel={t('search.label')}
         />
-      </View>
+      </SignHeader>
 
       {searching ? (
         <StationSearchResults
@@ -256,13 +256,6 @@ function Section({
 function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     scroll: { paddingTop: spacing.sm, paddingBottom: spacing.xxl, flexGrow: 1 },
-    header: {
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
-      paddingBottom: spacing.md,
-      gap: spacing.md,
-    },
-    title: { ...type.largeTitle, color: colors.foreground },
     section: { paddingHorizontal: spacing.lg, marginBottom: spacing.xl },
     sectionHeader: {
       flexDirection: 'row',

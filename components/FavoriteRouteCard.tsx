@@ -24,7 +24,6 @@ export function FavoriteRouteCard({ favorite, onPress, onMoveUp, onMoveDown, onR
 
   return (
     <FavoriteCard
-      icon="git-network"
       itemLabel={label}
       openLabel={t('favorites.openRoute', label)}
       onPress={onPress}

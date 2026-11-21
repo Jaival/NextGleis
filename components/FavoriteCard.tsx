@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
+import { PlatformTile } from './PlatformTile';
 import { press } from './PressableScale';
 import { tap } from '@/lib/haptics';
 import { useT } from '@/lib/i18n';
@@ -11,7 +12,6 @@ import { useTheme } from '@/lib/useTheme';
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
 type Props = {
-  icon: IconName;
   /** The thing's name, used to build the reorder/remove control labels. */
   itemLabel: string;
   /** What tapping the card does, e.g. "Open departure board for Köln Hbf". */
@@ -23,7 +23,7 @@ type Props = {
   children: ReactNode;
 };
 
-// The shared shell behind both favourite kinds: tinted icon well, content, and
+// The shared shell behind both favourite kinds: a sign tile, content, and
 // a quiet cluster of reorder/remove controls. Only the content differs between
 // stations and routes, so that is the one thing passed as children.
 //
@@ -32,7 +32,6 @@ type Props = {
 // controls no independent accessible name (the outer button's label absorbs
 // them) and is invalid DOM on web.
 export function FavoriteCard({
-  icon,
   itemLabel,
   openLabel,
   onPress,
@@ -59,9 +58,9 @@ export function FavoriteCard({
         accessibilityRole="button"
         accessibilityLabel={openLabel}
       >
-        <View style={styles.well}>
-          <Ionicons name={icon} size={20} color={colors.primary} />
-        </View>
+        {/* Neither kind has a platform to show yet, so the tile carries the
+            train glyph. */}
+        <PlatformTile flush kind="rail" />
         <View style={styles.content}>{children}</View>
       </Pressable>
       <View style={styles.actions}>
@@ -141,20 +140,19 @@ function createStyles({ colors, radii }: Theme) {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       boxShadow: colors.shadowCard,
-      paddingVertical: spacing.md,
-      paddingLeft: spacing.md,
       paddingRight: spacing.sm,
+      // Clips the tile to the card's corners; padding lives on the content so
+      // the tile can sit flush against the edge.
+      overflow: 'hidden',
     },
-    main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-    well: {
-      width: 40,
-      height: 40,
-      borderRadius: radii.pill,
-      backgroundColor: colors.accent,
-      alignItems: 'center',
+    main: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
+    content: {
+      flex: 1,
+      gap: 2,
       justifyContent: 'center',
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.md,
     },
-    content: { flex: 1, gap: 2 },
     actions: { flexDirection: 'row', alignItems: 'center' },
     control: {
       width: 32,

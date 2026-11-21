@@ -29,7 +29,6 @@ export function FavoriteStationCard({ favorite, onPress, onMoveUp, onMoveDown, o
 
   return (
     <FavoriteCard
-      icon="train"
       itemLabel={favorite.name}
       openLabel={t('favorites.openBoard', favorite.name)}
       onPress={onPress}
