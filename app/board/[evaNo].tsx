@@ -39,6 +39,7 @@ import { useSettingsStore } from '@/lib/settingsStore';
 import { duration, easing, spring } from '@/lib/motion';
 import { boardWarnings } from '@/lib/notices';
 import { spacing, type Theme } from '@/lib/theme';
+import { useNow } from '@/lib/useNow';
 import { useTheme } from '@/lib/useTheme';
 import type { ArrivalRow, DepartureRow, HiddenDirection } from '@/types';
 
@@ -103,6 +104,8 @@ export default function BoardScreen() {
   // Each page is a two-hour window; `null` is the one starting now, and the
   // next starts at the minute of the last row so far.
   const isFocused = useIsFocused();
+  // One clock for every row's countdown.
+  const now = useNow(isFocused);
   const {
     data,
     isLoading,
@@ -332,11 +335,13 @@ export default function BoardScreen() {
             mode === 'departures' ? (
               <DepartureListItem
                 row={item as DepartureRow}
+                now={now}
                 onPress={item.tripId ? openTrip : undefined}
               />
             ) : (
               <ArrivalListItem
                 row={item as ArrivalRow}
+                now={now}
                 onPress={item.tripId ? openTrip : undefined}
               />
             )

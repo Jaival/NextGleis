@@ -25,9 +25,9 @@ const shimmer = css.create({
   },
 });
 
-// Mirrors DepartureListItem's geometry exactly — same badge size, same column
-// widths, same row height — so real departures replace the placeholders
-// without the list shifting under the user.
+// Mirrors DepartureListItem's geometry — same tile size, same badge size, same
+// column widths — so real departures replace the placeholders without the list
+// shifting under the user.
 function SkeletonRow({
   index,
   styles,
@@ -41,15 +41,15 @@ function SkeletonRow({
 
   return (
     <View style={styles.row}>
-      <Animated.View style={[styles.lineBadge, anim]} />
+      <Animated.View style={[styles.tile, anim]} />
       <View style={styles.middle}>
-        <Animated.View style={[styles.bar, styles.directionBar, anim]} />
-        <Animated.View style={[styles.bar, styles.platformBar, anim]} />
+        <View style={styles.titleRow}>
+          <Animated.View style={[styles.lineBadge, anim]} />
+          <Animated.View style={[styles.bar, styles.directionBar, anim]} />
+        </View>
+        <Animated.View style={[styles.bar, styles.metaBar, anim]} />
       </View>
-      <View style={styles.right}>
-        <Animated.View style={[styles.bar, styles.timeBar, anim]} />
-        <Animated.View style={[styles.bar, styles.statusBar, anim]} />
-      </View>
+      <Animated.View style={[styles.bar, styles.countdownBar, anim]} />
     </View>
   );
 }
@@ -81,19 +81,25 @@ function createStyles({ colors, radii }: Theme) {
       borderBottomColor: colors.border,
       backgroundColor: colors.card,
     },
+    tile: {
+      width: 64,
+      height: 56,
+      borderRadius: radii.md,
+      borderCurve: 'continuous',
+      backgroundColor: colors.skeleton,
+    },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     lineBadge: {
-      minWidth: 62,
-      height: 30,
+      width: 40,
+      height: 24,
       borderRadius: radii.sm,
       borderCurve: 'continuous',
       backgroundColor: colors.skeleton,
     },
     middle: { flex: 1, gap: spacing.xs },
     bar: { height: 12, borderRadius: radii.pill, backgroundColor: colors.skeleton },
-    directionBar: { width: '62%' },
-    platformBar: { width: '34%', height: 14 },
-    right: { alignItems: 'flex-end', gap: spacing.xs },
-    timeBar: { width: 44, height: 16 },
-    statusBar: { width: 56 },
+    directionBar: { flex: 1, maxWidth: '70%' },
+    metaBar: { width: '45%', height: 14 },
+    countdownBar: { width: 36, height: 28 },
   });
 }
