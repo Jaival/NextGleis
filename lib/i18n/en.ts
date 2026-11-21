@@ -24,6 +24,12 @@ export const en = {
   'common.distance': (metres: number) =>
     metres < 1000 ? `${metres} m` : `${(metres / 1000).toFixed(1)} km`,
 
+  // Platform tile and countdown
+  'platform.label': 'Platform',
+  'countdown.now': 'now',
+  'countdown.min': 'min',
+  'countdown.label': (minutes: number) => `in ${minutes} ${plural(minutes, 'minute', 'minutes')}`,
+
   // Errors
   'error.title': 'Something went wrong',
   'error.message': 'The app hit an error. Your favorites are safe.',

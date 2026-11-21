@@ -29,6 +29,12 @@ export const de: Messages = {
         : `${hours} Std. ${minutes} Min.`,
   'common.distance': (metres) => (metres < 1000 ? `${metres} m` : `${decimal(metres / 1000)} km`),
 
+  // Platform tile and countdown
+  'platform.label': 'Gleis',
+  'countdown.now': 'jetzt',
+  'countdown.min': 'Min.',
+  'countdown.label': (minutes) => `in ${minutes} ${plural(minutes, 'Minute', 'Minuten')}`,
+
   // Errors
   'error.title': 'Etwas ist schiefgelaufen',
   'error.message': 'In der App ist ein Fehler aufgetreten. Deine Favoriten sind sicher.',
