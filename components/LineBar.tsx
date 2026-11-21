@@ -40,7 +40,9 @@ export function LineBar({ legs }: Props) {
 
 function createStyles({ type, radii }: Theme) {
   return StyleSheet.create({
-    bar: { flexDirection: 'row', height: 18, gap: 3 },
+    // minHeight, not height: at a large system font the label outgrows 18pt and a
+    // fixed height would cut it. The segments stretch to the row.
+    bar: { flexDirection: 'row', minHeight: 18, gap: 3 },
     segment: {
       borderRadius: radii.sm,
       borderCurve: 'continuous',
