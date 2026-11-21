@@ -70,7 +70,7 @@ the work this plan builds on, now on `main`: `app/journey.tsx`, `lib/journeyStep
 | Phase | Content | Executor | Status |
 | --- | --- | --- | --- |
 | 1 | Skin system: tokens, palettes, fonts, settings. Old layout, new skins. | Sonnet, medium | DONE |
-| 2 | Shared building blocks: platform tile, countdown, line bar, sign header, pure helpers + tests | Sonnet, medium | IN PROGRESS |
+| 2 | Shared building blocks: platform tile, countdown, line bar, sign header, pure helpers + tests | Sonnet, medium | DONE |
 | 3 | Screens rebuilt on the building blocks | Opus, high, with emulator | TODO |
 | 4 | Home: saved routes show their next departure | Sonnet, medium | TODO |
 | 5 | Device check of every skin, handoff | Opus, with emulator | TODO |
@@ -806,3 +806,9 @@ to know, anything left open.)_
 - Done: skin system as specified (`lib/palettes.ts`, `test/palettes.test.ts`, `lib/theme.ts`, store, storage, `useTheme`, Settings picker, en/de strings, font packages swapped). One deviation: in high contrast, line badges keep their text colour and the fill darkens (`ensureContrast(bg, [fg], 7, black)`); the old rule pushed white text toward black and dropped it below AA. Header, sign and highlight text move toward whichever pole it is nearer. `settings.highContrastText` now says "design" instead of "theme".
 - Next phase needs: `theme.statusBarStyle`, `radii.round` and the six new tokens exist but are unused. `radii.round` is applied only to the stop-rail dots (trip, journey) and the Routes locate-button well; other fixed-size icon wells (FavoriteCard, Routes swap button, card icons) stay on `radii.pill` and turn square in Anzeiger. Anzeiger `overline` letterSpacing is 0.3 (replaces 0.6), as the plan says.
 - Open: no device check done (no emulator in this run); fonts untested at runtime on Android.
+
+**Phase 2 (2026-11-21, `feat/ui-skins-phase-2`)**
+
+- Done: all five steps as specified (`minutesUntil`, `currentRideIndex`, `lineBarSegments`, `useNow`, `PlatformTile`, `Countdown` + `countdownLabel`, `LineBar`, `SignHeader`, `SearchField` `tone="header"`), with tests (197 pass). No screen changed; the new components are unused until Phase 3. Small deviations: `countdownLabel` returns "now" at 0 minutes (not "in 0 minutes") and `countdown.label` uses the singular at 1; `currentRideIndex` does not skip a cancelled ride; `lineBarSegments` keeps a ride without a line (empty name, `LineBar` shows "—"); `useNow` defers its first refresh with `setTimeout(…, 0)` because `react-hooks/set-state-in-effect` forbids a synchronous `setState` in the effect; in `SearchField` header tone the fill stays on focus (only the border changes) so header-coloured text never lands on a card-coloured field.
+- Next phase needs: `PlatformTile` with no platform draws a `train-outline` / `bus-outline` glyph in `colors.foreground` on `colors.muted`, with fixed width 64 and `radii.md`; inside a clipping card (3.2) check that the corner radius and `paddingHorizontal: spacing.xs` look right. The tile turns square in Anzeiger like the other fixed-size wells; Phase 3 decides the look. Screens that use `SignHeader` must render `<ScreenContainer edges={[]}>`. `statusBarStyle`, `radii.round` and the header, sign and highlight tokens are still unused until Phase 3. In `Countdown`, the "min" caption is `mutedForeground` even on delayed rows (only the number turns `delay`).
+- Open: no device or emulator check (Phase 2 has no visible screen change); `PlatformTile`, `Countdown`, `SignHeader` and the header-tone `SearchField` are untested at runtime and in high contrast.
