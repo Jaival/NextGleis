@@ -18,10 +18,10 @@
 - **Priority**: P1 (the look the app launches with)
 - **Effort**: L — five phases
 - **Risk**: MEDIUM. No backend change, no new native module. All screens are touched.
-- **Depends on**: the connection-screen work on branch
-  `feat/routes-journey-detail` (see "Prerequisite"). Committed and pushed on
-  2026-11-13 at `6822601`, three commits on top of `main` at `ea5028c`. Not
-  merged to `main` yet.
+- **Depends on**: the connection-screen work from branch
+  `feat/routes-journey-detail` (see "Prerequisite"). Merged to `main` in PR #19
+  (merge commit `71a8cf6`, 2026-11-13); the branch was three commits on top of
+  `ea5028c`.
 - **Category**: design / UI
 - **Planned at**: 2026-11-13, against `feat/routes-journey-detail` at `6822601`.
 
@@ -51,10 +51,10 @@ station is "which platform, and how long do I have". The new layout answers
 that first on every row. The two extra skins give the app a recognisable
 identity without three sets of screens to maintain.
 
-## Prerequisite (Phase 0) — done 2026-11-13
+## Prerequisite (Phase 0) — done 2026-11-13, merged in PR #19
 
-Branch `feat/routes-journey-detail` (pushed, head `6822601`) holds the work
-this plan builds on: `app/journey.tsx`, `lib/journeySteps.ts`,
+Branch `feat/routes-journey-detail` (head `6822601`, merged as `71a8cf6`) held
+the work this plan builds on, now on `main`: `app/journey.tsx`, `lib/journeySteps.ts`,
 `lib/useJourneys.ts`, `test/journeySteps.test.ts`, a rewritten
 `components/JourneyCard.tsx`, three tabs instead of four, stop search on Home.
 
