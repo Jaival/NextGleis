@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, css, useReducedMotion } from 'react-native-reanimated';
+import { mix } from '@/lib/contrast';
 import { duration as durations, curve, easing } from '@/lib/motion';
 import { useT } from '@/lib/i18n';
 import { spacing, type Theme } from '@/lib/theme';
@@ -13,6 +14,8 @@ type Props = {
   placeholder: string;
   accessibilityLabel: string;
   autoFocus?: boolean;
+  // 'header' is for a field that sits on the screen's header band.
+  tone?: 'default' | 'header';
 };
 
 const focusRing = css.create({
@@ -32,13 +35,18 @@ export function SearchField({
   placeholder,
   accessibilityLabel,
   autoFocus,
+  tone = 'default',
 }: Props) {
   const theme = useTheme();
   const { colors } = theme;
   const t = useT();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const styles = useMemo(() => createStyles(theme, tone), [theme, tone]);
   const [focused, setFocused] = useState(false);
   const reduced = useReducedMotion();
+  // On the header band the field's own colours would clash: text and icons
+  // follow the band's foreground instead.
+  const onHeader = tone === 'header';
+  const iconColor = onHeader ? colors.headerForeground : colors.mutedForeground;
 
   return (
     <Animated.View
@@ -47,13 +55,13 @@ export function SearchField({
       <Ionicons
         name="search"
         size={18}
-        color={focused ? colors.primary : colors.mutedForeground}
+        color={focused && !onHeader ? colors.primary : iconColor}
         style={styles.icon}
       />
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor={colors.mutedForeground}
+        placeholderTextColor={onHeader ? `${colors.headerForeground}B3` : colors.mutedForeground}
         value={value}
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
@@ -63,7 +71,7 @@ export function SearchField({
         accessibilityLabel={accessibilityLabel}
         autoFocus={autoFocus}
         returnKeyType="search"
-        selectionColor={colors.primary}
+        selectionColor={onHeader ? colors.headerForeground : colors.primary}
       />
       {/* Fixed-width slot: the button fades in and out without ever resizing
           the input, which would otherwise nudge the caret on the first keystroke. */}
@@ -76,7 +84,7 @@ export function SearchField({
               accessibilityLabel={t('search.clear')}
               hitSlop={12}
             >
-              <Ionicons name="close-circle" size={18} color={colors.mutedForeground} />
+              <Ionicons name="close-circle" size={18} color={iconColor} />
             </Pressable>
           </Animated.View>
         ) : null}
@@ -85,7 +93,10 @@ export function SearchField({
   );
 }
 
-function createStyles({ colors, type, radii }: Theme) {
+function createStyles({ colors, type, radii }: Theme, tone: 'default' | 'header') {
+  const onHeader = tone === 'header';
+  // A lighter or darker wash of the band, so the field reads as part of it.
+  const headerFill = mix(colors.header, colors.headerForeground, 0.14);
   return StyleSheet.create({
     field: {
       flexDirection: 'row',
@@ -93,19 +104,23 @@ function createStyles({ colors, type, radii }: Theme) {
       // Resting state is a recessed well; focus lifts it onto `surface` and
       // draws the ring. The unfocused border matches the fill so the field
       // doesn't change size when the ring appears.
-      backgroundColor: colors.muted,
+      backgroundColor: onHeader ? headerFill : colors.muted,
       borderWidth: 1,
-      borderColor: colors.muted,
+      borderColor: onHeader ? headerFill : colors.muted,
       borderRadius: radii.pill,
       paddingHorizontal: spacing.md,
       height: 46,
     },
-    fieldFocused: { borderColor: colors.primary, backgroundColor: colors.card },
+    // On the header the fill stays, so the foreground text never lands on a
+    // card-coloured field.
+    fieldFocused: onHeader
+      ? { borderColor: colors.headerForeground }
+      : { borderColor: colors.primary, backgroundColor: colors.card },
     icon: { marginRight: spacing.sm },
     input: {
       flex: 1,
       ...type.input,
-      color: colors.foreground,
+      color: onHeader ? colors.headerForeground : colors.foreground,
       // Android's TextInput ships vertical padding that breaks the row's centring.
       paddingVertical: 0,
     },
