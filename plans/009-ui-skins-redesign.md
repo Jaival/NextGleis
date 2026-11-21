@@ -69,7 +69,7 @@ the work this plan builds on, now on `main`: `app/journey.tsx`, `lib/journeyStep
 
 | Phase | Content | Executor | Status |
 | --- | --- | --- | --- |
-| 1 | Skin system: tokens, palettes, fonts, settings. Old layout, new skins. | Sonnet, medium | TODO |
+| 1 | Skin system: tokens, palettes, fonts, settings. Old layout, new skins. | Sonnet, medium | IN PROGRESS |
 | 2 | Shared building blocks: platform tile, countdown, line bar, sign header, pure helpers + tests | Sonnet, medium | TODO |
 | 3 | Screens rebuilt on the building blocks | Opus, high, with emulator | TODO |
 | 4 | Home: saved routes show their next departure | Sonnet, medium | TODO |
