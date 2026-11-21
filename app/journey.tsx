@@ -382,7 +382,7 @@ function BoardRow({
       }
     >
       <View style={styles.stepTitleRow}>
-        <LineBadge compact line={leg.line ?? ''} />
+        <LineBadge compact onHighlight={isNow} line={leg.line ?? ''} />
         {leg.direction ? (
           <Text style={[styles.stepTitle, isNow && styles.onNow]} numberOfLines={2}>
             {t('departure.to', leg.direction)}
