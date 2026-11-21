@@ -171,7 +171,14 @@ function JourneyDetail({ id, search }: { id: string; search: JourneySearch }) {
               );
             }
             return step.type === 'transfer' ? (
-              <Change key={index} transfer={step.transfer} styles={styles} colors={colors} t={t} />
+              <Change
+                key={index}
+                transfer={step.transfer}
+                passed={current !== -1 && index < current}
+                styles={styles}
+                colors={colors}
+                t={t}
+              />
             ) : (
               <View key={index} style={styles.aside}>
                 <Ionicons name="walk-outline" size={18} color={colors.mutedForeground} />
@@ -383,7 +390,7 @@ function BoardRow({
         ) : null}
       </View>
       <Text style={[styles.stepMeta, isNow && styles.onNow]} numberOfLines={2}>
-        <Text style={leg.cancelled && styles.struck}>
+        <Text style={leg.cancelled && (isNow ? styles.struckOnNow : styles.struck)}>
           {leg.origin} · {t('departure.departs', formatTime(leg.departure))}
         </Text>
         {delay ? (
@@ -425,7 +432,11 @@ function ExitRow({
     t('journey.exit'),
     `${leg.destination}, ${t('departure.arrives', formatTime(leg.arrival))}`,
     delay ? t('departure.delayedBy', delay) : null,
-    leg.arrivalPlatform ? t('departure.platform', leg.arrivalPlatform) : null,
+    leg.arrivalPlatform && leg.plannedArrivalPlatform
+      ? t('departure.platformChanged', leg.arrivalPlatform, leg.plannedArrivalPlatform)
+      : leg.arrivalPlatform
+        ? t('departure.platform', leg.arrivalPlatform)
+        : null,
   ]
     .filter(Boolean)
     .join('. ');
@@ -465,11 +476,13 @@ function ExitRow({
 
 function Change({
   transfer,
+  passed,
   styles,
   colors,
   t,
 }: {
   transfer: Transfer;
+  passed: boolean;
   styles: Styles;
   colors: Colors;
   t: Translate;
@@ -492,6 +505,7 @@ function Change({
       style={[
         styles.aside,
         styles.asideChange,
+        passed && styles.stepPassed,
         status === 'tight' && styles.asideTight,
         status === 'missed' && styles.asideMissed,
       ]}
@@ -592,6 +606,8 @@ function createStyles({ colors, type, radii }: Theme) {
     onNowBold: { ...type.footnoteBold, color: colors.highlightForeground },
     delayed: { ...type.footnoteBold, color: colors.delay },
     struck: { textDecorationLine: 'line-through', color: colors.mutedForeground },
+    // On the yellow card the line stays but the colour must not change.
+    struckOnNow: { textDecorationLine: 'line-through' },
     cancelled: { ...type.captionBold, color: colors.cancelled },
 
     // Changes and walks sit between the ride cards, off the card surface:

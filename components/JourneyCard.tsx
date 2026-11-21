@@ -108,9 +108,9 @@ function JourneyCardBase({
   );
 }
 
-// Connections refetch every minute and the clock ticks every 15 seconds;
-// without this each tick re-renders every card even when nothing changed
-// (only `now` does, and a card shows it in whole minutes).
+// `now` moves every 15 seconds, so every card re-renders on each tick; what the
+// memo saves is the re-render when only the parent does (a menu opening, a
+// refetch that returned the same connections).
 export const JourneyCard = memo(JourneyCardBase);
 
 function createStyles({ colors, type, radii }: Theme) {

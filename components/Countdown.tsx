@@ -80,5 +80,7 @@ export function Countdown({ time, delayMinutes, now, cancelled, tone = 'default'
 }
 
 const styles = StyleSheet.create({
-  box: { minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' },
+  // Wide enough for a clock time in the widest face and at a large system font,
+  // so the column does not jump when a row crosses 60 minutes.
+  box: { minWidth: 56, alignItems: 'flex-end', justifyContent: 'center' },
 });

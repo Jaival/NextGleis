@@ -100,6 +100,7 @@ function createStyles({ colors, radii }: Theme) {
     bar: { height: 12, borderRadius: radii.pill, backgroundColor: colors.skeleton },
     directionBar: { flex: 1, maxWidth: '70%' },
     metaBar: { width: '45%', height: 14 },
-    countdownBar: { width: 36, height: 28 },
+    // Right-aligned in the same 56pt column as Countdown.
+    countdownBar: { width: 36, height: 28, marginLeft: 20 },
   });
 }

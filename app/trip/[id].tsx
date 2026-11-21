@@ -287,7 +287,7 @@ function StopRow({
 
       <View style={styles.stopText}>
         <Text
-          style={[styles.stopName, own && styles.stopNameOwn, stop.cancelled && styles.struck]}
+          style={[styles.stopName, stop.cancelled && styles.struck, own && styles.stopNameOwn]}
           numberOfLines={1}
         >
           {stop.name}

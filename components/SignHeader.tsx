@@ -48,7 +48,14 @@ function createStyles({ colors, type }: Theme, topInset: number) {
       gap: spacing.sm,
     },
     overline: { ...type.overline, color: colors.headerForeground, opacity: 0.75 },
-    titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    // 44pt: the height of the buttons a screen puts on the right, so the band
+    // does not grow when they appear.
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 44,
+    },
     title: { ...type.title, color: colors.headerForeground, flexShrink: 1 },
   });
 }
