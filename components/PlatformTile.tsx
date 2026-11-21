@@ -34,7 +34,7 @@ export function PlatformTile({ platform, plannedPlatform, kind, tone = 'quiet', 
         <Ionicons
           name={kind === 'db' || kind === 'rail' ? 'train-outline' : 'bus-outline'}
           size={24}
-          color={colors.mutedForeground}
+          color={colors.foreground}
         />
       </View>
     );

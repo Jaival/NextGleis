@@ -130,10 +130,10 @@ describe('lineBarSegments', () => {
     const segments = lineBarSegments([
       walk('Home', 'A', '09:50', '10:00'),
       ride('A', 'B', '10:00', '10:20', { line: 'RB 82' }),
-      ride('B', 'C', '10:28', '10:29'),
+      ride('B', 'C', '10:28', '10:28'),
       walk('C', 'Work', '10:29', '10:40'),
     ]);
-    // A ride shorter than a minute still gets a minute; a missing line is ''.
+    // A zero-minute ride still gets a minute; a missing line is ''.
     assert.deepEqual(segments, [
       { line: 'RB 82', minutes: 20 },
       { line: '', minutes: 1 },

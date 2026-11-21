@@ -61,7 +61,9 @@ export function SearchField({
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor={onHeader ? `${colors.headerForeground}B3` : colors.mutedForeground}
+        placeholderTextColor={
+          onHeader ? mix(colors.header, colors.headerForeground, 0.7) : colors.mutedForeground
+        }
         value={value}
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
