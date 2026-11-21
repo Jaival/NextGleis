@@ -26,9 +26,9 @@ import type { TripStop } from '@/types';
 type Colors = ThemeColors;
 type Styles = ReturnType<typeof createStyles>;
 
-// Rows are a fixed height so the list can jump straight to the rider's own
-// stop without measuring everything above it first.
-const ROW_HEIGHT = 64;
+// A row is at least this tall and grows with the system font; a fixed height
+// clipped the stop name and the platform at the largest font sizes.
+const MIN_ROW_HEIGHT = 64;
 
 // The time a stop is shown with: when the service leaves it, or for the last
 // stop when it arrives.
@@ -139,14 +139,12 @@ export default function TripScreen() {
           ref={list}
           data={stops}
           keyExtractor={(stop, index) => `${stop.stopId ?? stop.name}-${index}`}
-          getItemLayout={(_data, index) => ({
-            length: ROW_HEIGHT,
-            offset: ROW_HEIGHT * index,
-            index,
-          })}
-          // The header's height isn't known up front, so a jump can land a
-          // little off; better that than none.
-          onScrollToIndexFailed={() => {}}
+          // Rows have no fixed height, so the jump to the rider's own stop can
+          // land on a row that is not drawn yet: go near it, then jump.
+          onScrollToIndexFailed={({ index, averageItemLength }) => {
+            list.current?.scrollToOffset({ offset: index * averageItemLength, animated: false });
+            setTimeout(() => list.current?.scrollToIndex({ index, animated: false }), 100);
+          }}
           ListHeaderComponent={
             data ? (
               <View>
@@ -360,7 +358,8 @@ function createStyles({ colors, type, radii }: Theme) {
       overflow: 'hidden',
     },
     row: {
-      height: ROW_HEIGHT,
+      minHeight: MIN_ROW_HEIGHT,
+      paddingVertical: spacing.sm,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: spacing.lg,
