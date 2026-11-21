@@ -64,27 +64,61 @@ Plan 009 phase 5 stays **IN PROGRESS**. Not done:
 2. Merge the chain bottom-up (#21 first) once it is checked.
 3. Batch H items below still apply to the next EAS build.
 
-## Open decisions (owner)
+## Decided (2026-11-21)
 
-1. **Reset the chosen time when a saved route opens from Home.** `routes.tsx`
-   keeps a time the rider picked. After "arrive by 18:00", tapping a saved
-   route on Home opens Routes with that time, so its list is another query key
-   than the Home card's (`when: null`) and is not there at once. A reset
-   (`setTripTime(LEAVE_NOW)` when the route params apply) is one line, but the
-   rider loses the time without a warning, and plan 009 forbids changing
-   Routes behaviour in Phase 5. Left as is.
-2. **Polling after "Later".** If the rider pressed "Later" on Routes for a
-   saved route, the infinite query refetches every loaded page, so Home sends
-   more than one request per minute for that route until the cache is dropped.
-3. **A live card is about 40 dp taller than a plain one** (caption row plus a
-   countdown), so a list can mix heights. A fix means a new card layout; it
-   needs a device to judge.
-4. **Trip rows have a fixed height (64)** for `getItemLayout`. At a 130 % font
-   the stop name and the platform line may not fit; the time stack (about
-   44 dp) does. Not checked at a large font.
-5. **Pull-to-refresh spinner flashes** on Routes and connection screens on every
-   focus refetch (`RefreshControl refreshing={isRefetching}`). Existing
-   behaviour, not skin-related.
+1. **Routes time reset** — do it: tapping a saved route on Home opens Routes
+   with "leave now" (`setTripTime(LEAVE_NOW)` when the route params apply).
+   Not in plan 009. A small PR from `main` after the chain merges (roadmap 2.13).
+   Why: after "arrive by 18:00" the Routes list has another query key than
+   the Home card and is not there at once.
+2. **Polling after "Later"** — accepted for now. After "Later" the infinite
+   query refetches every loaded page, so Home sends more than one request per
+   minute for that route until the cache is dropped. It needs a deliberate
+   press and happens only while Home is in view. A real fix changes the query
+   setup and needs its own plan.
+3. **Live card about 40 dp taller than a plain one** — accepted. Mixed heights
+   in a vertical list are normal. Revisit if the rest of the matrix shows a
+   problem.
+4. **Trip rows have a fixed height (64)** for `getItemLayout` — kept until a
+   device shows clipping at a large font. Then drop `getItemLayout` (trip lists
+   are short).
+5. **Pull-to-refresh spinner** — show it only when the rider pulls down, not on
+   every background or focus refetch (`refreshing={isRefetching}`). UI only, no
+   query change. A small PR from `main` after the chain merges (roadmap 2.14).
+6. **Merge order** — hold the merge of #21 until the device matrix is done and
+   Phase 5 is DONE. Then merge #21 to #25 bottom-up, then do items 1 and 5.
+
+## Brief for the matrix thread (paste into a new thread, Opus)
+
+Finish plan 009 phase 5: the device matrix in `docs/HANDOFF.md` ("NOT done").
+Branch from `feat/ui-skins-phase-5`. Fix what shows up with tokens or
+components only, never `theme.skin` in a screen. No change to query keys,
+polling intervals or navigation targets. Save screenshots to
+`docs/design/screens/`. Set the Phase 5 row to DONE only when the whole matrix
+is seen. Run all AGENTS.md Checks, push, update the PR.
+
+Setup that worked (Windows, Pixel_8_Pro emulator, Android 17):
+
+1. `device_list`, then `device_open` with the `hostId` and device `id`. If it
+   answers `DEVICE_IN_USE`, stop and ask the owner. Never close another session.
+2. Backend: `npm start` in `backend/` (port 3000). Metro: `npm start` in the repo
+   root (port 8081). The app falls back to `http://10.0.2.2:3000`.
+3. Port forwards (adb only for these): `adb -s emulator-5554 reverse tcp:8081
+   tcp:8081` and the same for 3000. Remove only those two at the end. Never
+   `adb reverse --remove-all`.
+4. Open the dev client with the deep link
+   `exp+nextgleis://expo-development-client/?url=http://localhost:8081`. The first
+   bundle takes about 15 s and may show a blank screen.
+5. Drive the UI with the `agent-device` command from `device_open` only:
+   `snapshot -i`, `press @ref --settle`, `screenshot <file>`, `back`,
+   `settings text-size <medium|large|extra-large|extra-extra-large|accessibility-medium>`
+   (1.0 is "large"; 130 % is between "extra-large" 1.12 and "extra-extra-large" 1.24).
+6. Wait 6 s after a screen opens before a screenshot: the pull-to-refresh
+   spinner of an old refetch can sit in the picture. Retake until clean.
+7. Poll check: count `api/journeys` lines in the backend log, with the number of
+   cards on screen written down this time.
+8. At the end: stop Metro and the backend, remove the two forwards, set the
+   font back to "large", and note the app settings you left.
 
 ---
 
