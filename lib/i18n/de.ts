@@ -249,7 +249,7 @@ export const de: Messages = {
   'settings.skin.netzplanText': 'Papier und Tinte, Linien wie im Netzplan.',
   'settings.skinDarkOnly': 'Anzeiger gibt es nur in Dunkel.',
   'settings.highContrast': 'Hoher Kontrast',
-  'settings.highContrastText': 'Dunklere Schrift und kräftigere Ränder, in jedem Farbschema.',
+  'settings.highContrastText': 'Dunklere Schrift und kräftigere Ränder, in jedem Design.',
   'settings.language': 'Sprache',
   'settings.languageSystem': 'System',
   'settings.dataSources': 'Datenquellen',

@@ -241,7 +241,7 @@ export const en = {
   'settings.skin.netzplanText': 'Paper and ink, with lines like a network map.',
   'settings.skinDarkOnly': 'Anzeiger has one appearance: dark.',
   'settings.highContrast': 'High contrast',
-  'settings.highContrastText': 'Darker text and stronger borders, in any theme.',
+  'settings.highContrastText': 'Darker text and stronger borders, in any design.',
   'settings.language': 'Language',
   'settings.languageSystem': 'System',
   'settings.dataSources': 'Data sources',

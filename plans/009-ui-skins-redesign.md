@@ -69,7 +69,7 @@ the work this plan builds on, now on `main`: `app/journey.tsx`, `lib/journeyStep
 
 | Phase | Content | Executor | Status |
 | --- | --- | --- | --- |
-| 1 | Skin system: tokens, palettes, fonts, settings. Old layout, new skins. | Sonnet, medium | IN PROGRESS |
+| 1 | Skin system: tokens, palettes, fonts, settings. Old layout, new skins. | Sonnet, medium | DONE |
 | 2 | Shared building blocks: platform tile, countdown, line bar, sign header, pure helpers + tests | Sonnet, medium | TODO |
 | 3 | Screens rebuilt on the building blocks | Opus, high, with emulator | TODO |
 | 4 | Home: saved routes show their next departure | Sonnet, medium | TODO |
@@ -800,3 +800,9 @@ Executor: Opus with the emulator. No new features.
 
 _(Each phase adds three lines here: what was done, what the next phase needs
 to know, anything left open.)_
+
+**Phase 1 (2026-11-21, `feat/ui-skins-phase-1`)**
+
+- Done: skin system as specified (`lib/palettes.ts`, `test/palettes.test.ts`, `lib/theme.ts`, store, storage, `useTheme`, Settings picker, en/de strings, font packages swapped). One deviation: in high contrast, line badges keep their text colour and the fill darkens (`ensureContrast(bg, [fg], 7, black)`); the old rule pushed white text toward black and dropped it below AA. Header, sign and highlight text move toward whichever pole it is nearer. `settings.highContrastText` now says "design" instead of "theme".
+- Next phase needs: `theme.statusBarStyle`, `radii.round` and the six new tokens exist but are unused. `radii.round` is applied only to the stop-rail dots (trip, journey) and the Routes locate-button well; other fixed-size icon wells (FavoriteCard, Routes swap button, card icons) stay on `radii.pill` and turn square in Anzeiger. Anzeiger `overline` letterSpacing is 0.3 (replaces 0.6), as the plan says.
+- Open: no device check done (no emulator in this run); fonts untested at runtime on Android.

@@ -685,7 +685,7 @@ function createStyles({ colors, type, radii }: Theme) {
     locateIcon: {
       width: 32,
       height: 32,
-      borderRadius: radii.pill,
+      borderRadius: radii.round,
       backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
