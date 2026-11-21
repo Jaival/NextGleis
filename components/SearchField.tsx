@@ -82,14 +82,11 @@ export function SearchField({
           selectionColor={onHeader ? colors.headerForeground : colors.primary}
         />
         {value.length === 0 ? (
-          <Text
-            style={[styles.input, styles.placeholder]}
-            numberOfLines={1}
-            pointerEvents="none"
-            importantForAccessibility="no-hide-descendants"
-          >
-            {placeholder}
-          </Text>
+          <View style={styles.placeholderBox} importantForAccessibility="no-hide-descendants">
+            <Text style={[styles.input, styles.placeholder]} numberOfLines={1}>
+              {placeholder}
+            </Text>
+          </View>
         ) : null}
       </View>
       {/* Fixed-width slot: the button fades in and out without ever resizing
@@ -147,11 +144,10 @@ function createStyles({ colors, type, radii }: Theme, tone: 'default' | 'header'
       // the same x (Android adds a few dp of its own to an EditText).
       paddingHorizontal: 0,
     },
+    placeholderBox: { ...StyleSheet.absoluteFill, justifyContent: 'center', pointerEvents: 'none' },
     placeholder: {
-      ...StyleSheet.absoluteFill,
-      textAlignVertical: 'center',
       // Archivo's last glyph overhangs its measured width by a few px and was cut.
-      paddingRight: spacing.xs,
+      paddingEnd: spacing.xs,
       color: onHeader ? mix(colors.header, colors.headerForeground, 0.7) : colors.mutedForeground,
     },
     clearSlot: { width: 22, alignItems: 'flex-end' },

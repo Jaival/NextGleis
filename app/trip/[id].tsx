@@ -105,6 +105,9 @@ export default function TripScreen() {
   // (an ICE can have twenty before it). Once, not on every refetch.
   const list = useRef<FlatList<TripStop>>(null);
   const scrolled = useRef(false);
+  const jumpRetries = useRef(0);
+  const jumpTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(jumpTimer.current), []);
   useEffect(() => {
     if (scrolled.current || ownIndex < 1) return;
     scrolled.current = true;
@@ -142,8 +145,13 @@ export default function TripScreen() {
           // Rows have no fixed height, so the jump to the rider's own stop can
           // land on a row that is not drawn yet: go near it, then jump.
           onScrollToIndexFailed={({ index, averageItemLength }) => {
+            if (jumpRetries.current >= 3) return;
+            jumpRetries.current += 1;
             list.current?.scrollToOffset({ offset: index * averageItemLength, animated: false });
-            setTimeout(() => list.current?.scrollToIndex({ index, animated: false }), 100);
+            jumpTimer.current = setTimeout(
+              () => list.current?.scrollToIndex({ index, animated: false }),
+              100,
+            );
           }}
           ListHeaderComponent={
             data ? (
@@ -374,7 +382,15 @@ function createStyles({ colors, type, radii }: Theme) {
     time: { ...type.timeSmall, color: colors.foreground },
     realtime: { ...type.timeSmall, color: colors.delay },
     struck: { textDecorationLine: 'line-through', color: colors.mutedForeground },
-    rail: { width: 14, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+    // The negative margin lets the line run through the row's own padding, so
+    // it stays unbroken between two stops.
+    rail: {
+      width: 14,
+      alignSelf: 'stretch',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: -spacing.sm,
+    },
     railLine: {
       position: 'absolute',
       top: 0,

@@ -116,7 +116,7 @@ appearances, high contrast off and on, every screen) is not seen. Missing:
 4. **Trip rows have a fixed height (64)** — done in the matrix thread. At 2.0×
    the stop name and platform clipped, so rows are `minHeight` 64 and grow, and
    `getItemLayout` is dropped. `onScrollToIndexFailed` scrolls near the row and
-   retries once.
+   retries up to 3 times.
 5. **Pull-to-refresh spinner** — show it only when the rider pulls down, not on
    every background or focus refetch (`refreshing={isRefetching}`). UI only, no
    query change. A small PR from `main` after the chain merges (roadmap 2.14).
