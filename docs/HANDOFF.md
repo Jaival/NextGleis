@@ -20,13 +20,16 @@ The older note for the launch-work batches (plans 001–008) follows below.
   countdown column has a fixed width and shrinks its text instead of widening
   (so "JETZT" in Anzeiger does not make a row jump), the line bar grows with
   the font, and the search placeholder stays on one line at a large font. The
-  first two came from reading code, the last two from the emulator.
+  first three came from reading code, the last two from the emulator.
 - Phase 5 device check (partial, Pixel_8_Pro emulator, local backend): Home,
   Routes results and a connection with 2 changes in all five appearances;
   Anzeiger in German and at a 1.5× font; high contrast on all three skins; the
   trip screen once. Nine screenshots are in `docs/design/screens/`. The Phase 4
-  verify step passed: 2 `/api/journeys` requests in 130 s with Home in view
-  (two saved routes), none in 130 s with Settings in view.
+  verify step is only partly confirmed: 2 `/api/journeys` requests in 130 s
+  with Home in view, none in 130 s with Settings in view. That fits "no more
+  than one per route per minute" and shows no polling off screen, but the
+  number of cards on screen was not recorded, so the exact rate per card is not
+  confirmed.
 - Docs: roadmap rows 2.11 and 2.12, README features, plan and plan index rows.
 
 ## NOT done — needs an emulator
@@ -38,6 +41,9 @@ Plan 009 phase 5 stays **IN PROGRESS**. Not done:
   and connection; high contrast in German and at a large font; the trip screen
   in every skin. Use a night connection Frankfurt Hbf → Darmstadt Schloss for a
   tight change.
+- The trip time column and the `Countdown` text at a large font in every skin
+  (the time column sizes per row, so rows could differ in width; `Countdown`
+  shrinks to 70 % and then cuts). None of the screenshots is at a large font.
 - The system font at exactly 130 % (1.5× was tested; 1.12× and 1.24× were not
   captured).
 - Screenshots for the other screens and for Bahnsteig dark and Netzplan dark.
@@ -75,7 +81,7 @@ Plan 009 phase 5 stays **IN PROGRESS**. Not done:
    needs a device to judge.
 4. **Trip rows have a fixed height (64)** for `getItemLayout`. At a 130 % font
    the stop name and the platform line may not fit; the time stack (about
-   44 dp) does. Not seen breaking at 1.5× on one skin; not checked in all.
+   44 dp) does. Not checked at a large font.
 5. **Pull-to-refresh spinner flashes** on Routes and connection screens on every
    focus refetch (`RefreshControl refreshing={isRefetching}`). Existing
    behaviour, not skin-related.
