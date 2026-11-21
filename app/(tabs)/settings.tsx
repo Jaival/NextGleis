@@ -4,6 +4,7 @@ import { useMemo, type ComponentProps, type ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { SignHeader } from '@/components/SignHeader';
 import { PRIVACY_POLICY_URL } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { useLocationPermission } from '@/lib/location';
@@ -107,12 +108,10 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScreenContainer>
+    // The header owns the top inset.
+    <ScreenContainer edges={[]}>
+      <SignHeader title={t('settings.title')} />
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t('settings.title')}
-        </Text>
-
         <Card
           icon="contrast-outline"
           title={t('settings.appearance')}
@@ -325,11 +324,10 @@ function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     container: {
       paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
+      paddingTop: spacing.lg,
       paddingBottom: spacing.xxl,
       gap: spacing.md,
     },
-    title: { ...type.largeTitle, color: colors.foreground, marginBottom: spacing.xs },
     card: {
       backgroundColor: colors.card,
       borderRadius: radii.lg,

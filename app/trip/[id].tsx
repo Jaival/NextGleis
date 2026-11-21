@@ -267,12 +267,14 @@ function StopRow({
     >
       <View style={styles.times}>
         {scheduled ? (
-          <Text style={[styles.time, stop.cancelled && styles.struck]}>
+          <Text style={[styles.time, stop.cancelled && styles.struck, own && styles.onOwn]}>
             {formatTime(scheduled)}
           </Text>
         ) : null}
         {delayed && scheduled ? (
-          <Text style={styles.realtime}>{formatTime(addMinutes(scheduled, delay!))}</Text>
+          <Text style={[styles.realtime, own && styles.onOwn]}>
+            {formatTime(addMinutes(scheduled, delay!))}
+          </Text>
         ) : null}
       </View>
 
@@ -291,14 +293,22 @@ function StopRow({
           {stop.name}
         </Text>
         {stop.cancelled ? (
-          <Text style={styles.stopCancelled}>{t('trip.stopCancelled')}</Text>
+          <Text style={[styles.stopCancelled, own && styles.onOwn]}>{t('trip.stopCancelled')}</Text>
         ) : stop.platform ? (
           <View style={styles.platformLine}>
-            <Text style={[styles.platform, platformChanged && styles.platformChanged]}>
+            <Text
+              style={[
+                styles.platform,
+                platformChanged && styles.platformChanged,
+                own && styles.onOwn,
+              ]}
+            >
               {t('departure.platform', stop.platform)}
             </Text>
             {platformChanged ? (
-              <Text style={styles.plannedPlatform}>{stop.plannedPlatform}</Text>
+              <Text style={[styles.plannedPlatform, own && styles.onOwn]}>
+                {stop.plannedPlatform}
+              </Text>
             ) : null}
           </View>
         ) : null}
@@ -340,7 +350,7 @@ function createStyles({ colors, type, radii }: Theme) {
       paddingHorizontal: spacing.lg,
       gap: spacing.md,
     },
-    rowOwn: { backgroundColor: colors.accent },
+    rowOwn: { backgroundColor: colors.highlight },
     rowPressed: { backgroundColor: colors.muted },
     rowPassed: { opacity: 0.55 },
     times: { width: 48, alignItems: 'flex-end' },
@@ -367,7 +377,10 @@ function createStyles({ colors, type, radii }: Theme) {
     dotOwn: { width: 14, height: 14, backgroundColor: colors.primary },
     stopText: { flex: 1, gap: 2 },
     stopName: { ...type.subheadMedium, color: colors.foreground },
-    stopNameOwn: { ...type.subheadBold },
+    // On the highlight fill every text takes its own foreground: the status
+    // colours have no contrast guarantee there.
+    stopNameOwn: { ...type.subheadBold, color: colors.highlightForeground },
+    onOwn: { color: colors.highlightForeground },
     stopCancelled: { ...type.captionBold, color: colors.cancelled },
     platformLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
     platform: { ...type.micro, color: colors.mutedForeground },
