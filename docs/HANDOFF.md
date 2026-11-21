@@ -15,38 +15,46 @@ The older note for the launch-work batches (plans 001–008) follows below.
 - Phase 3: every screen rebuilt on them.
 - Phase 4: saved routes on Home show the next departure, its platform and a
   countdown (first three routes, one search per minute each).
-- Phase 5 (code reading only, no device): trip time column grows with the
-  font (`minWidth`), the rail line through the rider's own stop is visible on
-  the highlight fill, the countdown column has a fixed width and shrinks its
-  text instead of widening, so "JETZT" in Anzeiger does not make a row jump.
-  Docs: roadmap rows 2.11 and 2.12, README features, plan and plan index rows.
+- Phase 5 fixes: trip time column grows with the font (`minWidth`), the rail
+  line through the rider's own stop is visible on the highlight fill, the
+  countdown column has a fixed width and shrinks its text instead of widening
+  (so "JETZT" in Anzeiger does not make a row jump), the line bar grows with
+  the font, and the search placeholder stays on one line at a large font. The
+  first two came from reading code, the last two from the emulator.
+- Phase 5 device check (partial, Pixel_8_Pro emulator, local backend): Home,
+  Routes results and a connection with 2 changes in all five appearances;
+  Anzeiger in German and at a 1.5× font; high contrast on all three skins; the
+  trip screen once. Nine screenshots are in `docs/design/screens/`. The Phase 4
+  verify step passed: 2 `/api/journeys` requests in 130 s with Home in view
+  (two saved routes), none in 130 s with Settings in view.
+- Docs: roadmap rows 2.11 and 2.12, README features, plan and plan index rows.
 
 ## NOT done — needs an emulator
 
-Plan 009 phase 5 stays **IN PROGRESS**. No device check was done in the Phase 5
-run: `device_open` worked, but another session held the emulator
-(`DEVICE_IN_USE`), so the app was never started. Not done:
+Plan 009 phase 5 stays **IN PROGRESS**. Not done:
 
-- The device matrix: five appearances (Bahnsteig light and dark, Anzeiger,
-  Netzplan light and dark), each with high contrast off and on, over Home,
-  search, board, trip, Routes, connection (use a night connection Frankfurt
-  Hbf → Darmstadt Schloss for a tight change), Settings and onboarding.
-- German once, and the system font at 130 % once.
-- The screenshots: `docs/design/screens/<skin>-<screen>.png` for Home, Routes
-  results and the connection screen. None exist.
-- The Phase 4 verify step: the backend log shows one `/api/journeys` per saved
-  route per minute while Home is in view, and none while another tab is open.
-- The "not seen" lists in the plan's handoff log for phases 3 and 4 (shadows on
-  clipping cards, "17 Ost" / "103" / "AUSSTIEG" in the tile, board rows at
-  130 %, status-bar icons on the Netzplan light header and onboarding, the
-  yellow card with a delayed or cancelled ride, a live card at 130 % and in
-  German).
+- The rest of the device matrix: board, search results, onboarding, Home empty
+  state and Settings in every skin; the dark appearances beyond Home, Routes
+  and connection; high contrast in German and at a large font; the trip screen
+  in every skin. Use a night connection Frankfurt Hbf → Darmstadt Schloss for a
+  tight change.
+- The system font at exactly 130 % (1.5× was tested; 1.12× and 1.24× were not
+  captured).
+- Screenshots for the other screens and for Bahnsteig dark and Netzplan dark.
+  The nine existing ones are English, high contrast off, light for Bahnsteig
+  and Netzplan.
+- The "not seen" items from the plan's handoff log: shadows on clipping cards,
+  "17 Ost" / "103" / "AUSSTIEG" in the tile, status-bar icons on the Netzplan
+  light header and onboarding, the yellow card with a delayed or cancelled
+  ride, a live card at a large font and in German in every skin.
+- The device was left on the font size "large" (1.0) and the app on Anzeiger,
+  English, high contrast off. The original app settings are unknown.
 
 ## What is next
 
-1. Someone with an emulator runs the matrix, fixes what shows up with tokens
-   or components (never `theme.skin` in a screen), saves the screenshots and
-   sets the Phase 5 row to DONE.
+1. Someone with an emulator finishes the matrix, fixes what shows up with
+   tokens or components (never `theme.skin` in a screen), saves the remaining
+   screenshots and sets the Phase 5 row to DONE.
 2. Merge the chain bottom-up (#21 first) once it is checked.
 3. Batch H items below still apply to the next EAS build.
 
@@ -67,7 +75,10 @@ run: `device_open` worked, but another session held the emulator
    needs a device to judge.
 4. **Trip rows have a fixed height (64)** for `getItemLayout`. At a 130 % font
    the stop name and the platform line may not fit; the time stack (about
-   44 dp) does. Not seen on a device.
+   44 dp) does. Not seen breaking at 1.5× on one skin; not checked in all.
+5. **Pull-to-refresh spinner flashes** on Routes and connection screens on every
+   focus refetch (`RefreshControl refreshing={isRefetching}`). Existing
+   behaviour, not skin-related.
 
 ---
 
