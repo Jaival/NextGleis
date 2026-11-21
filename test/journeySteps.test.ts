@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { JourneyLeg } from '../types';
-import { journeySteps } from '../lib/journeySteps.ts';
+import { currentRideIndex, journeySteps, lineBarSegments } from '../lib/journeySteps.ts';
 
 function ride(
   origin: string,
@@ -92,5 +92,51 @@ describe('journeySteps', () => {
       ['walk', 'ride'],
     );
     assert.equal(steps[0]?.type === 'walk' && steps[0].minutes, 10);
+  });
+});
+
+describe('currentRideIndex', () => {
+  const steps = journeySteps([
+    ride('A', 'B', '10:00', '10:20', { line: 'RB 82' }),
+    ride('B', 'C', '10:28', '11:00', { line: 'S 3' }),
+  ]);
+  const at = (time: string) => `2026-11-12T${time}:00`;
+
+  it('is the first ride before departure', () => {
+    assert.equal(currentRideIndex(steps, at('09:30')), 0);
+  });
+
+  it('is the next ride between rides', () => {
+    assert.equal(currentRideIndex(steps, at('10:25')), 2);
+  });
+
+  it('is -1 after the last arrival', () => {
+    assert.equal(currentRideIndex(steps, at('11:00')), -1);
+    assert.equal(currentRideIndex(steps, at('12:00')), -1);
+  });
+
+  it('keeps a ride current while its delayed arrival is ahead', () => {
+    const delayed = journeySteps([
+      ride('A', 'B', '10:00', '10:20', { arrivalDelayMinutes: 10 }),
+      ride('B', 'C', '10:40', '11:00'),
+    ]);
+    assert.equal(currentRideIndex(delayed, at('10:25')), 0);
+    assert.equal(currentRideIndex(delayed, at('10:31')), 2);
+  });
+});
+
+describe('lineBarSegments', () => {
+  it('has one entry per ride and skips walks', () => {
+    const segments = lineBarSegments([
+      walk('Home', 'A', '09:50', '10:00'),
+      ride('A', 'B', '10:00', '10:20', { line: 'RB 82' }),
+      ride('B', 'C', '10:28', '10:29'),
+      walk('C', 'Work', '10:29', '10:40'),
+    ]);
+    // A ride shorter than a minute still gets a minute; a missing line is ''.
+    assert.deepEqual(segments, [
+      { line: 'RB 82', minutes: 20 },
+      { line: '', minutes: 1 },
+    ]);
   });
 });

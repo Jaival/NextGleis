@@ -85,3 +85,12 @@ export function berlinNow(): string {
 export function addMinutes(wall: string, minutes: number): string {
   return new Date(Date.parse(`${wall}Z`) + minutes * 60_000).toISOString().slice(0, 19);
 }
+
+// Whole minutes from `now` until a scheduled time plus its delay. Both are
+// Berlin wall-clock strings; negative once it has passed. Rounded down, so
+// "6 min" means at least six full minutes, which is why this does not use
+// minutesBetween (it rounds to the nearest minute).
+export function minutesUntil(wall: string, delayMinutes: number | undefined, now: string): number {
+  const ms = Date.parse(`${wall}Z`) + (delayMinutes ?? 0) * 60_000 - Date.parse(`${now}Z`);
+  return Math.floor(ms / 60_000);
+}

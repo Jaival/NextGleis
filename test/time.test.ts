@@ -9,6 +9,7 @@ import {
   formatDuration,
   formatTime,
   minutesBetween,
+  minutesUntil,
 } from '../lib/time.ts';
 
 const t = ((key: string, ...params: unknown[]) =>
@@ -57,5 +58,29 @@ describe('formatDuration', () => {
   it('splits hours and minutes', () => {
     assert.equal(formatDuration(75, t), 'common.duration:1:15');
     assert.equal(formatDuration(5, t), 'common.duration:0:5');
+  });
+});
+
+describe('minutesUntil', () => {
+  it('counts whole minutes on time', () => {
+    assert.equal(minutesUntil('2026-11-12T10:06:00', undefined, '2026-11-12T10:00:00'), 6);
+  });
+
+  it('adds the delay', () => {
+    assert.equal(minutesUntil('2026-11-12T10:06:00', 4, '2026-11-12T10:00:00'), 10);
+  });
+
+  it('rounds down, so "5 min" means at least five full minutes', () => {
+    assert.equal(minutesUntil('2026-11-12T10:06:00', 0, '2026-11-12T10:00:30'), 5);
+    assert.equal(minutesUntil('2026-11-12T10:06:00', 0, '2026-11-12T10:05:59'), 0);
+  });
+
+  it('is negative once it has passed', () => {
+    assert.equal(minutesUntil('2026-11-12T10:00:00', 0, '2026-11-12T10:03:00'), -3);
+    assert.equal(minutesUntil('2026-11-12T10:00:00', 0, '2026-11-12T10:00:10'), -1);
+  });
+
+  it('works across midnight', () => {
+    assert.equal(minutesUntil('2026-11-13T00:05:00', 2, '2026-11-12T23:58:00'), 9);
   });
 });
