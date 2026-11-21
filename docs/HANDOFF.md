@@ -1,3 +1,74 @@
+# Handoff — new UI, plan 009 (phases 1–5)
+
+Date: 2026-11-21. Plan: `plans/009-ui-skins-redesign.md` (its handoff log has
+the per-phase details). One layout ("Bahnsteig"), three skins (Bahnsteig,
+Anzeiger, Netzplan). PR chain, all open and stacked:
+#21 phase 1 → #22 phase 2 → #23 phase 3 → #24 phase 4 → phase 5 (this branch).
+The older note for the launch-work batches (plans 001–008) follows below.
+
+## What is done
+
+- Phase 1: skin system (tokens, palettes, fonts, Settings picker). The five
+  colour themes and three styles are gone.
+- Phase 2: building blocks (`PlatformTile`, `Countdown`, `LineBar`,
+  `SignHeader`, pure helpers) with tests.
+- Phase 3: every screen rebuilt on them.
+- Phase 4: saved routes on Home show the next departure, its platform and a
+  countdown (first three routes, one search per minute each).
+- Phase 5 (code reading only, no device): trip time column grows with the
+  font (`minWidth`), the rail line through the rider's own stop is visible on
+  the highlight fill, the countdown column has a fixed width and shrinks its
+  text instead of widening, so "JETZT" in Anzeiger does not make a row jump.
+  Docs: roadmap rows 2.11 and 2.12, README features, plan and plan index rows.
+
+## NOT done — needs an emulator
+
+Plan 009 phase 5 stays **IN PROGRESS**. Not done:
+
+- The device matrix: five appearances (Bahnsteig light and dark, Anzeiger,
+  Netzplan light and dark), each with high contrast off and on, over Home,
+  search, board, trip, Routes, connection (use a night connection Frankfurt
+  Hbf → Darmstadt Schloss for a tight change), Settings and onboarding.
+- German once, and the system font at 130 % once.
+- The screenshots: `docs/design/screens/<skin>-<screen>.png` for Home, Routes
+  results and the connection screen. None exist.
+- The Phase 4 verify step: the backend log shows one `/api/journeys` per saved
+  route per minute while Home is in view, and none while another tab is open.
+- The "not seen" lists in the plan's handoff log for phases 3 and 4 (shadows on
+  clipping cards, "17 Ost" / "103" / "AUSSTIEG" in the tile, board rows at
+  130 %, status-bar icons on the Netzplan light header and onboarding, the
+  yellow card with a delayed or cancelled ride, a live card at 130 % and in
+  German).
+
+## What is next
+
+1. Someone with an emulator runs the matrix, fixes what shows up with tokens
+   or components (never `theme.skin` in a screen), saves the screenshots and
+   sets the Phase 5 row to DONE.
+2. Merge the chain bottom-up (#21 first) once it is checked.
+3. Batch H items below still apply to the next EAS build.
+
+## Open decisions (owner)
+
+1. **Reset the chosen time when a saved route opens from Home.** `routes.tsx`
+   keeps a time the rider picked. After "arrive by 18:00", tapping a saved
+   route on Home opens Routes with that time, so its list is another query key
+   than the Home card's (`when: null`) and is not there at once. A reset
+   (`setTripTime(LEAVE_NOW)` when the route params apply) is one line, but the
+   rider loses the time without a warning, and plan 009 forbids changing
+   Routes behaviour in Phase 5. Left as is.
+2. **Polling after "Later".** If the rider pressed "Later" on Routes for a
+   saved route, the infinite query refetches every loaded page, so Home sends
+   more than one request per minute for that route until the cache is dropped.
+3. **A live card is about 40 dp taller than a plain one** (caption row plus a
+   countdown), so a list can mix heights. A fix means a new card layout; it
+   needs a device to judge.
+4. **Trip rows have a fixed height (64)** for `getItemLayout`. At a 130 % font
+   the stop name and the platform line may not fit; the time stack (about
+   44 dp) does. Not seen on a device.
+
+---
+
 # Handoff — launch-work batches A–D (plans 001–008)
 
 Date: 2026-11-12. Orchestrator and reviewer: Claude (Opus 5.5). Workers:

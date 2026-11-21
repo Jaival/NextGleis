@@ -23,7 +23,9 @@ and web also run.
   and the time to change
 - **Trip details**: tap a departure to see every stop it serves, with live times
 - **Deutschlandticket mode**: hides ICE, IC/EC, night trains and FlixTrain
-- German and English UI, light and dark themes
+- **Three skins** (Bahnsteig, Anzeiger, Netzplan) with light, dark and high-contrast
+  modes (Anzeiger is dark only); the platform and the minutes to go lead every row
+- German and English UI
 
 ## How it works
 

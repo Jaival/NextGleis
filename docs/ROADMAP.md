@@ -54,6 +54,8 @@ Not features, but needed before the first store release.
 | 2.6 | **Deutschlandticket mode** — hide ICE/IC/EC/FlixTrain on boards and routes ☑ | Uses existing product classification; a setting |
 | 2.9 | **Connection screen** — tap a connection to see each change, its platforms and time to change; tap a ride for all its stops ☑ | `app/journey.tsx`; legs carry `tripId` from `/api/journeys` |
 | 2.10 | **Three tabs** — stop search moved into Home, Search tab removed; saved routes listed on an empty Routes screen ☑ | Routes is the planner; Home is boards |
+| 2.11 | **New look** — one "Bahnsteig" layout (platform tile and countdown on every row, line bar on connections) and three skins: Bahnsteig, Anzeiger, Netzplan ◐ | Plan 009 phases 1–3, 5. Code done; the check on a device (five appearances, German, 130 % font, high contrast) and the screenshots are NOT done |
+| 2.12 | **Live route cards** — saved routes on Home show the next departure, its platform and a countdown (first three routes) ◐ | Plan 009 phase 4. One `/api/journeys` search per card per minute while Home is in view. Code done; not seen on a device |
 | 2.7 | **Share** a board or route as a link that opens the app | `nextgleis://` scheme exists; add web fallback page on the backend |
 | 2.8 | **Offline last-known board** | Persist the React Query cache for favorites |
 
