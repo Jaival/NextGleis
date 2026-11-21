@@ -73,6 +73,9 @@ export function SearchField({
         accessibilityLabel={accessibilityLabel}
         autoFocus={autoFocus}
         returnKeyType="search"
+        // One line: a long placeholder in a wide face at a large system font would
+        // wrap and be cut by the field's height.
+        numberOfLines={1}
         selectionColor={onHeader ? colors.headerForeground : colors.primary}
       />
       {/* Fixed-width slot: the button fades in and out without ever resizing
@@ -111,7 +114,8 @@ function createStyles({ colors, type, radii }: Theme, tone: 'default' | 'header'
       borderColor: onHeader ? headerFill : colors.muted,
       borderRadius: radii.pill,
       paddingHorizontal: spacing.md,
-      height: 46,
+      // minHeight, not height: a large system font grows the text past 46pt.
+      minHeight: 46,
     },
     // On the header the fill stays, so the foreground text never lands on a
     // card-coloured field.
