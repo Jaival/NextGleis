@@ -257,7 +257,8 @@ export default function BoardScreen() {
                 <Ionicons
                   name={isFavorite ? 'star' : 'star-outline'}
                   size={22}
-                  color={isFavorite ? colors.primary : colors.mutedForeground}
+                  // On the header band: the filled star is the saved state.
+                  color={colors.headerForeground}
                 />
               </Animated.View>
             </Pressable>

@@ -53,7 +53,7 @@ function ErrorScreen({ onRetry }: { onRetry: () => void }) {
 }
 
 function RootLayout() {
-  const { colors, isDark, type } = useTheme();
+  const { colors, statusBarStyle, type } = useTheme();
   const { markInteractive } = useObserve();
   const navigationTheme = useNavigationTheme();
   const reducedMotion = useReducedMotion();
@@ -101,14 +101,14 @@ function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  // Flat header on the screen background rather than a raised
-                  // `surface` bar: the board's filter row already draws the only
-                  // separator that region needs, and two stacked bars read as the
-                  // chrome-heavy style this design is moving away from.
-                  headerStyle: { backgroundColor: colors.background },
+                  // The sign band: the same `header` colour as SignHeader on the
+                  // tab screens, so the top of every screen reads as one family.
+                  // Flat, not a raised bar: the board's filter row already draws
+                  // the only separator that region needs.
+                  headerStyle: { backgroundColor: colors.header },
                   headerShadowVisible: false,
-                  headerTintColor: colors.foreground,
-                  headerTitleStyle: { ...type.headline, color: colors.foreground },
+                  headerTintColor: colors.headerForeground,
+                  headerTitleStyle: { ...type.headline, color: colors.headerForeground },
                   // Screen transitions stay native — never rebuilt in JS — so the
                   // interactive back gesture and platform timing come for free.
                   animation: reducedMotion ? 'fade' : 'default',
@@ -127,7 +127,7 @@ function RootLayout() {
               </Stack>
             </ObserveErrorBoundary>
           </ThemeProvider>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <StatusBar style={statusBarStyle} />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

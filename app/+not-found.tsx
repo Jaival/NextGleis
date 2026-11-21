@@ -1,4 +1,5 @@
 import { Link, Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
@@ -15,6 +16,8 @@ export default function NotFoundScreen() {
   return (
     <ScreenContainer>
       <Stack.Screen options={{ title: t('notFound.title') }} />
+      {/* No header band here; see the root layout. */}
+      <StatusBar style={theme.isDark ? 'light' : 'dark'} />
       <View style={styles.center}>
         <EmptyState
           icon="help-circle-outline"
