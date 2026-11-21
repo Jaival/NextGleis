@@ -34,31 +34,67 @@ The older note for the launch-work batches (plans 001–008) follows below.
   not "checked".
 - confirmed on the emulator with one live card on Home (one saved route): the backend log showed 2 `/api/journeys` requests in 130 s with Home in view and 0 in 130 s with Settings in view. That is one request per card per minute, none off screen. Cards with several routes, and the 'Later' case, were not measured.
 - Docs: roadmap rows 2.11 and 2.12, README features, plan and plan index rows.
+- Matrix thread (branch `feat/ui-skins-phase-5-matrix`, 2026-11-21), Pixel_8_Pro
+  emulator, local backend. Fixed with components only: the search placeholder
+  stays on one line with an ellipsis at a large font (a one-line `Text` draws
+  it, the native hint is transparent); the board destination (departures and
+  arrivals) takes two lines; on the connection screen the stop name and the
+  "departs HH:MM" text are two lines, so the time is never cut; trip rows grow
+  with the font and `getItemLayout` is gone (decision 4: at 2.0× the stop name
+  and platform clipped at height 64). Seen on the device after the fix: the
+  placeholder in Netzplan light and dark and in Anzeiger at 1.5×; the board
+  destination and arrivals in Anzeiger at 1.5×; the connection card in Anzeiger
+  at 1.5×; trip rows in Netzplan at 1.5× and 2.0× (jump to the own stop works).
+  Not re-seen after the fix: Bahnsteig for the board and connection changes.
+- Matrix cells seen in this thread: exactly 130 % (font scale 1.3, set with
+  `adb shell settings put system font_scale 1.3`) on Bahnsteig, Netzplan and
+  Anzeiger; a three-digit platform (Stuttgart Hbf, "101", "102") in the tile
+  at 1.3× (Bahnsteig), 1.5× (Anzeiger, Netzplan); Settings at a large font in
+  Netzplan (1.3×) and Anzeiger (1.5×); search at a large font in Bahnsteig
+  (1.3×) and Anzeiger (1.5×); high contrast in German at 1.3× on Netzplan
+  light, Bahnsteig light and Anzeiger (Settings, Home, board, connection);
+  German at 1.5× on Netzplan dark (Settings, Home, board, connection); trip rows
+  at a large font in Bahnsteig (1.3×) and Netzplan (1.5×, 2.0×); two live cards
+  on Home at 1.5× with one delayed ride (amber countdown) in Netzplan dark.
+- All 165 older captures (132 in `D:/t3/shots-p5/matrix/`, 33 in
+  `docs/design/screens/`) were viewed as contact sheets, four shots per sheet at
+  448 px wide: enough for layout, clipping and colour, not for one-pixel detail.
+  9 new screenshots were added to `docs/design/screens/`.
 
 ## NOT done — needs an emulator
 
-Plan 009 phase 5 stays **IN PROGRESS**. Not done:
+Plan 009 phase 5 stays **IN PROGRESS**: the whole matrix in the plan (five
+appearances, high contrast off and on, every screen) is not seen. Missing:
 
-- Looking through the captured shots that nobody viewed, and the rest of the
-  matrix: a live card with a delayed or cancelled ride; a three-digit
-  platform ("103") in the tile; Settings and search results at a large font;
-  high contrast in German on the light skins and at a large font; German at a
-  large font; the trip row at a large font in Bahnsteig and Netzplan.
-- The system font at exactly 130 % (1.24× and 1.5× were tested, which bracket
-  it).
-- Found, not fixed, owner decides: the Netzplan search placeholder wraps to a
-  second line (cut) at 1.24× and above; at 1.24× and 1.5× the Anzeiger board
-  destination is cut to about two words, and the yellow card on the connection
-  screen loses "departs 17:24" to an ellipsis. A two-line destination changes
-  row heights.
-- The device was left on the font size "large" (1.0), the app on Bahnsteig
-  light, English, high contrast off. The original app settings are unknown.
+- High contrast on: search results, Settings, onboarding and the board's
+  Arrivals tab are not captured in any appearance (Home, board departures,
+  trip, Routes and connection are, in all five). High contrast at a large font
+  only in German (see above), not in English.
+- Arrivals tab: seen once after the change (Anzeiger, 1.5×). Not seen in
+  Bahnsteig or Netzplan.
+- Onboarding at a large font and in German is not captured (normal font only).
+- A live card whose first ride is cancelled: by design `nextJourney` skips
+  cancelled connections, so the card shows the next one. The cancelled
+  connection itself was seen in the Routes list. A delayed card was seen.
+- Screen readers (TalkBack) with the new search placeholder were not tried.
+  The `TextInput` keeps `placeholder` and `accessibilityLabel`; the visible
+  overlay is hidden from accessibility.
+- Seen once, not repeated: after a scroll on Home with two saved routes the
+  second live card was blank in one screenshot; later runs (cold start,
+  scroll) showed it. Most likely a layout animation caught mid-way.
+- The ROUTES heading on Home touches or is touched by the card in a few old
+  captures (Netzplan, 1.24×; German). Not seen after the layout settles; the
+  cause is the card height change when its live row loads (reflow animation).
+- The device was left on the font size "large" (1.0). The app was left on
+  Anzeiger, English, high contrast off, with two saved routes (Frankfurt Hbf to
+  Darmstadt Schloss, Darmstadt Hbf to Böllenfalltor) and Deutschlandticket mode
+  off. The original app settings are unknown.
 
 ## What is next
 
-1. Someone with an emulator finishes the matrix, fixes what shows up with
-   tokens or components (never `theme.skin` in a screen), saves the remaining
-   screenshots and sets the Phase 5 row to DONE.
+1. Someone with an emulator closes the gaps above (mostly high contrast on
+   Settings, search, onboarding and Arrivals) and sets the Phase 5 row to DONE.
+   If the owner accepts the matrix as seen, say so in the PR and set it then.
 2. Merge the chain bottom-up (#21 first) once it is checked.
 3. Batch H items below still apply to the next EAS build.
 
@@ -77,16 +113,17 @@ Plan 009 phase 5 stays **IN PROGRESS**. Not done:
 3. **Live card about 40 dp taller than a plain one** — accepted. Mixed heights
    in a vertical list are normal. Revisit if the rest of the matrix shows a
    problem.
-4. **Trip rows have a fixed height (64)** for `getItemLayout` — kept until a
-   device shows clipping at a large font. Then drop `getItemLayout` (trip lists
-   are short).
+4. **Trip rows have a fixed height (64)** — done in the matrix thread. At 2.0×
+   the stop name and platform clipped, so rows are `minHeight` 64 and grow, and
+   `getItemLayout` is dropped. `onScrollToIndexFailed` scrolls near the row and
+   retries once.
 5. **Pull-to-refresh spinner** — show it only when the rider pulls down, not on
    every background or focus refetch (`refreshing={isRefetching}`). UI only, no
    query change. A small PR from `main` after the chain merges (roadmap 2.14).
 6. **Merge order** — hold the merge of #21 until the device matrix is done and
    Phase 5 is DONE. Then merge #21 to #25 bottom-up, then do items 1 and 5.
 
-## Brief for the matrix thread (paste into a new thread, Opus)
+## Brief for the matrix thread (used; kept for the next run)
 
 Finish plan 009 phase 5: the device matrix in `docs/HANDOFF.md` ("NOT done").
 Branch from `feat/ui-skins-phase-5`. Fix what shows up with tokens or
