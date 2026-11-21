@@ -389,9 +389,20 @@ function BoardRow({
           </Text>
         ) : null}
       </View>
-      <Text style={[styles.stepMeta, isNow && styles.onNow]} numberOfLines={2}>
+      {/* Two lines, so a long stop name can never push the time out. */}
+      <Text
+        style={[
+          styles.stepMeta,
+          isNow && styles.onNow,
+          leg.cancelled && (isNow ? styles.struckOnNow : styles.struck),
+        ]}
+        numberOfLines={2}
+      >
+        {leg.origin}
+      </Text>
+      <Text style={[styles.stepMeta, isNow && styles.onNow]}>
         <Text style={leg.cancelled && (isNow ? styles.struckOnNow : styles.struck)}>
-          {leg.origin} · {t('departure.departs', formatTime(leg.departure))}
+          {t('departure.departs', formatTime(leg.departure))}
         </Text>
         {delay ? (
           <Text style={isNow ? styles.onNowBold : styles.delayed}>
