@@ -52,7 +52,7 @@ export function Countdown({ time, delayMinutes, now, cancelled, tone = 'default'
   if (minutes < 0 || minutes >= 60) {
     return (
       <View style={styles.box}>
-        <Text style={[type.timeSmall, { color }]} numberOfLines={1}>
+        <Text style={[type.timeSmall, { color }]} {...fit}>
           {formatTime(addMinutes(time, delayMinutes ?? 0))}
         </Text>
       </View>
@@ -61,7 +61,7 @@ export function Countdown({ time, delayMinutes, now, cancelled, tone = 'default'
   if (minutes === 0) {
     return (
       <View style={styles.box}>
-        <Text style={[type.headline, { color }]} numberOfLines={1}>
+        <Text style={[type.headline, { color }]} {...fit}>
           {t('countdown.now')}
         </Text>
       </View>
@@ -69,7 +69,7 @@ export function Countdown({ time, delayMinutes, now, cancelled, tone = 'default'
   }
   return (
     <View style={styles.box}>
-      <Text style={[type.title, { color }]} numberOfLines={1}>
+      <Text style={[type.title, { color }]} {...fit}>
         {minutes}
       </Text>
       <Text style={[type.micro, { color: caption }]} numberOfLines={1}>
@@ -79,8 +79,12 @@ export function Countdown({ time, delayMinutes, now, cancelled, tone = 'default'
   );
 }
 
+// Shrinks a text to the box instead of widening it.
+const fit = { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.7 } as const;
+
 const styles = StyleSheet.create({
-  // Wide enough for a clock time in the widest face and at a large system font,
-  // so the column does not jump when a row crosses 60 minutes.
-  box: { minWidth: 56, alignItems: 'flex-end', justifyContent: 'center' },
+  // A fixed width, wide enough for a clock time in the widest face at a large
+  // system font. A minWidth would let "JETZT" in Anzeiger's capitals widen the
+  // column when a row turns from "1 min" to "now", and the row would reflow.
+  box: { width: 56, alignItems: 'flex-end', justifyContent: 'center' },
 });
