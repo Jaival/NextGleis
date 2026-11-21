@@ -81,7 +81,7 @@ function DepartureListItemBase({
       <View style={styles.middle}>
         <View style={styles.titleRow}>
           <LineBadge compact line={row.line} />
-          <Text style={styles.direction} numberOfLines={1}>
+          <Text style={styles.direction} numberOfLines={2}>
             {row.direction || t('departure.unknownDirection')}
           </Text>
         </View>
