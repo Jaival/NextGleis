@@ -73,7 +73,7 @@ the work this plan builds on, now on `main`: `app/journey.tsx`, `lib/journeyStep
 | 2 | Shared building blocks: platform tile, countdown, line bar, sign header, pure helpers + tests | Sonnet, medium | DONE |
 | 3 | Screens rebuilt on the building blocks | Opus, high, with emulator | IN PROGRESS |
 | 4 | Home: saved routes show their next departure | Sonnet, medium | IN PROGRESS |
-| 5 | Device check of every skin, handoff | Opus, with emulator | TODO |
+| 5 | Device check of every skin, handoff | Opus, with emulator | IN PROGRESS |
 
 Each phase leaves the app working and all checks green. Phases run in order.
 
