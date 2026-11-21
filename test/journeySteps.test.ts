@@ -1,8 +1,8 @@
 /// <reference types="node" />
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { JourneyLeg } from '../types';
-import { currentRideIndex, journeySteps, lineBarSegments } from '../lib/journeySteps.ts';
+import type { Journey, JourneyLeg } from '../types';
+import { currentRideIndex, journeySteps, lineBarSegments, nextJourney } from '../lib/journeySteps.ts';
 
 function ride(
   origin: string,
@@ -138,5 +138,61 @@ describe('lineBarSegments', () => {
       { line: 'RB 82', minutes: 20 },
       { line: '', minutes: 1 },
     ]);
+  });
+});
+
+describe('nextJourney', () => {
+  const at = (time: string) => `2026-11-12T${time}`;
+  function journey(id: string, legs: JourneyLeg[], extra: Partial<Journey> = {}): Journey {
+    const [first] = legs;
+    const last = legs.at(-1);
+    return {
+      id,
+      departure: first?.departure ?? '',
+      arrival: last?.arrival ?? '',
+      durationMinutes: 0,
+      transfers: 0,
+      cancelled: false,
+      legs,
+      ...extra,
+    };
+  }
+  const at1000 = journey('a', [ride('A', 'B', '10:00', '10:20')]);
+  const at1030 = journey('b', [ride('A', 'B', '10:30', '10:50')]);
+
+  it('takes the first connection that has not left', () => {
+    assert.equal(nextJourney([at1000, at1030], at('09:50:00'))?.id, 'a');
+    assert.equal(nextJourney([at1000, at1030], at('10:01:00'))?.id, 'b');
+  });
+
+  it('matches the countdown: shown while it says "now", gone after', () => {
+    assert.equal(nextJourney([at1000, at1030], at('09:59:30'))?.id, 'a');
+    assert.equal(nextJourney([at1000, at1030], at('10:00:00'))?.id, 'a');
+    assert.equal(nextJourney([at1000, at1030], at('10:00:30'))?.id, 'b');
+  });
+
+  it('counts the delay', () => {
+    const late = journey('late', [ride('A', 'B', '10:00', '10:20', { departureDelayMinutes: 5 })], {
+      departureDelayMinutes: 5,
+    });
+    assert.equal(nextJourney([late, at1030], at('10:03:00'))?.id, 'late');
+    assert.equal(nextJourney([late, at1030], at('10:05:00'))?.id, 'late');
+    assert.equal(nextJourney([late, at1030], at('10:05:30'))?.id, 'b');
+  });
+
+  it('skips a cancelled connection and one whose first ride is cancelled', () => {
+    const cancelled = journey('c', [ride('A', 'B', '10:00', '10:20')], { cancelled: true });
+    const firstRideCancelled = journey('d', [ride('A', 'B', '10:10', '10:20', { cancelled: true })]);
+    assert.equal(nextJourney([cancelled, firstRideCancelled, at1030], at('09:50:00'))?.id, 'b');
+  });
+
+  it('skips a connection without a ride', () => {
+    const onFoot = journey('w', [walk('A', 'B', '10:00', '10:10')]);
+    assert.equal(nextJourney([onFoot, at1030], at('09:50:00'))?.id, 'b');
+  });
+
+  it('is undefined when nothing is left', () => {
+    assert.equal(nextJourney([at1000], at('10:05:00')), undefined);
+    assert.equal(nextJourney([], at('10:05:00')), undefined);
   });
 });
