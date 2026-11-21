@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, css, useReducedMotion } from 'react-native-reanimated';
 import { mix } from '@/lib/contrast';
 import { duration as durations, curve, easing } from '@/lib/motion';
@@ -58,27 +58,40 @@ export function SearchField({
         color={focused && !onHeader ? colors.primary : iconColor}
         style={styles.icon}
       />
-      <TextInput
-        // Android keeps the typeface a TextInput had, so after a skin switch back
-        // to the system font the typed text stayed in Plex Mono. A new key per
-        // family mounts a fresh input.
-        key={theme.type.input.fontFamily ?? 'system'}
-        style={styles.input}
-        placeholder={placeholder}
-        placeholderTextColor={
-          onHeader ? mix(colors.header, colors.headerForeground, 0.7) : colors.mutedForeground
-        }
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        autoCapitalize="words"
-        autoCorrect={false}
-        accessibilityLabel={accessibilityLabel}
-        autoFocus={autoFocus}
-        returnKeyType="search"
-        selectionColor={onHeader ? colors.headerForeground : colors.primary}
-      />
+      <View style={styles.inputSlot}>
+        <TextInput
+          // Android keeps the typeface a TextInput had, so after a skin switch back
+          // to the system font the typed text stayed in Plex Mono. A new key per
+          // family mounts a fresh input.
+          key={theme.type.input.fontFamily ?? 'system'}
+          style={styles.input}
+          // The native hint wraps to a second line at a large font and is cut, so
+          // it stays transparent (screen readers still read it) and the visible
+          // placeholder below is one line that ends in an ellipsis.
+          placeholder={placeholder}
+          placeholderTextColor="transparent"
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          autoCapitalize="words"
+          autoCorrect={false}
+          accessibilityLabel={accessibilityLabel}
+          autoFocus={autoFocus}
+          returnKeyType="search"
+          selectionColor={onHeader ? colors.headerForeground : colors.primary}
+        />
+        {value.length === 0 ? (
+          <Text
+            style={[styles.input, styles.placeholder]}
+            numberOfLines={1}
+            pointerEvents="none"
+            importantForAccessibility="no-hide-descendants"
+          >
+            {placeholder}
+          </Text>
+        ) : null}
+      </View>
       {/* Fixed-width slot: the button fades in and out without ever resizing
           the input, which would otherwise nudge the caret on the first keystroke. */}
       <View style={styles.clearSlot}>
@@ -123,13 +136,23 @@ function createStyles({ colors, type, radii }: Theme, tone: 'default' | 'header'
     fieldFocused: onHeader
       ? { borderColor: colors.headerForeground }
       : { borderColor: colors.primary, backgroundColor: colors.card },
-    icon: { marginRight: spacing.sm },
+    icon: { marginRight: spacing.md },
+    inputSlot: { flex: 1, justifyContent: 'center' },
     input: {
-      flex: 1,
       ...type.input,
       color: onHeader ? colors.headerForeground : colors.foreground,
       // Android's TextInput ships vertical padding that breaks the row's centring.
       paddingVertical: 0,
+      // Zero on both axes, so the typed text and the placeholder overlay start at
+      // the same x (Android adds a few dp of its own to an EditText).
+      paddingHorizontal: 0,
+    },
+    placeholder: {
+      ...StyleSheet.absoluteFill,
+      textAlignVertical: 'center',
+      // Archivo's last glyph overhangs its measured width by a few px and was cut.
+      paddingRight: spacing.xs,
+      color: onHeader ? mix(colors.header, colors.headerForeground, 0.7) : colors.mutedForeground,
     },
     clearSlot: { width: 22, alignItems: 'flex-end' },
   });
