@@ -249,7 +249,13 @@ function StopRow({
   const { scheduled, delay } = stopTime(stop);
   const delayed = !stop.cancelled && Boolean(delay);
   const platformChanged = Boolean(stop.platform && stop.plannedPlatform);
-  const dotColor = own ? colors.primary : passed ? colors.input : colors.mutedForeground;
+  // On the highlight fill the dot takes its foreground, as the text does: `primary`
+  // is amber in Anzeiger and pale in the dark skins, and vanishes on it.
+  const dotColor = own
+    ? colors.highlightForeground
+    : passed
+      ? colors.input
+      : colors.mutedForeground;
 
   return (
     <Pressable
@@ -374,7 +380,7 @@ function createStyles({ colors, type, radii }: Theme) {
       borderWidth: 2,
       backgroundColor: colors.background,
     },
-    dotOwn: { width: 14, height: 14, backgroundColor: colors.primary },
+    dotOwn: { width: 14, height: 14, backgroundColor: colors.highlightForeground },
     stopText: { flex: 1, gap: 2 },
     stopName: { ...type.subheadMedium, color: colors.foreground },
     // On the highlight fill every text takes its own foreground: the status
