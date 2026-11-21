@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Stack, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -10,17 +10,20 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Countdown, countdownLabel } from '@/components/Countdown';
 import { EmptyState } from '@/components/EmptyState';
 import { LineBadge } from '@/components/LineBadge';
 import { NoticeLine } from '@/components/NoticeLine';
+import { PlatformTile } from '@/components/PlatformTile';
 import { PressableScale } from '@/components/PressableScale';
-import { ServicePill, serviceDescription } from '@/components/ServicePill';
+import { serviceDescription } from '@/components/ServicePill';
 import { departureStatus } from '@/lib/delay';
 import { useLanguage, useT, type Translate } from '@/lib/i18n';
-import { journeySteps, type Transfer } from '@/lib/journeySteps';
+import { currentRideIndex, journeySteps, type Transfer } from '@/lib/journeySteps';
 import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
-import { addMinutes, formatDay, formatDuration, formatTime, minutesBetween } from '@/lib/time';
+import { addMinutes, formatDay, formatDuration, formatTime } from '@/lib/time';
 import { useJourneys, type JourneySearch } from '@/lib/useJourneys';
+import { useNow } from '@/lib/useNow';
 import { useTheme } from '@/lib/useTheme';
 import type { Journey, JourneyLeg } from '@/types';
 
@@ -63,6 +66,9 @@ function JourneyDetail({ id, search }: { id: string; search: JourneySearch }) {
   const language = useLanguage();
   const router = useRouter();
   const isFocused = useIsFocused();
+  // One clock for the screen: the countdown and the "now" step move together,
+  // and it stops while another screen covers this one.
+  const now = useNow(isFocused);
 
   // The same search the list ran, so the connection is in the cache already
   // and its delays and platforms keep updating while this screen is open.
@@ -82,6 +88,10 @@ function JourneyDetail({ id, search }: { id: string; search: JourneySearch }) {
   }
 
   const steps = useMemo(() => (journey ? journeySteps(journey.legs) : []), [journey]);
+  // An index into `steps`: the ride the rider is on or waiting for, -1 once the
+  // last ride has arrived.
+  const current = currentRideIndex(steps, now);
+  const rideSteps = steps.flatMap((step, index) => (step.type === 'ride' ? [index] : []));
 
   const openTrip = (leg: JourneyLeg) => {
     if (!leg.tripId) return;
@@ -124,17 +134,43 @@ function JourneyDetail({ id, search }: { id: string; search: JourneySearch }) {
         >
           <Summary journey={journey} language={language} styles={styles} colors={colors} t={t} />
 
-          {steps.map((step, index) =>
-            step.type === 'ride' ? (
-              <Ride
-                key={index}
-                leg={step.leg}
-                onOpen={step.leg.tripId ? () => openTrip(step.leg) : undefined}
-                styles={styles}
-                colors={colors}
-                t={t}
+          {/* One segment per ride; the ones already ridden are filled. */}
+          <View style={styles.progress} accessible={false}>
+            {rideSteps.map((stepIndex) => (
+              <View
+                key={stepIndex}
+                style={[
+                  styles.progressSegment,
+                  (current === -1 || stepIndex < current) && styles.progressDone,
+                ]}
               />
-            ) : step.type === 'transfer' ? (
+            ))}
+          </View>
+
+          {steps.map((step, index) => {
+            if (step.type === 'ride') {
+              const isNow = index === current;
+              // Once the last ride has arrived nothing is "now" and nothing is
+              // dimmed: the whole connection is simply behind the rider.
+              const passed = current !== -1 && index < current;
+              return (
+                <Fragment key={index}>
+                  {isNow ? <Overline text={t('journey.now')} styles={styles} /> : null}
+                  <BoardRow
+                    leg={step.leg}
+                    isNow={isNow}
+                    passed={passed}
+                    now={now}
+                    onOpen={step.leg.tripId ? () => openTrip(step.leg) : undefined}
+                    styles={styles}
+                    t={t}
+                  />
+                  {isNow ? <Overline text={t('journey.next')} styles={styles} /> : null}
+                  <ExitRow leg={step.leg} passed={passed} styles={styles} t={t} />
+                </Fragment>
+              );
+            }
+            return step.type === 'transfer' ? (
               <Change key={index} transfer={step.transfer} styles={styles} colors={colors} t={t} />
             ) : (
               <View key={index} style={styles.aside}>
@@ -147,8 +183,8 @@ function JourneyDetail({ id, search }: { id: string; search: JourneySearch }) {
                   )}
                 </Text>
               </View>
-            ),
-          )}
+            );
+          })}
         </ScrollView>
       )}
     </View>
@@ -207,160 +243,223 @@ function Summary({
   );
 }
 
-function Ride({
+function Overline({ text, styles }: { text: string; styles: Styles }) {
+  return (
+    <Text accessibilityRole="header" style={styles.overline}>
+      {text}
+    </Text>
+  );
+}
+
+// A row of the connection: the platform on the left edge, what to do in the
+// middle. The card clips its children so the tile sits flush against the edge;
+// padding lives on the body.
+function StepCard({
+  tile,
+  right,
+  highlight = false,
+  passed = false,
+  onPress,
+  label,
+  hint,
+  styles,
+  children,
+}: {
+  tile: ReactNode;
+  right?: ReactNode;
+  highlight?: boolean;
+  passed?: boolean;
+  onPress?: () => void;
+  label: string;
+  hint?: string;
+  styles: Styles;
+  children: ReactNode;
+}) {
+  const style = [styles.step, highlight && styles.stepNow, passed && styles.stepPassed];
+  const content = (
+    <>
+      {tile}
+      <View style={styles.stepBody}>{children}</View>
+      {right}
+    </>
+  );
+  return onPress ? (
+    <PressableScale
+      onPress={onPress}
+      style={style}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={hint}
+    >
+      {content}
+    </PressableScale>
+  ) : (
+    <View style={style} accessible accessibilityLabel={label}>
+      {content}
+    </View>
+  );
+}
+
+// Getting on: the platform to board from, the service, and when it leaves.
+// For the ride the rider is on or waiting for this is the yellow card, with
+// the countdown.
+function BoardRow({
   leg,
+  isNow,
+  passed,
+  now,
   onOpen,
   styles,
-  colors,
   t,
 }: {
   leg: JourneyLeg;
+  isNow: boolean;
+  passed: boolean;
+  now: string;
   onOpen?: () => void;
   styles: Styles;
-  colors: Colors;
   t: Translate;
 }) {
+  const delay = !leg.cancelled && leg.departureDelayMinutes ? leg.departureDelayMinutes : 0;
+  const platformChanged = Boolean(leg.departurePlatform && leg.plannedDeparturePlatform);
   const label = [
     [leg.line, leg.kind ? serviceDescription(leg.kind, t) : null].filter(Boolean).join(', '),
     leg.direction ? t('departure.to', leg.direction) : null,
     leg.cancelled ? t('status.cancelled') : null,
     `${leg.origin}, ${t('departure.departs', formatTime(leg.departure))}`,
-    leg.departureDelayMinutes ? t('departure.delayedBy', leg.departureDelayMinutes) : null,
-    leg.departurePlatform ? t('departure.platform', leg.departurePlatform) : null,
+    delay ? t('departure.delayedBy', delay) : null,
+    platformChanged
+      ? t(
+          'departure.platformChanged',
+          leg.departurePlatform ?? '',
+          leg.plannedDeparturePlatform ?? '',
+        )
+      : leg.departurePlatform
+        ? t('departure.platform', leg.departurePlatform)
+        : null,
+    isNow && !leg.cancelled ? countdownLabel(leg.departure, delay, now, t) : null,
+    ...(leg.notices?.map((notice) => notice.text) ?? []),
+  ]
+    .filter(Boolean)
+    .join('. ');
+
+  return (
+    <StepCard
+      highlight={isNow}
+      passed={passed}
+      onPress={onOpen}
+      label={label}
+      hint={onOpen ? t('trip.openHint') : undefined}
+      styles={styles}
+      tile={
+        <PlatformTile
+          flush
+          tone={isNow ? 'highlight' : 'sign'}
+          platform={leg.departurePlatform}
+          plannedPlatform={leg.plannedDeparturePlatform}
+          kind={leg.kind}
+        />
+      }
+      right={
+        isNow ? (
+          <View style={styles.stepRight}>
+            <Countdown
+              tone="highlight"
+              time={leg.departure}
+              delayMinutes={leg.departureDelayMinutes}
+              now={now}
+              cancelled={leg.cancelled}
+            />
+          </View>
+        ) : null
+      }
+    >
+      <View style={styles.stepTitleRow}>
+        <LineBadge compact line={leg.line ?? ''} />
+        {leg.direction ? (
+          <Text style={[styles.stepTitle, isNow && styles.onNow]} numberOfLines={2}>
+            {t('departure.to', leg.direction)}
+          </Text>
+        ) : null}
+      </View>
+      <Text style={[styles.stepMeta, isNow && styles.onNow]} numberOfLines={2}>
+        <Text style={leg.cancelled && styles.struck}>
+          {leg.origin} · {t('departure.departs', formatTime(leg.departure))}
+        </Text>
+        {delay ? (
+          <Text style={isNow ? styles.onNowBold : styles.delayed}>
+            {' '}
+            {formatTime(addMinutes(leg.departure, delay))} (+{delay})
+          </Text>
+        ) : null}
+      </Text>
+      {leg.cancelled ? (
+        <Text style={[styles.cancelled, isNow && styles.onNowBold]}>{t('status.cancelled')}</Text>
+      ) : null}
+      {leg.notices?.map((notice) => (
+        <NoticeLine
+          key={notice.text}
+          notice={notice}
+          lines={4}
+          tone={isNow ? 'highlight' : 'default'}
+        />
+      ))}
+    </StepCard>
+  );
+}
+
+// Getting off: the platform to leave by, the stop, and when it arrives.
+function ExitRow({
+  leg,
+  passed,
+  styles,
+  t,
+}: {
+  leg: JourneyLeg;
+  passed: boolean;
+  styles: Styles;
+  t: Translate;
+}) {
+  const delay = !leg.cancelled && leg.arrivalDelayMinutes ? leg.arrivalDelayMinutes : 0;
+  const label = [
+    t('journey.exit'),
     `${leg.destination}, ${t('departure.arrives', formatTime(leg.arrival))}`,
-    leg.arrivalDelayMinutes ? t('departure.delayedBy', leg.arrivalDelayMinutes) : null,
+    delay ? t('departure.delayedBy', delay) : null,
     leg.arrivalPlatform ? t('departure.platform', leg.arrivalPlatform) : null,
   ]
     .filter(Boolean)
     .join('. ');
 
-  const body = (
-    <>
-      <Stop
-        end="start"
-        time={leg.departure}
-        delay={leg.departureDelayMinutes}
-        name={leg.origin}
-        platform={leg.departurePlatform}
-        plannedPlatform={leg.plannedDeparturePlatform}
-        cancelled={leg.cancelled}
-        styles={styles}
-        t={t}
-      />
-
-      <View style={styles.row}>
-        <View style={styles.times} />
-        <View style={styles.rail}>
-          <View style={styles.railLine} />
-        </View>
-        <View style={styles.service}>
-          <View style={styles.serviceHeader}>
-            <LineBadge compact line={leg.line ?? ''} />
-            {leg.kind ? <ServicePill kind={leg.kind} /> : null}
-            <Text style={styles.serviceDuration}>
-              {formatDuration(minutesBetween(leg.departure, leg.arrival), t)}
-            </Text>
-            {onOpen ? (
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color={colors.mutedForeground}
-                style={styles.serviceChevron}
-              />
-            ) : null}
-          </View>
-          {leg.direction ? (
-            <Text style={styles.serviceDirection} numberOfLines={2}>
-              {t('departure.to', leg.direction)}
-            </Text>
-          ) : null}
-          {leg.cancelled ? (
-            <Text style={styles.serviceCancelled}>{t('status.cancelled')}</Text>
-          ) : null}
-          {leg.notices?.map((notice) => (
-            <NoticeLine key={notice.text} notice={notice} lines={4} />
-          ))}
-        </View>
-      </View>
-
-      <Stop
-        end="end"
-        time={leg.arrival}
-        delay={leg.arrivalDelayMinutes}
-        name={leg.destination}
-        platform={leg.arrivalPlatform}
-        plannedPlatform={leg.plannedArrivalPlatform}
-        cancelled={leg.cancelled}
-        styles={styles}
-        t={t}
-      />
-    </>
-  );
-
-  return onOpen ? (
-    <PressableScale
-      onPress={onOpen}
-      style={styles.ride}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={t('trip.openHint')}
-    >
-      {body}
-    </PressableScale>
-  ) : (
-    <View style={styles.ride} accessible accessibilityLabel={label}>
-      {body}
-    </View>
-  );
-}
-
-// Where a ride starts or ends: the time, the stop, and the platform — the
-// three things read off this screen while standing in a station.
-function Stop({
-  end,
-  time,
-  delay,
-  name,
-  platform,
-  plannedPlatform,
-  cancelled,
-  styles,
-  t,
-}: {
-  end: 'start' | 'end';
-  time: string;
-  delay?: number;
-  name: string;
-  platform?: string;
-  plannedPlatform?: string;
-  cancelled: boolean;
-  styles: Styles;
-  t: Translate;
-}) {
   return (
-    <View style={styles.row}>
-      <View style={styles.times}>
-        <Text style={[styles.time, cancelled && styles.struck]}>{formatTime(time)}</Text>
-        {delay && !cancelled ? (
-          <Text style={styles.realtime}>{formatTime(addMinutes(time, delay))}</Text>
-        ) : null}
-      </View>
-      <View style={styles.rail}>
-        <View style={[styles.railLine, end === 'start' ? styles.railStart : styles.railEnd]} />
-        <View style={styles.dot} />
-      </View>
-      <Text style={[styles.stopName, cancelled && styles.struck]} numberOfLines={2}>
-        {name}
+    <StepCard
+      passed={passed}
+      label={label}
+      styles={styles}
+      tile={
+        <PlatformTile
+          flush
+          label={t('journey.exit')}
+          platform={leg.arrivalPlatform}
+          plannedPlatform={leg.plannedArrivalPlatform}
+          kind={leg.kind}
+        />
+      }
+    >
+      <Text style={[styles.stepTitle, leg.cancelled && styles.struck]} numberOfLines={2}>
+        {leg.destination}
       </Text>
-      {platform ? (
-        <View style={[styles.platform, plannedPlatform && styles.platformChanged]}>
-          {plannedPlatform ? <Text style={styles.platformPlanned}>{plannedPlatform}</Text> : null}
-          <Text style={[styles.platformText, plannedPlatform && styles.platformTextChanged]}>
-            {t('departure.platform', platform)}
+      <Text style={styles.stepMeta}>
+        <Text style={leg.cancelled && styles.struck}>
+          {t('departure.arrives', formatTime(leg.arrival))}
+        </Text>
+        {delay ? (
+          <Text style={styles.delayed}>
+            {' '}
+            {formatTime(addMinutes(leg.arrival, delay))} (+{delay})
           </Text>
-        </View>
-      ) : null}
-    </View>
+        ) : null}
+      </Text>
+    </StepCard>
   );
 }
 
@@ -392,6 +491,7 @@ function Change({
     <View
       style={[
         styles.aside,
+        styles.asideChange,
         status === 'tight' && styles.asideTight,
         status === 'missed' && styles.asideMissed,
       ]}
@@ -443,66 +543,56 @@ function createStyles({ colors, type, radii }: Theme) {
     },
     summaryText: { ...type.footnote, color: colors.mutedForeground },
 
-    ride: {
+    // Progress through the connection: one segment per ride.
+    progress: { flexDirection: 'row', gap: 3, paddingBottom: spacing.xs },
+    progressSegment: {
+      flex: 1,
+      height: 4,
+      borderRadius: radii.sm,
+      backgroundColor: colors.border,
+    },
+    progressDone: { backgroundColor: colors.primary },
+    overline: {
+      ...type.overline,
+      color: colors.mutedForeground,
+      textTransform: 'uppercase',
+      marginTop: spacing.xs,
+    },
+
+    // The card clips its children so the platform tile sits flush against the
+    // left edge; padding lives on the body.
+    step: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
       backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       boxShadow: colors.shadowCard,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
+      overflow: 'hidden',
     },
-    // The three rows of a ride stack without a gap, so the rail through them
-    // is one unbroken line from boarding to getting off.
-    row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44 },
-    times: { width: 44, alignItems: 'flex-end' },
-    time: { ...type.timeSmall, fontSize: 15, color: colors.foreground },
-    realtime: { ...type.timeSmall, color: colors.delay },
-    struck: { textDecorationLine: 'line-through', color: colors.mutedForeground },
-    rail: { width: 14, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-    railLine: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      width: 3,
-      borderRadius: radii.pill,
-      backgroundColor: colors.primary,
-    },
-    railStart: { top: '50%' },
-    railEnd: { bottom: '50%' },
-    dot: {
-      width: 14,
-      height: 14,
-      borderRadius: radii.round,
-      borderWidth: 3,
-      borderColor: colors.primary,
-      backgroundColor: colors.card,
-    },
-    stopName: { flex: 1, ...type.subheadBold, color: colors.foreground },
-    platform: {
-      flexDirection: 'row',
-      alignItems: 'center',
+    // The step the rider is on: the one yellow card on the screen. Every text
+    // on it takes `highlightForeground`, because the status colours have no
+    // contrast guarantee on this fill.
+    stepNow: { backgroundColor: colors.highlight, borderColor: colors.highlight },
+    stepPassed: { opacity: 0.55 },
+    stepBody: {
+      flex: 1,
+      minWidth: 0,
+      padding: spacing.md,
       gap: spacing.xs,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 3,
-      borderRadius: radii.sm,
-      backgroundColor: colors.muted,
+      justifyContent: 'center',
     },
-    platformChanged: { backgroundColor: colors.delaySoft },
-    platformText: { ...type.footnoteBold, color: colors.foreground },
-    platformTextChanged: { color: colors.delay },
-    platformPlanned: {
-      ...type.caption,
-      color: colors.mutedForeground,
-      textDecorationLine: 'line-through',
-    },
-    service: { flex: 1, gap: spacing.xs, paddingVertical: spacing.sm },
-    serviceHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    serviceDuration: { ...type.caption, color: colors.mutedForeground },
-    serviceChevron: { marginLeft: 'auto' },
-    serviceDirection: { ...type.footnote, color: colors.mutedForeground },
-    serviceCancelled: { ...type.captionBold, color: colors.cancelled },
+    stepRight: { paddingRight: spacing.md, justifyContent: 'center' },
+    stepTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    stepTitle: { flexShrink: 1, ...type.subheadBold, color: colors.foreground },
+    stepMeta: { ...type.footnote, color: colors.mutedForeground },
+    onNow: { color: colors.highlightForeground },
+    onNowBold: { ...type.footnoteBold, color: colors.highlightForeground },
+    delayed: { ...type.footnoteBold, color: colors.delay },
+    struck: { textDecorationLine: 'line-through', color: colors.mutedForeground },
+    cancelled: { ...type.captionBold, color: colors.cancelled },
 
     // Changes and walks sit between the ride cards, off the card surface:
     // they are what happens on the platform, not on a train.
@@ -515,6 +605,7 @@ function createStyles({ colors, type, radii }: Theme) {
       borderRadius: radii.md,
       borderCurve: 'continuous',
     },
+    asideChange: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.input },
     asideTight: { backgroundColor: colors.delaySoft },
     asideMissed: { backgroundColor: colors.cancelledSoft },
     asideBody: { flex: 1, gap: 2 },

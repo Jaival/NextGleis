@@ -9,7 +9,17 @@ import type { Notice } from '@/types';
 // "replacement bus", "departs from platform 13 today". Clamped, because a row
 // is scanned rather than read; the full text of disruption warnings lives in
 // the board's banner.
-export function NoticeLine({ notice, lines = 2 }: { notice: Notice; lines?: number }) {
+export function NoticeLine({
+  notice,
+  lines = 2,
+  tone = 'default',
+}: {
+  notice: Notice;
+  lines?: number;
+  // 'highlight' is for a line on `colors.highlight`, where the warning colour
+  // has no contrast guarantee: icon and text take that fill's text colour.
+  tone?: 'default' | 'highlight';
+}) {
   const theme = useTheme();
   const { colors } = theme;
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -20,10 +30,13 @@ export function NoticeLine({ notice, lines = 2 }: { notice: Notice; lines?: numb
       <Ionicons
         name={notice.severity === 'warning' ? 'warning' : 'information-circle'}
         size={13}
-        color={colors.delay}
+        color={tone === 'highlight' ? colors.highlightForeground : colors.delay}
         style={styles.icon}
       />
-      <Text style={styles.text} numberOfLines={lines}>
+      <Text
+        style={[styles.text, tone === 'highlight' && { color: colors.highlightForeground }]}
+        numberOfLines={lines}
+      >
         {text}
       </Text>
     </View>
