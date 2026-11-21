@@ -273,12 +273,15 @@ function StopRow({
     >
       <View style={styles.times}>
         {scheduled ? (
-          <Text style={[styles.time, stop.cancelled && styles.struck, own && styles.onOwn]}>
+          <Text
+            style={[styles.time, stop.cancelled && styles.struck, own && styles.onOwn]}
+            numberOfLines={1}
+          >
             {formatTime(scheduled)}
           </Text>
         ) : null}
         {delayed && scheduled ? (
-          <Text style={[styles.realtime, own && styles.onOwn]}>
+          <Text style={[styles.realtime, own && styles.onOwn]} numberOfLines={1}>
             {formatTime(addMinutes(scheduled, delay!))}
           </Text>
         ) : null}
@@ -359,7 +362,9 @@ function createStyles({ colors, type, radii }: Theme) {
     rowOwn: { backgroundColor: colors.highlight },
     rowPressed: { backgroundColor: colors.muted },
     rowPassed: { opacity: 0.55 },
-    times: { width: 48, alignItems: 'flex-end' },
+    // minWidth, not width: a clock time in Anzeiger's mono face is about 51pt
+    // at a 130 % system font, and a fixed 48 would wrap it.
+    times: { minWidth: 48, alignItems: 'flex-end' },
     time: { ...type.timeSmall, color: colors.foreground },
     realtime: { ...type.timeSmall, color: colors.delay },
     struck: { textDecorationLine: 'line-through', color: colors.mutedForeground },
