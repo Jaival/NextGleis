@@ -20,6 +20,10 @@ type Props = {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onRemove: () => void;
+  // What the tile shows. The card sets `flush` itself: it clips its corners, so
+  // a tile with its own radius would leave notches. Without a platform the tile
+  // carries the train glyph.
+  tile?: Omit<ComponentProps<typeof PlatformTile>, 'flush'>;
   children: ReactNode;
 };
 
@@ -38,6 +42,7 @@ export function FavoriteCard({
   onMoveUp,
   onMoveDown,
   onRemove,
+  tile = { kind: 'rail' },
   children,
 }: Props) {
   const theme = useTheme();
@@ -58,9 +63,7 @@ export function FavoriteCard({
         accessibilityRole="button"
         accessibilityLabel={openLabel}
       >
-        {/* Neither kind has a platform to show yet, so the tile carries the
-            train glyph. */}
-        <PlatformTile flush kind="rail" />
+        <PlatformTile flush {...tile} />
         <View style={styles.content}>{children}</View>
       </Pressable>
       <View style={styles.actions}>

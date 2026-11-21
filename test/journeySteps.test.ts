@@ -2,7 +2,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Journey, JourneyLeg } from '../types';
-import { currentRideIndex, journeySteps, lineBarSegments, nextJourney } from '../lib/journeySteps.ts';
+import {
+  currentRideIndex,
+  journeySteps,
+  lineBarSegments,
+  nextJourney,
+} from '../lib/journeySteps.ts';
 
 function ride(
   origin: string,
@@ -182,7 +187,9 @@ describe('nextJourney', () => {
 
   it('skips a cancelled connection and one whose first ride is cancelled', () => {
     const cancelled = journey('c', [ride('A', 'B', '10:00', '10:20')], { cancelled: true });
-    const firstRideCancelled = journey('d', [ride('A', 'B', '10:10', '10:20', { cancelled: true })]);
+    const firstRideCancelled = journey('d', [
+      ride('A', 'B', '10:10', '10:20', { cancelled: true }),
+    ]);
     assert.equal(nextJourney([cancelled, firstRideCancelled, at1030], at('09:50:00'))?.id, 'b');
   });
 
