@@ -59,6 +59,10 @@ export function SearchField({
         style={styles.icon}
       />
       <TextInput
+        // Android keeps the typeface a TextInput had, so after a skin switch back
+        // to the system font the typed text stayed in Plex Mono. A new key per
+        // family mounts a fresh input.
+        key={theme.type.input.fontFamily ?? 'system'}
         style={styles.input}
         placeholder={placeholder}
         placeholderTextColor={
@@ -73,9 +77,6 @@ export function SearchField({
         accessibilityLabel={accessibilityLabel}
         autoFocus={autoFocus}
         returnKeyType="search"
-        // One line: a long placeholder in a wide face at a large system font would
-        // wrap and be cut by the field's height.
-        numberOfLines={1}
         selectionColor={onHeader ? colors.headerForeground : colors.primary}
       />
       {/* Fixed-width slot: the button fades in and out without ever resizing
