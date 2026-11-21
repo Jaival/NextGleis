@@ -23,7 +23,9 @@ The older note for the launch-work batches (plans 001–008) follows below.
 
 ## NOT done — needs an emulator
 
-Plan 009 phase 5 stays **IN PROGRESS**. Not done:
+Plan 009 phase 5 stays **IN PROGRESS**. No device check was done in the Phase 5
+run: `device_open` worked, but another session held the emulator
+(`DEVICE_IN_USE`), so the app was never started. Not done:
 
 - The device matrix: five appearances (Bahnsteig light and dark, Anzeiger,
   Netzplan light and dark), each with high contrast off and on, over Home,
