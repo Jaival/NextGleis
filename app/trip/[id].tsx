@@ -290,7 +290,14 @@ function StopRow({
       {/* The line through the dots is the trip itself: it starts at the
           first stop and ends at the last. */}
       <View style={styles.rail}>
-        <View style={[styles.railLine, first && styles.railStart, last && styles.railEnd]} />
+        <View
+          style={[
+            styles.railLine,
+            own && styles.railLineOwn,
+            first && styles.railStart,
+            last && styles.railEnd,
+          ]}
+        />
         <View style={[styles.dot, own && styles.dotOwn, { borderColor: dotColor }]} />
       </View>
 
@@ -376,6 +383,9 @@ function createStyles({ colors, type, radii }: Theme) {
       width: 2,
       backgroundColor: colors.border,
     },
+    // `border` is faint on the highlight fill (Bahnsteig light); the foreground
+    // at partial opacity stays a line, not a shout.
+    railLineOwn: { backgroundColor: colors.highlightForeground, opacity: 0.35 },
     railStart: { top: '50%' },
     railEnd: { bottom: '50%' },
     dot: {
