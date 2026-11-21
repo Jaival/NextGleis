@@ -18,43 +18,41 @@ The older note for the launch-work batches (plans 001–008) follows below.
 - Phase 5 fixes: trip time column grows with the font (`minWidth`), the rail
   line through the rider's own stop is visible on the highlight fill, the
   countdown column has a fixed width and shrinks its text instead of widening
-  (so "JETZT" in Anzeiger does not make a row jump), the line bar grows with
-  the font, and the search placeholder stays on one line at a large font. The
-  first three came from reading code, the last two from the emulator.
-- Phase 5 device check (partial, Pixel_8_Pro emulator, local backend): Home,
-  Routes results and a connection with 2 changes in all five appearances;
-  Anzeiger in German and at a 1.5× font; high contrast on all three skins; the
-  trip screen once. Nine screenshots are in `docs/design/screens/`. The Phase 4
-  verify step is only partly confirmed: 2 `/api/journeys` requests in 130 s
-  with Home in view, none in 130 s with Settings in view. That fits "no more
-  than one per route per minute" and shows no polling off screen, but the
-  number of cards on screen was not recorded, so the exact rate per card is not
-  confirmed.
+  (so "JETZT" in Anzeiger does not make a row jump), the line bar and the
+  search field grow with the font, and the typed text in the search field no
+  longer keeps Plex Mono after a skin switch. The first three came from reading
+  code, the rest from the emulator.
+- Phase 5 device check, two runs on the Pixel_8_Pro emulator with the local
+  backend. Captured: Home, search, board, trip, Routes, a connection with 2
+  changes, Settings and onboarding in all five appearances; high contrast on
+  five screens in all five; German; the system font at 1.24× and 1.5× in all
+  five; Home with a saved station in four. 33 screenshots are in
+  `docs/design/screens/` (English, normal font, plus three large-font or German
+  ones). About 250 were taken; the rest are only on the machine of that run
+  (`D:\t3\shots-p5\`), not in the repo.
+- The agent looked at a subset by eye, not every captured shot. "Captured" is
+  not "checked".
+- confirmed on the emulator with one live card on Home (one saved route): the backend log showed 2 `/api/journeys` requests in 130 s with Home in view and 0 in 130 s with Settings in view. That is one request per card per minute, none off screen. Cards with several routes, and the 'Later' case, were not measured.
 - Docs: roadmap rows 2.11 and 2.12, README features, plan and plan index rows.
 
 ## NOT done — needs an emulator
 
 Plan 009 phase 5 stays **IN PROGRESS**. Not done:
 
-- The rest of the device matrix: board, search results, onboarding, Home empty
-  state and Settings in every skin; the dark appearances beyond Home, Routes
-  and connection; high contrast in German and at a large font; the trip screen
-  in every skin. Use a night connection Frankfurt Hbf → Darmstadt Schloss for a
-  tight change.
-- The trip time column and the `Countdown` text at a large font in every skin
-  (the time column sizes per row, so rows could differ in width; `Countdown`
-  shrinks to 70 % and then cuts). None of the screenshots is at a large font.
-- The system font at exactly 130 % (1.5× was tested; 1.12× and 1.24× were not
-  captured).
-- Screenshots for the other screens and for Bahnsteig dark and Netzplan dark.
-  The nine existing ones are English, high contrast off, light for Bahnsteig
-  and Netzplan.
-- The "not seen" items from the plan's handoff log: shadows on clipping cards,
-  "17 Ost" / "103" / "AUSSTIEG" in the tile, status-bar icons on the Netzplan
-  light header and onboarding, the yellow card with a delayed or cancelled
-  ride, a live card at a large font and in German in every skin.
-- The device was left on the font size "large" (1.0) and the app on Anzeiger,
-  English, high contrast off. The original app settings are unknown.
+- Looking through the captured shots that nobody viewed, and the rest of the
+  matrix: a live card with a delayed or cancelled ride; a three-digit
+  platform ("103") in the tile; Settings and search results at a large font;
+  high contrast in German on the light skins and at a large font; German at a
+  large font; the trip row at a large font in Bahnsteig and Netzplan.
+- The system font at exactly 130 % (1.24× and 1.5× were tested, which bracket
+  it).
+- Found, not fixed, owner decides: the Netzplan search placeholder wraps to a
+  second line (cut) at 1.24× and above; at 1.24× and 1.5× the Anzeiger board
+  destination is cut to about two words, and the yellow card on the connection
+  screen loses "departs 17:24" to an ellipsis. A two-line destination changes
+  row heights.
+- The device was left on the font size "large" (1.0), the app on Bahnsteig
+  light, English, high contrast off. The original app settings are unknown.
 
 ## What is next
 
@@ -113,6 +111,7 @@ Setup that worked (Windows, Pixel_8_Pro emulator, Android 17):
    `snapshot -i`, `press @ref --settle`, `screenshot <file>`, `back`,
    `settings text-size <medium|large|extra-large|extra-extra-large|accessibility-medium>`
    (1.0 is "large"; 130 % is between "extra-large" 1.12 and "extra-extra-large" 1.24).
+   Onboarding opens with `agent-device open com.nextgleis.app nextgleis://onboarding`.
 6. Wait 6 s after a screen opens before a screenshot: the pull-to-refresh
    spinner of an old refetch can sit in the picture. Retake until clean.
 7. Poll check: count `api/journeys` lines in the backend log, with the number of
