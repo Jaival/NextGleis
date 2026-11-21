@@ -150,17 +150,15 @@ export type FavoriteRoute = {
 };
 
 export type ThemeMode = 'system' | 'light' | 'dark';
-// Colour theme and type/shape style: see lib/theme.ts.
-export type ColorTheme = 'indigo' | 'mauve' | 'neutral' | 'teal' | 'blue';
-export type UiStyle = 'classic' | 'modern' | 'sharp';
+export type Skin = 'bahnsteig' | 'anzeiger' | 'netzplan';
 
 export type Language = 'en' | 'de';
 export type LanguageSetting = 'system' | Language;
 
 export type AppSettings = {
   themeMode: ThemeMode;
-  colorTheme: ColorTheme;
-  uiStyle: UiStyle;
+  // The look: colours, type and corner shape. See lib/theme.ts.
+  skin: Skin;
   // Pushes text to 7:1 and darkens borders on top of whichever theme is picked.
   highContrast: boolean;
   language: LanguageSetting;
