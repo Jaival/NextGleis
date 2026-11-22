@@ -60,41 +60,58 @@ The older note for the launch-work batches (plans 001–008) follows below.
   `docs/design/screens/`) were viewed as contact sheets, four shots per sheet at
   448 px wide: enough for layout, clipping and colour, not for one-pixel detail.
   9 new screenshots were added to `docs/design/screens/`.
+- Gap run (same branch, 2026-11-22, Pixel_8_Pro emulator, local backend, about
+  70 new shots in `D:/t3/shots-p5/m3/`, all viewed as contact sheets; 8 added to
+  `docs/design/screens/`, 50 in total). Seen, English, normal font, high contrast
+  on: Settings (top and scrolled), Home, search results ("Darm"), board
+  departures, board Arrivals tab and onboarding in all five appearances
+  (Anzeiger, Bahnsteig light and dark, Netzplan light and dark). Arrivals with
+  high contrast off in Bahnsteig and Netzplan, light and dark. At 1.5×: Arrivals
+  and onboarding in Bahnsteig light and Netzplan light (high contrast off), and
+  Settings, Home, search, board, Arrivals and onboarding with high contrast on
+  in Bahnsteig light and Netzplan light. Onboarding at 2.0× in English and in
+  German (Bahnsteig light, high contrast on, also scrolled in German) and at
+  1.5× in German. Nothing needed a code change: the unseen screens use theme
+  tokens only. Two things in the shots are not bugs: a long station name in the
+  search list ends in an ellipsis at 1.5× (one line by design), and the board
+  tab pill can be caught mid-slide in a screenshot.
 
-## NOT done — needs an emulator
+## NOT done
 
-Plan 009 phase 5 stays **IN PROGRESS**: the whole matrix in the plan (five
-appearances, high contrast off and on, every screen) is not seen. Missing:
+Plan 009 phase 5 stays **IN PROGRESS**, because these cells are not seen. None
+is a known defect; the owner may accept the matrix as it is and set DONE.
 
-- High contrast on: search results, Settings, onboarding and the board's
-  Arrivals tab are not captured in any appearance (Home, board departures,
-  trip, Routes and connection are, in all five). High contrast at a large font
-  only in German (see above), not in English.
-- Arrivals tab: seen once after the change (Anzeiger, 1.5×). Not seen in
-  Bahnsteig or Netzplan.
-- Onboarding at a large font and in German is not captured (normal font only).
+- TalkBack (screen reader) with the new search placeholder. `agent-device`
+  cannot drive it. The `TextInput` keeps `placeholder` and `accessibilityLabel`;
+  the visible overlay is hidden from accessibility. Try it on a device.
+- High contrast at a large font in English: seen in Bahnsteig light and
+  Netzplan light at 1.5× (all six screens). Not seen in Anzeiger, Bahnsteig
+  dark or Netzplan dark at a large font. In German it was seen at 1.3× in three
+  appearances (Settings, Home, board, connection).
+- High contrast on the trip screen and on Routes at a large font was not
+  repeated in this run; both were seen at the normal font in all five.
 - A live card whose first ride is cancelled: by design `nextJourney` skips
   cancelled connections, so the card shows the next one. The cancelled
   connection itself was seen in the Routes list. A delayed card was seen.
-- Screen readers (TalkBack) with the new search placeholder were not tried.
-  The `TextInput` keeps `placeholder` and `accessibilityLabel`; the visible
-  overlay is hidden from accessibility.
 - Seen once, not repeated: after a scroll on Home with two saved routes the
   second live card was blank in one screenshot; later runs (cold start,
-  scroll) showed it. Most likely a layout animation caught mid-way.
+  scroll, the gap run) showed it. Most likely a layout animation caught
+  mid-way.
 - The ROUTES heading on Home touches or is touched by the card in a few old
   captures (Netzplan, 1.24×; German). Not seen after the layout settles; the
   cause is the card height change when its live row loads (reflow animation).
 - The device was left on the font size "large" (1.0). The app was left on
-  Anzeiger, English, high contrast off, with two saved routes (Frankfurt Hbf to
-  Darmstadt Schloss, Darmstadt Hbf to Böllenfalltor) and Deutschlandticket mode
-  off. The original app settings are unknown.
+  Anzeiger, Dark, English, high contrast off, with two saved routes (Frankfurt
+  Hbf to Darmstadt Schloss, Darmstadt Hbf to Böllenfalltor) and
+  Deutschlandticket mode off. The app was set back to the state it had at the
+  start of the gap run (Anzeiger, Dark, English, high contrast off); the state
+  before the first run is unknown.
 
 ## What is next
 
-1. Someone with an emulator closes the gaps above (mostly high contrast on
-   Settings, search, onboarding and Arrivals) and sets the Phase 5 row to DONE.
-   If the owner accepts the matrix as seen, say so in the PR and set it then.
+1. The owner decides: accept the matrix as seen (then set the Phase 5 row to
+   DONE) or have someone try TalkBack and the high-contrast large-font cells
+   above first.
 2. Merge the chain bottom-up (#21 first) once it is checked.
 3. Batch H items below still apply to the next EAS build.
 
