@@ -77,8 +77,8 @@ The older note for the launch-work batches (plans 001–008) follows below.
 
 ## NOT done
 
-Plan 009 phase 5 stays **IN PROGRESS**, because these cells are not seen. None
-is a known defect; the owner may accept the matrix as it is and set DONE.
+Plan 009 phase 5 is **DONE** (2026-11-22): the owner accepted the matrix as seen
+with these cells open. None is a known defect.
 
 - TalkBack (screen reader) with the new search placeholder. `agent-device`
   cannot drive it. The `TextInput` keeps `placeholder` and `accessibilityLabel`;
@@ -107,10 +107,10 @@ is a known defect; the owner may accept the matrix as it is and set DONE.
 
 ## What is next
 
-1. The owner decides: accept the matrix as seen (then set the Phase 5 row to
-   DONE) or have someone try TalkBack and the high-contrast large-font cells
-   above first.
-2. Merge the chain bottom-up (#21 first) once it is checked.
+1. Phase 5 is DONE. Optional, any time: try TalkBack and the high-contrast
+   large-font cells above on a device.
+2. Merge the chain bottom-up (#21 first), or merge the single PR from the
+   matrix branch to `main` (it holds all six phases).
 3. Batch H items below still apply to the next EAS build.
 
 ## Decided (2026-11-21)
@@ -135,8 +135,9 @@ is a known defect; the owner may accept the matrix as it is and set DONE.
 5. **Pull-to-refresh spinner** — show it only when the rider pulls down, not on
    every background or focus refetch (`refreshing={isRefetching}`). UI only, no
    query change. A small PR from `main` after the chain merges (roadmap 2.14).
-6. **Merge order** — hold the merge of #21 until the device matrix is done and
-   Phase 5 is DONE. Then merge #21 to #25 bottom-up, then do items 1 and 5.
+6. **Merge order** — the device matrix is done and Phase 5 is DONE (2026-11-22). The
+   chain may merge now: #21 to #26 bottom-up, or one PR to `main`. Then do
+   items 1 and 5.
 
 ## Brief for the matrix thread (used; kept for the next run)
 
