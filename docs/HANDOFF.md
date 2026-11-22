@@ -60,8 +60,8 @@ The older note for the launch-work batches (plans 001–008) follows below.
   `docs/design/screens/`) were viewed as contact sheets, four shots per sheet at
   448 px wide: enough for layout, clipping and colour, not for one-pixel detail.
   9 new screenshots were added to `docs/design/screens/`.
-- Gap run (same branch, 2026-11-22, Pixel_8_Pro emulator, local backend, about
-  70 new shots in `D:/t3/shots-p5/m3/`, all viewed as contact sheets; 8 added to
+- Gap run (same branch, 2026-11-22, Pixel_8_Pro emulator, local backend,
+  67 new shots in `D:/t3/shots-p5/m3/`, all viewed as contact sheets; 8 added to
   `docs/design/screens/`, 50 in total). Seen, English, normal font, high contrast
   on: Settings (top and scrolled), Home, search results ("Darm"), board
   departures, board Arrivals tab and onboarding in all five appearances
@@ -71,8 +71,7 @@ The older note for the launch-work batches (plans 001–008) follows below.
   Settings, Home, search, board, Arrivals and onboarding with high contrast on
   in Bahnsteig light and Netzplan light. Onboarding at 2.0× in English and in
   German (Bahnsteig light, high contrast on, also scrolled in German) and at
-  1.5× in German. Nothing needed a code change: the unseen screens use theme
-  tokens only. Two things in the shots are not bugs: a long station name in the
+  1.5× in German. Nothing needed a code change: no defect was seen on these screens. Two things in the shots are not bugs: a long station name in the
   search list ends in an ellipsis at 1.5× (one line by design), and the board
   tab pill can be caught mid-slide in a screenshot.
 
@@ -85,7 +84,7 @@ is a known defect; the owner may accept the matrix as it is and set DONE.
   cannot drive it. The `TextInput` keeps `placeholder` and `accessibilityLabel`;
   the visible overlay is hidden from accessibility. Try it on a device.
 - High contrast at a large font in English: seen in Bahnsteig light and
-  Netzplan light at 1.5× (all six screens). Not seen in Anzeiger, Bahnsteig
+  Netzplan light at 1.5× (Settings, Home, search, board, Arrivals, onboarding). Not seen in Anzeiger, Bahnsteig
   dark or Netzplan dark at a large font. In German it was seen at 1.3× in three
   appearances (Settings, Home, board, connection).
 - High contrast on the trip screen and on Routes at a large font was not
@@ -100,12 +99,11 @@ is a known defect; the owner may accept the matrix as it is and set DONE.
 - The ROUTES heading on Home touches or is touched by the card in a few old
   captures (Netzplan, 1.24×; German). Not seen after the layout settles; the
   cause is the card height change when its live row loads (reflow animation).
-- The device was left on the font size "large" (1.0). The app was left on
-  Anzeiger, Dark, English, high contrast off, with two saved routes (Frankfurt
-  Hbf to Darmstadt Schloss, Darmstadt Hbf to Böllenfalltor) and
-  Deutschlandticket mode off. The app was set back to the state it had at the
-  start of the gap run (Anzeiger, Dark, English, high contrast off); the state
-  before the first run is unknown.
+- The device was left on font scale 1.0 (`adb shell settings get system font_scale`;
+  `agent-device` calls it "large"). The app was left as it was at the start of
+  the gap run: Anzeiger, Dark, English, high contrast off, two saved routes
+  (Frankfurt Hbf to Darmstadt Schloss, Darmstadt Hbf to Böllenfalltor),
+  Deutschlandticket mode off. The state before the first run is unknown.
 
 ## What is next
 
