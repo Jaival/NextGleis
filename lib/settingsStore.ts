@@ -2,7 +2,7 @@ import { Observe } from 'expo-observe';
 import { Appearance } from 'react-native';
 import { create } from 'zustand';
 import { getSettings, saveSettings } from './storage';
-import type { AppSettings, ColorTheme, LanguageSetting, ThemeMode, UiStyle } from '@/types';
+import type { AppSettings, LanguageSetting, Skin, ThemeMode } from '@/types';
 
 // Makes native-rendered chrome (dialogs, keyboard, etc.) follow the in-app
 // theme override instead of only the OS-level system setting.
@@ -11,8 +11,12 @@ import type { AppSettings, ColorTheme, LanguageSetting, ThemeMode, UiStyle } fro
 // `hydrate()` as an unhandled rejection on every web start. The in-app theme
 // is driven by `useThemeColors`, not by this call, so skipping it costs the
 // web build nothing.
-function applyColorScheme(mode: ThemeMode) {
-  Appearance.setColorScheme?.(mode === 'system' ? 'unspecified' : mode);
+//
+// Anzeiger is dark only, so it forces dark whatever the mode is. Switching
+// back to another skin must call this again, or "system" would stay dark.
+function applyColorScheme(mode: ThemeMode, skin: Skin) {
+  const scheme = skin === 'anzeiger' ? 'dark' : mode;
+  Appearance.setColorScheme?.(scheme === 'system' ? 'unspecified' : scheme);
 }
 
 // The one switch for everything expo-observe sends: error reports and startup
@@ -27,8 +31,7 @@ type SettingsState = AppSettings & {
   hydrated: boolean;
   hydrate: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
-  setColorTheme: (colorTheme: ColorTheme) => Promise<void>;
-  setUiStyle: (uiStyle: UiStyle) => Promise<void>;
+  setSkin: (skin: Skin) => Promise<void>;
   setHighContrast: (highContrast: boolean) => Promise<void>;
   setLanguage: (language: LanguageSetting) => Promise<void>;
   completeOnboarding: () => Promise<void>;
@@ -44,8 +47,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     set(patch);
     const {
       themeMode,
-      colorTheme,
-      uiStyle,
+      skin,
       highContrast,
       language,
       onboarded,
@@ -55,8 +57,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     } = get();
     await saveSettings({
       themeMode,
-      colorTheme,
-      uiStyle,
+      skin,
       highContrast,
       language,
       onboarded,
@@ -68,8 +69,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
 
   return {
     themeMode: 'system',
-    colorTheme: 'indigo',
-    uiStyle: 'classic',
+    skin: 'bahnsteig',
     highContrast: false,
     language: 'system',
     onboarded: false,
@@ -82,7 +82,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       try {
         const settings = await getSettings();
         set({ ...settings });
-        applyColorScheme(settings.themeMode);
+        applyColorScheme(settings.themeMode, settings.skin);
         applyDiagnostics(settings.diagnosticsEnabled);
       } finally {
         set({ hydrated: true });
@@ -90,13 +90,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     },
 
     setThemeMode: async (themeMode) => {
-      applyColorScheme(themeMode);
+      applyColorScheme(themeMode, get().skin);
       await update({ themeMode });
     },
 
-    setColorTheme: (colorTheme) => update({ colorTheme }),
-
-    setUiStyle: (uiStyle) => update({ uiStyle }),
+    setSkin: async (skin) => {
+      applyColorScheme(get().themeMode, skin);
+      await update({ skin });
+    },
 
     setHighContrast: (highContrast) => update({ highContrast }),
 

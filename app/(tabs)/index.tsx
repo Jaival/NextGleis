@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
@@ -8,6 +8,7 @@ import { FavoriteStationCard } from '@/components/FavoriteStationCard';
 import { NearbySection } from '@/components/NearbySection';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SearchField } from '@/components/SearchField';
+import { SignHeader } from '@/components/SignHeader';
 import { StationSearchResults } from '@/components/StationSearchResults';
 import { useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
 import { useFavoritesStore } from '@/lib/favoritesStore';
@@ -16,6 +17,7 @@ import { duration, easing } from '@/lib/motion';
 import { moveItem } from '@/lib/reorder';
 import { useSettingsStore } from '@/lib/settingsStore';
 import { spacing, type Theme } from '@/lib/theme';
+import { useNow } from '@/lib/useNow';
 import { useStationSearch } from '@/lib/useStationSearch';
 import { useTheme } from '@/lib/useTheme';
 
@@ -26,6 +28,11 @@ const REFLOW = LinearTransition.duration(duration.base).easing(easing.inOut);
 const CARD_OUT = FadeOut.duration(duration.press);
 const CARD_IN = FadeIn.duration(duration.fast);
 const STAGGER_MS = 35;
+
+// Each live route card is one journey search per minute against the upstream
+// planners (the backend caches for 60 s), so only the first few saved routes
+// look up their next departure.
+const LIVE_ROUTE_CARDS = 3;
 
 // The staggered reveal is the app's launch moment — it plays once, after the
 // splash hands over to real content. Coming back to this tab later must not
@@ -52,6 +59,10 @@ export default function HomeScreen() {
   const [input, setInput] = useState('');
   const searching = input.trim().length > 0;
   const search = useStationSearch(input, searching);
+
+  // The countdowns only tick while a card showing one is in view.
+  const isFocused = useIsFocused();
+  const now = useNow(isFocused && !searching && favoriteRoutes.length > 0);
 
   const [revealing, setRevealing] = useState(() => !launchRevealed);
   useEffect(() => {
@@ -123,18 +134,17 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScreenContainer>
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.title}>
-          NextGleis
-        </Text>
+    // The header owns the top inset.
+    <ScreenContainer edges={[]}>
+      <SignHeader title="NextGleis">
         <SearchField
+          tone="header"
           value={input}
           onChangeText={setInput}
           placeholder={t('search.placeholder')}
           accessibilityLabel={t('search.label')}
         />
-      </View>
+      </SignHeader>
 
       {searching ? (
         <StationSearchResults
@@ -206,6 +216,8 @@ export default function HomeScreen() {
                 >
                   <FavoriteRouteCard
                     favorite={route}
+                    live={index < LIVE_ROUTE_CARDS}
+                    now={now}
                     onPress={() => openRoute(route)}
                     onMoveUp={index > 0 ? () => moveRoute(index, index - 1) : undefined}
                     onMoveDown={
@@ -256,13 +268,6 @@ function Section({
 function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     scroll: { paddingTop: spacing.sm, paddingBottom: spacing.xxl, flexGrow: 1 },
-    header: {
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
-      paddingBottom: spacing.md,
-      gap: spacing.md,
-    },
-    title: { ...type.largeTitle, color: colors.foreground },
     section: { paddingHorizontal: spacing.lg, marginBottom: spacing.xl },
     sectionHeader: {
       flexDirection: 'row',

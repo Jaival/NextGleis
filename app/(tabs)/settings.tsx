@@ -4,18 +4,13 @@ import { useMemo, type ComponentProps, type ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { SignHeader } from '@/components/SignHeader';
 import { PRIVACY_POLICY_URL } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { useLocationPermission } from '@/lib/location';
 import { useSettingsStore } from '@/lib/settingsStore';
-import {
-  spacing,
-  THEME_NAMES,
-  themeSwatch,
-  UI_STYLES,
-  type Theme,
-  type ThemeColors,
-} from '@/lib/theme';
+import { SKINS } from '@/lib/palettes';
+import { skinSwatch, spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { useTheme } from '@/lib/useTheme';
 
 type Styles = ReturnType<typeof createStyles>;
@@ -85,10 +80,8 @@ export default function SettingsScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const themeMode = useSettingsStore((s) => s.themeMode);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
-  const colorTheme = useSettingsStore((s) => s.colorTheme);
-  const setColorTheme = useSettingsStore((s) => s.setColorTheme);
-  const uiStyle = useSettingsStore((s) => s.uiStyle);
-  const setUiStyle = useSettingsStore((s) => s.setUiStyle);
+  const skin = useSettingsStore((s) => s.skin);
+  const setSkin = useSettingsStore((s) => s.setSkin);
   const highContrast = useSettingsStore((s) => s.highContrast);
   const setHighContrast = useSettingsStore((s) => s.setHighContrast);
   const language = useSettingsStore((s) => s.language);
@@ -115,12 +108,10 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScreenContainer>
+    // The header owns the top inset.
+    <ScreenContainer edges={[]}>
+      <SignHeader title={t('settings.title')} />
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t('settings.title')}
-        </Text>
-
         <Card
           icon="contrast-outline"
           title={t('settings.appearance')}
@@ -128,61 +119,54 @@ export default function SettingsScreen() {
           colors={colors}
         >
           <View style={styles.cardBody}>
-            <SegmentedControl
-              accessibilityLabel={t('settings.appearance')}
-              value={themeMode}
-              onChange={setThemeMode}
-              options={[
-                { value: 'system', label: t('settings.themeSystem') },
-                { value: 'light', label: t('settings.themeLight') },
-                { value: 'dark', label: t('settings.themeDark') },
-              ]}
-            />
-
-            <Text style={styles.fieldLabel}>{t('settings.colorTheme')}</Text>
+            <Text style={styles.fieldLabel}>{t('settings.skin')}</Text>
             <View style={styles.swatches} accessibilityRole="radiogroup">
-              {THEME_NAMES.map((name) => {
-                const swatch = themeSwatch(name, theme.isDark);
-                const selected = name === colorTheme;
+              {SKINS.map((name) => {
+                const swatch = skinSwatch(name, theme.isDark);
+                const selected = name === skin;
                 return (
                   <Pressable
                     key={name}
-                    onPress={() => setColorTheme(name)}
+                    onPress={() => setSkin(name)}
                     accessibilityRole="radio"
-                    accessibilityState={{ checked: selected }}
-                    accessibilityLabel={t(`settings.theme.${name}`)}
+                    accessibilityState={{ selected, checked: selected }}
+                    accessibilityLabel={t(`settings.skin.${name}`)}
                     style={styles.swatchItem}
                   >
-                    {/* Each swatch is a miniature of its theme: page colour
-                        behind, primary in front, so the dark-mode swatch shows
-                        what the theme looks like in the current mode. */}
+                    {/* Each swatch is a miniature of its skin: page colour
+                        behind, the platform sign and the highlight in front. */}
                     <View style={[styles.swatchRing, selected && { borderColor: colors.primary }]}>
                       <View style={[styles.swatch, { backgroundColor: swatch.background }]}>
-                        <View style={[styles.swatchDot, { backgroundColor: swatch.primary }]} />
+                        <View style={[styles.swatchSign, { backgroundColor: swatch.sign }]} />
+                        <View style={[styles.swatchDot, { backgroundColor: swatch.highlight }]} />
                       </View>
                     </View>
                     <Text
                       style={[styles.swatchLabel, selected && styles.swatchLabelSelected]}
                       numberOfLines={1}
                     >
-                      {t(`settings.theme.${name}`)}
+                      {t(`settings.skin.${name}`)}
                     </Text>
                   </Pressable>
                 );
               })}
             </View>
+            <Text style={styles.paragraph}>{t(`settings.skin.${skin}Text`)}</Text>
 
-            <Text style={styles.fieldLabel}>{t('settings.uiStyle')}</Text>
-            <SegmentedControl
-              accessibilityLabel={t('settings.uiStyle')}
-              value={uiStyle}
-              onChange={setUiStyle}
-              options={UI_STYLES.map((style) => ({
-                value: style,
-                label: t(`settings.style.${style}`),
-              }))}
-            />
-            <Text style={styles.paragraph}>{t(`settings.style.${uiStyle}Text`)}</Text>
+            {skin === 'anzeiger' ? (
+              <Text style={styles.paragraph}>{t('settings.skinDarkOnly')}</Text>
+            ) : (
+              <SegmentedControl
+                accessibilityLabel={t('settings.appearance')}
+                value={themeMode}
+                onChange={setThemeMode}
+                options={[
+                  { value: 'system', label: t('settings.themeSystem') },
+                  { value: 'light', label: t('settings.themeLight') },
+                  { value: 'dark', label: t('settings.themeDark') },
+                ]}
+              />
+            )}
 
             <View style={[styles.switchRow, styles.switchRowSpaced]}>
               <View style={styles.switchText}>
@@ -340,11 +324,10 @@ function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     container: {
       paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
+      paddingTop: spacing.lg,
       paddingBottom: spacing.xxl,
       gap: spacing.md,
     },
-    title: { ...type.largeTitle, color: colors.foreground, marginBottom: spacing.xs },
     card: {
       backgroundColor: colors.card,
       borderRadius: radii.lg,
@@ -385,23 +368,26 @@ function createStyles({ colors, type, radii }: Theme) {
     },
     swatches: { flexDirection: 'row', justifyContent: 'space-between' },
     // Wider than the swatch so each one is a full-size touch target.
-    swatchItem: { width: 56, alignItems: 'center', gap: spacing.xs },
+    swatchItem: { minWidth: 88, alignItems: 'center', gap: spacing.xs },
     swatchRing: {
       padding: 3,
-      borderRadius: radii.pill,
+      borderRadius: radii.lg,
       borderWidth: 2,
       borderColor: 'transparent',
     },
     swatch: {
-      width: 38,
-      height: 38,
-      borderRadius: radii.pill,
+      width: 64,
+      height: 40,
+      borderRadius: radii.md,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.input,
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      gap: spacing.xs,
     },
-    swatchDot: { width: 18, height: 18, borderRadius: radii.pill },
+    swatchSign: { width: 22, height: 22, borderRadius: radii.sm },
+    swatchDot: { width: 12, height: 12, borderRadius: radii.round },
     swatchLabel: { ...type.micro, color: colors.mutedForeground },
     swatchLabelSelected: { ...type.microBold, color: colors.foreground },
     linkRow: {

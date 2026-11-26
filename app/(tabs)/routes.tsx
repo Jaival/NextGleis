@@ -19,6 +19,7 @@ import { JourneyCard } from '@/components/JourneyCard';
 import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SearchField } from '@/components/SearchField';
+import { SignHeader } from '@/components/SignHeader';
 import { StationSearchResults } from '@/components/StationSearchResults';
 import { TripTimeSheet, type TripTime } from '@/components/TripTimeSheet';
 import { routeId, useFavoriteRoutesStore } from '@/lib/favoriteRoutesStore';
@@ -30,6 +31,7 @@ import { spacing, type Theme, type ThemeColors } from '@/lib/theme';
 import { formatClock, formatDay } from '@/lib/time';
 import { useJourneys } from '@/lib/useJourneys';
 import { useNearbyStops } from '@/lib/useNearbyStops';
+import { useNow } from '@/lib/useNow';
 import { useStationSearch } from '@/lib/useStationSearch';
 import { useTheme } from '@/lib/useTheme';
 import type { Journey, Language, NearbyStop, StationSearchResult } from '@/types';
@@ -160,60 +162,85 @@ export default function RoutesScreen() {
     setTo(from);
   };
 
+  // Without this the saved routes can only be reached again after a restart:
+  // once both ends are set the screen shows connections instead.
+  const clear = () => {
+    tap.light();
+    setFrom(null);
+    setTo(null);
+    setTripTime(LEAVE_NOW);
+    stopEditing();
+  };
+
   const ready = from !== null && to !== null && from.id !== to.id;
 
   return (
-    <ScreenContainer>
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t('routes.title')}
-        </Text>
-        {ready ? (
+    // The header owns the top inset.
+    <ScreenContainer edges={[]}>
+      <SignHeader
+        title={t('routes.title')}
+        right={
+          ready || from || to ? (
+            <View style={styles.headerActions}>
+              {ready ? (
+                <Pressable
+                  onPress={toggleSaved}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: saved }}
+                  accessibilityLabel={saved ? t('routes.unsave') : t('routes.save')}
+                  style={styles.headerButton}
+                >
+                  <Ionicons
+                    name={saved ? 'star' : 'star-outline'}
+                    size={22}
+                    color={colors.headerForeground}
+                  />
+                </Pressable>
+              ) : null}
+              {from || to ? (
+                <Pressable
+                  onPress={clear}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('routes.clear')}
+                  style={styles.headerButton}
+                >
+                  <Ionicons name="close" size={24} color={colors.headerForeground} />
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null
+        }
+      >
+        <View style={styles.ends}>
+          <EndRow
+            end="from"
+            stop={from}
+            active={editing === 'from'}
+            onPress={() => startEditing('from')}
+            styles={styles}
+            colors={colors}
+          />
+          <View style={styles.divider} />
+          <EndRow
+            end="to"
+            stop={to}
+            active={editing === 'to'}
+            onPress={() => startEditing('to')}
+            styles={styles}
+            colors={colors}
+          />
           <Pressable
-            onPress={toggleSaved}
+            onPress={swap}
+            disabled={!from && !to}
+            style={styles.swap}
             accessibilityRole="button"
-            accessibilityState={{ selected: saved }}
-            accessibilityLabel={saved ? t('routes.unsave') : t('routes.save')}
-            hitSlop={12}
+            accessibilityLabel={t('routes.swap')}
+            hitSlop={8}
           >
-            <Ionicons
-              name={saved ? 'star' : 'star-outline'}
-              size={22}
-              color={saved ? colors.primary : colors.mutedForeground}
-            />
+            <Ionicons name="swap-vertical" size={18} color={colors.primary} />
           </Pressable>
-        ) : null}
-      </View>
-
-      <View style={styles.ends}>
-        <EndRow
-          end="from"
-          stop={from}
-          active={editing === 'from'}
-          onPress={() => startEditing('from')}
-          styles={styles}
-          colors={colors}
-        />
-        <View style={styles.divider} />
-        <EndRow
-          end="to"
-          stop={to}
-          active={editing === 'to'}
-          onPress={() => startEditing('to')}
-          styles={styles}
-          colors={colors}
-        />
-        <Pressable
-          onPress={swap}
-          disabled={!from && !to}
-          style={styles.swap}
-          accessibilityRole="button"
-          accessibilityLabel={t('routes.swap')}
-          hitSlop={8}
-        >
-          <Ionicons name="swap-vertical" size={18} color={colors.primary} />
-        </Pressable>
-      </View>
+        </View>
+      </SignHeader>
 
       {(CAN_PICK_TIME || deutschlandticket) && !editing ? (
         <View style={styles.optionsRow}>
@@ -478,6 +505,7 @@ function JourneyList({
 }) {
   const t = useT();
   const isFocused = useIsFocused();
+  const now = useNow(isFocused);
   const { query, journeys } = useJourneys(
     { fromId: from.id, toId: to.id, when: time.when, arrival: time.arrival, regionalOnly },
     // The Routes tab stays mounted while another tab or screen is open; don't
@@ -544,7 +572,7 @@ function JourneyList({
     <FlatList
       data={journeys}
       keyExtractor={(journey) => journey.id}
-      renderItem={({ item }) => <JourneyCard journey={item} onOpen={openJourney} />}
+      renderItem={({ item }) => <JourneyCard journey={item} now={now} onOpen={openJourney} />}
       contentContainerStyle={styles.list}
       refreshControl={
         <RefreshControl
@@ -612,17 +640,10 @@ function JourneyList({
 function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
     fill: { flex: 1 },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
-      paddingBottom: spacing.md,
-    },
-    title: { ...type.largeTitle, color: colors.foreground },
+    headerActions: { flexDirection: 'row', alignItems: 'center' },
+    // 44pt targets; the glyphs stay small.
+    headerButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     ends: {
-      marginHorizontal: spacing.lg,
       backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
@@ -685,7 +706,7 @@ function createStyles({ colors, type, radii }: Theme) {
     locateIcon: {
       width: 32,
       height: 32,
-      borderRadius: radii.pill,
+      borderRadius: radii.round,
       backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',

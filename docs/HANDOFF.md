@@ -1,3 +1,179 @@
+# Handoff — new UI, plan 009 (phases 1–5)
+
+Date: 2026-11-21. Plan: `plans/009-ui-skins-redesign.md` (its handoff log has
+the per-phase details). One layout ("Bahnsteig"), three skins (Bahnsteig,
+Anzeiger, Netzplan). PR chain, all open and stacked:
+#21 phase 1 → #22 phase 2 → #23 phase 3 → #24 phase 4 → phase 5 (this branch).
+The older note for the launch-work batches (plans 001–008) follows below.
+
+## What is done
+
+- Phase 1: skin system (tokens, palettes, fonts, Settings picker). The five
+  colour themes and three styles are gone.
+- Phase 2: building blocks (`PlatformTile`, `Countdown`, `LineBar`,
+  `SignHeader`, pure helpers) with tests.
+- Phase 3: every screen rebuilt on them.
+- Phase 4: saved routes on Home show the next departure, its platform and a
+  countdown (first three routes, one search per minute each).
+- Phase 5 fixes: trip time column grows with the font (`minWidth`), the rail
+  line through the rider's own stop is visible on the highlight fill, the
+  countdown column has a fixed width and shrinks its text instead of widening
+  (so "JETZT" in Anzeiger does not make a row jump), the line bar and the
+  search field grow with the font, and the typed text in the search field no
+  longer keeps Plex Mono after a skin switch. The first three came from reading
+  code, the rest from the emulator.
+- Phase 5 device check, two runs on the Pixel_8_Pro emulator with the local
+  backend. Captured: Home, search, board, trip, Routes, a connection with 2
+  changes, Settings and onboarding in all five appearances; high contrast on
+  five screens in all five; German; the system font at 1.24× and 1.5× in all
+  five; Home with a saved station in four. 33 screenshots are in
+  `docs/design/screens/` (English, normal font, plus three large-font or German
+  ones). About 250 were taken; the rest are only on the machine of that run
+  (`D:\t3\shots-p5\`), not in the repo.
+- The agent looked at a subset by eye, not every captured shot. "Captured" is
+  not "checked".
+- confirmed on the emulator with one live card on Home (one saved route): the backend log showed 2 `/api/journeys` requests in 130 s with Home in view and 0 in 130 s with Settings in view. That is one request per card per minute, none off screen. Cards with several routes, and the 'Later' case, were not measured.
+- Docs: roadmap rows 2.11 and 2.12, README features, plan and plan index rows.
+- Matrix thread (branch `feat/ui-skins-phase-5-matrix`, 2026-11-21), Pixel_8_Pro
+  emulator, local backend. Fixed with components only: the search placeholder
+  stays on one line with an ellipsis at a large font (a one-line `Text` draws
+  it, the native hint is transparent); the board destination (departures and
+  arrivals) takes two lines; on the connection screen the stop name and the
+  "departs HH:MM" text are two lines, so the time is never cut; trip rows grow
+  with the font and `getItemLayout` is gone (decision 4: at 2.0× the stop name
+  and platform clipped at height 64). Seen on the device after the fix: the
+  placeholder in Netzplan light and dark and in Anzeiger at 1.5×; the board
+  destination and arrivals in Anzeiger at 1.5×; the connection card in Anzeiger
+  at 1.5×; trip rows in Netzplan at 1.5× and 2.0× (jump to the own stop works).
+  Not re-seen after the fix: Bahnsteig for the board and connection changes.
+- Matrix cells seen in this thread: exactly 130 % (font scale 1.3, set with
+  `adb shell settings put system font_scale 1.3`) on Bahnsteig, Netzplan and
+  Anzeiger; a three-digit platform (Stuttgart Hbf, "101", "102") in the tile
+  at 1.3× (Bahnsteig), 1.5× (Anzeiger, Netzplan); Settings at a large font in
+  Netzplan (1.3×) and Anzeiger (1.5×); search at a large font in Bahnsteig
+  (1.3×) and Anzeiger (1.5×); high contrast in German at 1.3× on Netzplan
+  light, Bahnsteig light and Anzeiger (Settings, Home, board, connection);
+  German at 1.5× on Netzplan dark (Settings, Home, board, connection); trip rows
+  at a large font in Bahnsteig (1.3×) and Netzplan (1.5×, 2.0×); two live cards
+  on Home at 1.5× with one delayed ride (amber countdown) in Netzplan dark.
+- All 165 older captures (132 in `D:/t3/shots-p5/matrix/`, 33 in
+  `docs/design/screens/`) were viewed as contact sheets, four shots per sheet at
+  448 px wide: enough for layout, clipping and colour, not for one-pixel detail.
+  9 new screenshots were added to `docs/design/screens/`.
+- Gap run (same branch, 2026-11-22, Pixel_8_Pro emulator, local backend,
+  67 new shots in `D:/t3/shots-p5/m3/`, all viewed as contact sheets; 8 added to
+  `docs/design/screens/`, 50 in total). Seen, English, normal font, high contrast
+  on: Settings (top and scrolled), Home, search results ("Darm"), board
+  departures, board Arrivals tab and onboarding in all five appearances
+  (Anzeiger, Bahnsteig light and dark, Netzplan light and dark). Arrivals with
+  high contrast off in Bahnsteig and Netzplan, light and dark. At 1.5×: Arrivals
+  and onboarding in Bahnsteig light and Netzplan light (high contrast off), and
+  Settings, Home, search, board, Arrivals and onboarding with high contrast on
+  in Bahnsteig light and Netzplan light. Onboarding at 2.0× in English and in
+  German (Bahnsteig light, high contrast on, also scrolled in German) and at
+  1.5× in German. Nothing needed a code change: no defect was seen on these screens. Two things in the shots are not bugs: a long station name in the
+  search list ends in an ellipsis at 1.5× (one line by design), and the board
+  tab pill can be caught mid-slide in a screenshot.
+
+## NOT done
+
+Plan 009 phase 5 is **DONE** (2026-11-22): the owner accepted the matrix as seen
+with these cells open. None is a known defect.
+
+- TalkBack (screen reader) with the new search placeholder. `agent-device`
+  cannot drive it. The `TextInput` keeps `placeholder` and `accessibilityLabel`;
+  the visible overlay is hidden from accessibility. Try it on a device.
+- High contrast at a large font in English: seen in Bahnsteig light and
+  Netzplan light at 1.5× (Settings, Home, search, board, Arrivals, onboarding). Not seen in Anzeiger, Bahnsteig
+  dark or Netzplan dark at a large font. In German it was seen at 1.3× in three
+  appearances (Settings, Home, board, connection).
+- High contrast on the trip screen and on Routes at a large font was not
+  repeated in this run; both were seen at the normal font in all five.
+- A live card whose first ride is cancelled: by design `nextJourney` skips
+  cancelled connections, so the card shows the next one. The cancelled
+  connection itself was seen in the Routes list. A delayed card was seen.
+- Seen once, not repeated: after a scroll on Home with two saved routes the
+  second live card was blank in one screenshot; later runs (cold start,
+  scroll, the gap run) showed it. Most likely a layout animation caught
+  mid-way.
+- The ROUTES heading on Home touches or is touched by the card in a few old
+  captures (Netzplan, 1.24×; German). Not seen after the layout settles; the
+  cause is the card height change when its live row loads (reflow animation).
+- The device was left on font scale 1.0 (`adb shell settings get system font_scale`;
+  `agent-device` calls it "large"). The app was left as it was at the start of
+  the gap run: Anzeiger, Dark, English, high contrast off, two saved routes
+  (Frankfurt Hbf to Darmstadt Schloss, Darmstadt Hbf to Böllenfalltor),
+  Deutschlandticket mode off. The state before the first run is unknown.
+
+## What is next
+
+1. Phase 5 is DONE. Optional, any time: try TalkBack and the high-contrast
+   large-font cells above on a device.
+2. Merge the chain bottom-up (#21 first), or merge the single PR from the
+   matrix branch to `main` (it holds all six phases).
+3. Batch H items below still apply to the next EAS build.
+
+## Decided (2026-11-21)
+
+1. **Routes time reset** — do it: tapping a saved route on Home opens Routes
+   with "leave now" (`setTripTime(LEAVE_NOW)` when the route params apply).
+   Not in plan 009. A small PR from `main` after the chain merges (roadmap 2.13).
+   Why: after "arrive by 18:00" the Routes list has another query key than
+   the Home card and is not there at once.
+2. **Polling after "Later"** — accepted for now. After "Later" the infinite
+   query refetches every loaded page, so Home sends more than one request per
+   minute for that route until the cache is dropped. It needs a deliberate
+   press and happens only while Home is in view. A real fix changes the query
+   setup and needs its own plan.
+3. **Live card about 40 dp taller than a plain one** — accepted. Mixed heights
+   in a vertical list are normal. Revisit if the rest of the matrix shows a
+   problem.
+4. **Trip rows have a fixed height (64)** — done in the matrix thread. At 2.0×
+   the stop name and platform clipped, so rows are `minHeight` 64 and grow, and
+   `getItemLayout` is dropped. `onScrollToIndexFailed` scrolls near the row and
+   retries up to 3 times.
+5. **Pull-to-refresh spinner** — show it only when the rider pulls down, not on
+   every background or focus refetch (`refreshing={isRefetching}`). UI only, no
+   query change. A small PR from `main` after the chain merges (roadmap 2.14).
+6. **Merge order** — the device matrix is done and Phase 5 is DONE (2026-11-22). The
+   chain may merge now: #21 to #26 bottom-up, or one PR to `main`. Then do
+   items 1 and 5.
+
+## Brief for the matrix thread (used; kept for the next run)
+
+Finish plan 009 phase 5: the device matrix in `docs/HANDOFF.md` ("NOT done").
+Branch from `feat/ui-skins-phase-5`. Fix what shows up with tokens or
+components only, never `theme.skin` in a screen. No change to query keys,
+polling intervals or navigation targets. Save screenshots to
+`docs/design/screens/`. Set the Phase 5 row to DONE only when the whole matrix
+is seen. Run all AGENTS.md Checks, push, update the PR.
+
+Setup that worked (Windows, Pixel_8_Pro emulator, Android 17):
+
+1. `device_list`, then `device_open` with the `hostId` and device `id`. If it
+   answers `DEVICE_IN_USE`, stop and ask the owner. Never close another session.
+2. Backend: `npm start` in `backend/` (port 3000). Metro: `npm start` in the repo
+   root (port 8081). The app falls back to `http://10.0.2.2:3000`.
+3. Port forwards (adb only for these): `adb -s emulator-5554 reverse tcp:8081
+   tcp:8081` and the same for 3000. Remove only those two at the end. Never
+   `adb reverse --remove-all`.
+4. Open the dev client with the deep link
+   `exp+nextgleis://expo-development-client/?url=http://localhost:8081`. The first
+   bundle takes about 15 s and may show a blank screen.
+5. Drive the UI with the `agent-device` command from `device_open` only:
+   `snapshot -i`, `press @ref --settle`, `screenshot <file>`, `back`,
+   `settings text-size <medium|large|extra-large|extra-extra-large|accessibility-medium>`
+   (1.0 is "large"; 130 % is between "extra-large" 1.12 and "extra-extra-large" 1.24).
+   Onboarding opens with `agent-device open com.nextgleis.app nextgleis://onboarding`.
+6. Wait 6 s after a screen opens before a screenshot: the pull-to-refresh
+   spinner of an old refetch can sit in the picture. Retake until clean.
+7. Poll check: count `api/journeys` lines in the backend log, with the number of
+   cards on screen written down this time.
+8. At the end: stop Metro and the backend, remove the two forwards, set the
+   font back to "large", and note the app settings you left.
+
+---
+
 # Handoff — launch-work batches A–D (plans 001–008)
 
 Date: 2026-11-12. Orchestrator and reviewer: Claude (Opus 5.5). Workers:

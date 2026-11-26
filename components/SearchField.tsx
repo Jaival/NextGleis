@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, css, useReducedMotion } from 'react-native-reanimated';
+import { mix } from '@/lib/contrast';
 import { duration as durations, curve, easing } from '@/lib/motion';
 import { useT } from '@/lib/i18n';
 import { spacing, type Theme } from '@/lib/theme';
@@ -13,6 +14,8 @@ type Props = {
   placeholder: string;
   accessibilityLabel: string;
   autoFocus?: boolean;
+  // 'header' is for a field that sits on the screen's header band.
+  tone?: 'default' | 'header';
 };
 
 const focusRing = css.create({
@@ -32,13 +35,18 @@ export function SearchField({
   placeholder,
   accessibilityLabel,
   autoFocus,
+  tone = 'default',
 }: Props) {
   const theme = useTheme();
   const { colors } = theme;
   const t = useT();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const styles = useMemo(() => createStyles(theme, tone), [theme, tone]);
   const [focused, setFocused] = useState(false);
   const reduced = useReducedMotion();
+  // On the header band the field's own colours would clash: text and icons
+  // follow the band's foreground instead.
+  const onHeader = tone === 'header';
+  const iconColor = onHeader ? colors.headerForeground : colors.mutedForeground;
 
   return (
     <Animated.View
@@ -47,24 +55,40 @@ export function SearchField({
       <Ionicons
         name="search"
         size={18}
-        color={focused ? colors.primary : colors.mutedForeground}
+        color={focused && !onHeader ? colors.primary : iconColor}
         style={styles.icon}
       />
-      <TextInput
-        style={styles.input}
-        placeholder={placeholder}
-        placeholderTextColor={colors.mutedForeground}
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        autoCapitalize="words"
-        autoCorrect={false}
-        accessibilityLabel={accessibilityLabel}
-        autoFocus={autoFocus}
-        returnKeyType="search"
-        selectionColor={colors.primary}
-      />
+      <View style={styles.inputSlot}>
+        <TextInput
+          // Android keeps the typeface a TextInput had, so after a skin switch back
+          // to the system font the typed text stayed in Plex Mono. A new key per
+          // family mounts a fresh input.
+          key={theme.type.input.fontFamily ?? 'system'}
+          style={styles.input}
+          // The native hint wraps to a second line at a large font and is cut, so
+          // it stays transparent (screen readers still read it) and the visible
+          // placeholder below is one line that ends in an ellipsis.
+          placeholder={placeholder}
+          placeholderTextColor="transparent"
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          autoCapitalize="words"
+          autoCorrect={false}
+          accessibilityLabel={accessibilityLabel}
+          autoFocus={autoFocus}
+          returnKeyType="search"
+          selectionColor={onHeader ? colors.headerForeground : colors.primary}
+        />
+        {value.length === 0 ? (
+          <View style={styles.placeholderBox} importantForAccessibility="no-hide-descendants">
+            <Text style={[styles.input, styles.placeholder]} numberOfLines={1}>
+              {placeholder}
+            </Text>
+          </View>
+        ) : null}
+      </View>
       {/* Fixed-width slot: the button fades in and out without ever resizing
           the input, which would otherwise nudge the caret on the first keystroke. */}
       <View style={styles.clearSlot}>
@@ -76,7 +100,7 @@ export function SearchField({
               accessibilityLabel={t('search.clear')}
               hitSlop={12}
             >
-              <Ionicons name="close-circle" size={18} color={colors.mutedForeground} />
+              <Ionicons name="close-circle" size={18} color={iconColor} />
             </Pressable>
           </Animated.View>
         ) : null}
@@ -85,7 +109,10 @@ export function SearchField({
   );
 }
 
-function createStyles({ colors, type, radii }: Theme) {
+function createStyles({ colors, type, radii }: Theme, tone: 'default' | 'header') {
+  const onHeader = tone === 'header';
+  // A lighter or darker wash of the band, so the field reads as part of it.
+  const headerFill = mix(colors.header, colors.headerForeground, 0.14);
   return StyleSheet.create({
     field: {
       flexDirection: 'row',
@@ -93,21 +120,35 @@ function createStyles({ colors, type, radii }: Theme) {
       // Resting state is a recessed well; focus lifts it onto `surface` and
       // draws the ring. The unfocused border matches the fill so the field
       // doesn't change size when the ring appears.
-      backgroundColor: colors.muted,
+      backgroundColor: onHeader ? headerFill : colors.muted,
       borderWidth: 1,
-      borderColor: colors.muted,
+      borderColor: onHeader ? headerFill : colors.muted,
       borderRadius: radii.pill,
       paddingHorizontal: spacing.md,
-      height: 46,
+      // minHeight, not height: a large system font grows the text past 46pt.
+      minHeight: 46,
     },
-    fieldFocused: { borderColor: colors.primary, backgroundColor: colors.card },
-    icon: { marginRight: spacing.sm },
+    // On the header the fill stays, so the foreground text never lands on a
+    // card-coloured field.
+    fieldFocused: onHeader
+      ? { borderColor: colors.headerForeground }
+      : { borderColor: colors.primary, backgroundColor: colors.card },
+    icon: { marginRight: spacing.md },
+    inputSlot: { flex: 1, justifyContent: 'center' },
     input: {
-      flex: 1,
       ...type.input,
-      color: colors.foreground,
+      color: onHeader ? colors.headerForeground : colors.foreground,
       // Android's TextInput ships vertical padding that breaks the row's centring.
       paddingVertical: 0,
+      // Zero on both axes, so the typed text and the placeholder overlay start at
+      // the same x (Android adds a few dp of its own to an EditText).
+      paddingHorizontal: 0,
+    },
+    placeholderBox: { ...StyleSheet.absoluteFill, justifyContent: 'center', pointerEvents: 'none' },
+    placeholder: {
+      // Archivo's last glyph overhangs its measured width by a few px and was cut.
+      paddingEnd: spacing.xs,
+      color: onHeader ? mix(colors.header, colors.headerForeground, 0.7) : colors.mutedForeground,
     },
     clearSlot: { width: 22, alignItems: 'flex-end' },
   });

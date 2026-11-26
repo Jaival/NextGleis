@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState, type ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -26,7 +27,7 @@ const enter = (index: number) =>
 // asked for only when the user taps the button, never on load.
 export default function OnboardingScreen() {
   const theme = useTheme();
-  const { colors } = theme;
+  const { colors, isDark } = theme;
   const styles = useMemo(() => createStyles(theme), [theme]);
   const t = useT();
   const completeOnboarding = useSettingsStore((s) => s.completeOnboarding);
@@ -54,6 +55,9 @@ export default function OnboardingScreen() {
   return (
     // Outside the tabs, so this screen owns the bottom inset too.
     <ScreenContainer edges={['top', 'bottom']}>
+      {/* No header band here, so the root's status bar style (picked for the
+          band) would put light icons on a light screen. */}
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View entering={enter(0)} style={styles.hero}>
           <View style={styles.logo}>

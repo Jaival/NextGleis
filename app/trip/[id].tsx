@@ -26,9 +26,9 @@ import type { TripStop } from '@/types';
 type Colors = ThemeColors;
 type Styles = ReturnType<typeof createStyles>;
 
-// Rows are a fixed height so the list can jump straight to the rider's own
-// stop without measuring everything above it first.
-const ROW_HEIGHT = 64;
+// A row is at least this tall and grows with the system font; a fixed height
+// clipped the stop name and the platform at the largest font sizes.
+const MIN_ROW_HEIGHT = 64;
 
 // The time a stop is shown with: when the service leaves it, or for the last
 // stop when it arrives.
@@ -105,6 +105,9 @@ export default function TripScreen() {
   // (an ICE can have twenty before it). Once, not on every refetch.
   const list = useRef<FlatList<TripStop>>(null);
   const scrolled = useRef(false);
+  const jumpRetries = useRef(0);
+  const jumpTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(jumpTimer.current), []);
   useEffect(() => {
     if (scrolled.current || ownIndex < 1) return;
     scrolled.current = true;
@@ -139,14 +142,17 @@ export default function TripScreen() {
           ref={list}
           data={stops}
           keyExtractor={(stop, index) => `${stop.stopId ?? stop.name}-${index}`}
-          getItemLayout={(_data, index) => ({
-            length: ROW_HEIGHT,
-            offset: ROW_HEIGHT * index,
-            index,
-          })}
-          // The header's height isn't known up front, so a jump can land a
-          // little off; better that than none.
-          onScrollToIndexFailed={() => {}}
+          // Rows have no fixed height, so the jump to the rider's own stop can
+          // land on a row that is not drawn yet: go near it, then jump.
+          onScrollToIndexFailed={({ index, averageItemLength }) => {
+            if (jumpRetries.current >= 3) return;
+            jumpRetries.current += 1;
+            list.current?.scrollToOffset({ offset: index * averageItemLength, animated: false });
+            jumpTimer.current = setTimeout(
+              () => list.current?.scrollToIndex({ index, animated: false }),
+              100,
+            );
+          }}
           ListHeaderComponent={
             data ? (
               <View>
@@ -249,7 +255,13 @@ function StopRow({
   const { scheduled, delay } = stopTime(stop);
   const delayed = !stop.cancelled && Boolean(delay);
   const platformChanged = Boolean(stop.platform && stop.plannedPlatform);
-  const dotColor = own ? colors.primary : passed ? colors.input : colors.mutedForeground;
+  // On the highlight fill the dot takes its foreground, as the text does: `primary`
+  // is amber in Anzeiger and pale in the dark skins, and vanishes on it.
+  const dotColor = own
+    ? colors.highlightForeground
+    : passed
+      ? colors.input
+      : colors.mutedForeground;
 
   return (
     <Pressable
@@ -267,38 +279,58 @@ function StopRow({
     >
       <View style={styles.times}>
         {scheduled ? (
-          <Text style={[styles.time, stop.cancelled && styles.struck]}>
+          <Text
+            style={[styles.time, stop.cancelled && styles.struck, own && styles.onOwn]}
+            numberOfLines={1}
+          >
             {formatTime(scheduled)}
           </Text>
         ) : null}
         {delayed && scheduled ? (
-          <Text style={styles.realtime}>{formatTime(addMinutes(scheduled, delay!))}</Text>
+          <Text style={[styles.realtime, own && styles.onOwn]} numberOfLines={1}>
+            {formatTime(addMinutes(scheduled, delay!))}
+          </Text>
         ) : null}
       </View>
 
       {/* The line through the dots is the trip itself: it starts at the
           first stop and ends at the last. */}
       <View style={styles.rail}>
-        <View style={[styles.railLine, first && styles.railStart, last && styles.railEnd]} />
+        <View
+          style={[
+            styles.railLine,
+            own && styles.railLineOwn,
+            first && styles.railStart,
+            last && styles.railEnd,
+          ]}
+        />
         <View style={[styles.dot, own && styles.dotOwn, { borderColor: dotColor }]} />
       </View>
 
       <View style={styles.stopText}>
         <Text
-          style={[styles.stopName, own && styles.stopNameOwn, stop.cancelled && styles.struck]}
+          style={[styles.stopName, stop.cancelled && styles.struck, own && styles.stopNameOwn]}
           numberOfLines={1}
         >
           {stop.name}
         </Text>
         {stop.cancelled ? (
-          <Text style={styles.stopCancelled}>{t('trip.stopCancelled')}</Text>
+          <Text style={[styles.stopCancelled, own && styles.onOwn]}>{t('trip.stopCancelled')}</Text>
         ) : stop.platform ? (
           <View style={styles.platformLine}>
-            <Text style={[styles.platform, platformChanged && styles.platformChanged]}>
+            <Text
+              style={[
+                styles.platform,
+                platformChanged && styles.platformChanged,
+                own && styles.onOwn,
+              ]}
+            >
               {t('departure.platform', stop.platform)}
             </Text>
             {platformChanged ? (
-              <Text style={styles.plannedPlatform}>{stop.plannedPlatform}</Text>
+              <Text style={[styles.plannedPlatform, own && styles.onOwn]}>
+                {stop.plannedPlatform}
+              </Text>
             ) : null}
           </View>
         ) : null}
@@ -334,20 +366,31 @@ function createStyles({ colors, type, radii }: Theme) {
       overflow: 'hidden',
     },
     row: {
-      height: ROW_HEIGHT,
+      minHeight: MIN_ROW_HEIGHT,
+      paddingVertical: spacing.sm,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: spacing.lg,
       gap: spacing.md,
     },
-    rowOwn: { backgroundColor: colors.accent },
+    rowOwn: { backgroundColor: colors.highlight },
     rowPressed: { backgroundColor: colors.muted },
     rowPassed: { opacity: 0.55 },
-    times: { width: 48, alignItems: 'flex-end' },
+    // minWidth, not width: a clock time in Anzeiger's mono face is about 51pt
+    // at a 130 % system font, and a fixed 48 would wrap it.
+    times: { minWidth: 48, alignItems: 'flex-end' },
     time: { ...type.timeSmall, color: colors.foreground },
     realtime: { ...type.timeSmall, color: colors.delay },
     struck: { textDecorationLine: 'line-through', color: colors.mutedForeground },
-    rail: { width: 14, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+    // The negative margin lets the line run through the row's own padding, so
+    // it stays unbroken between two stops.
+    rail: {
+      width: 14,
+      alignSelf: 'stretch',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: -spacing.sm,
+    },
     railLine: {
       position: 'absolute',
       top: 0,
@@ -355,19 +398,25 @@ function createStyles({ colors, type, radii }: Theme) {
       width: 2,
       backgroundColor: colors.border,
     },
+    // `border` is faint on the highlight fill (Bahnsteig light); the foreground
+    // at partial opacity stays a line, not a shout.
+    railLineOwn: { backgroundColor: colors.highlightForeground, opacity: 0.35 },
     railStart: { top: '50%' },
     railEnd: { bottom: '50%' },
     dot: {
       width: 12,
       height: 12,
-      borderRadius: radii.pill,
+      borderRadius: radii.round,
       borderWidth: 2,
       backgroundColor: colors.background,
     },
-    dotOwn: { width: 14, height: 14, backgroundColor: colors.primary },
+    dotOwn: { width: 14, height: 14, backgroundColor: colors.highlightForeground },
     stopText: { flex: 1, gap: 2 },
     stopName: { ...type.subheadMedium, color: colors.foreground },
-    stopNameOwn: { ...type.subheadBold },
+    // On the highlight fill every text takes its own foreground: the status
+    // colours have no contrast guarantee there.
+    stopNameOwn: { ...type.subheadBold, color: colors.highlightForeground },
+    onOwn: { color: colors.highlightForeground },
     stopCancelled: { ...type.captionBold, color: colors.cancelled },
     platformLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
     platform: { ...type.micro, color: colors.mutedForeground },

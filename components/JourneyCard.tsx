@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Fragment, memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { LineBadge } from './LineBadge';
+import { countdownLabel, Countdown } from './Countdown';
+import { LineBar } from './LineBar';
+import { PlatformTile } from './PlatformTile';
 import { PressableScale } from './PressableScale';
 import { serviceDescription } from './ServicePill';
 import { departureStatus } from '@/lib/delay';
@@ -15,14 +17,17 @@ function changesLabel(transfers: number, t: Translate): string {
   return transfers === 0 ? t('journey.direct') : t('journey.changes', transfers);
 }
 
-// The summary carries what a list of connections gets compared on — when, how
-// long, how many changes, which lines, and the platform to start from. Tapping
-// opens the connection's own screen with every change.
+// One row per connection, read left to right: the platform to start from, when
+// and by which lines, and how long until it leaves. Tapping opens the
+// connection's own screen with every change.
 function JourneyCardBase({
   journey,
+  now,
   onOpen,
 }: {
   journey: Journey;
+  // The screen's clock; see useNow.
+  now: string;
   onOpen: (journey: Journey) => void;
 }) {
   const theme = useTheme();
@@ -42,6 +47,9 @@ function JourneyCardBase({
 
   const a11yLabel = [
     t('journey.summary', formatTime(journey.departure), formatTime(journey.arrival)),
+    journey.cancelled
+      ? null
+      : countdownLabel(journey.departure, journey.departureDelayMinutes, now, t),
     formatDuration(journey.durationMinutes, t),
     changes,
     status.kind === 'delayed'
@@ -66,73 +74,66 @@ function JourneyCardBase({
       accessibilityLabel={a11yLabel}
       accessibilityHint={t('journey.openHint')}
     >
-      <View style={styles.summary}>
+      <PlatformTile
+        flush
+        tone="sign"
+        platform={first?.departurePlatform}
+        plannedPlatform={first?.plannedDeparturePlatform}
+        kind={first?.kind}
+      />
+
+      <View style={styles.body}>
         <Text style={[styles.time, journey.cancelled && styles.timeCancelled]}>
           {formatTime(journey.departure)} – {formatTime(journey.arrival)}
         </Text>
-        <Text style={styles.duration}>{formatDuration(journey.durationMinutes, t)}</Text>
-      </View>
-
-      <View style={styles.subline}>
-        <Text style={[styles.status, { color: status.fg }]}>{status.label}</Text>
-        <Text style={styles.changes}>{changes}</Text>
-        {hasNotices ? <Ionicons name="warning" size={13} color={colors.delay} /> : null}
-      </View>
-
-      <View style={styles.footer}>
-        <View style={styles.badges}>
-          {riding.map((leg, index) => (
-            <Fragment key={`${leg.line}-${leg.departure}-${index}`}>
-              {index > 0 ? (
-                <Ionicons name="chevron-forward" size={12} color={colors.mutedForeground} />
-              ) : null}
-              <LineBadge compact line={leg.line ?? ''} />
-            </Fragment>
-          ))}
-        </View>
-        {first?.departurePlatform ? (
-          <Text style={[styles.platform, first.plannedDeparturePlatform && styles.platformChanged]}>
-            {t('departure.platformShort', first.departurePlatform)}
+        <LineBar legs={journey.legs} />
+        <View style={styles.subline}>
+          <Text style={[styles.status, { color: status.fg }]}>{status.label}</Text>
+          <Text style={styles.changes} numberOfLines={1}>
+            {changes}
           </Text>
-        ) : null}
-        <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+          {hasNotices ? <Ionicons name="warning" size={13} color={colors.delay} /> : null}
+        </View>
+      </View>
+
+      <View style={styles.countdown}>
+        <Countdown
+          time={journey.departure}
+          delayMinutes={journey.departureDelayMinutes}
+          now={now}
+          cancelled={journey.cancelled}
+        />
       </View>
     </PressableScale>
   );
 }
 
-// Connections refetch every minute; without this each poll re-renders every
-// card even when nothing changed.
+// `now` moves every 15 seconds, so every card re-renders on each tick; what the
+// memo saves is the re-render when only the parent does (a menu opening, a
+// refetch that returned the same connections).
 export const JourneyCard = memo(JourneyCardBase);
 
 function createStyles({ colors, type, radii }: Theme) {
   return StyleSheet.create({
+    // The card clips its children so the platform tile can sit flush against the
+    // left edge; padding lives on the body, not here.
     card: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
       backgroundColor: colors.card,
       borderRadius: radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       boxShadow: colors.shadowCard,
-      padding: spacing.md,
-      gap: spacing.sm,
+      overflow: 'hidden',
     },
-    summary: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    body: { flex: 1, minWidth: 0, padding: spacing.md, gap: spacing.sm, justifyContent: 'center' },
     time: { ...type.time, color: colors.foreground },
     timeCancelled: { textDecorationLine: 'line-through', color: colors.mutedForeground },
-    duration: { ...type.subheadMedium, color: colors.mutedForeground },
     subline: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     status: { ...type.captionBold },
-    changes: { ...type.caption, color: colors.mutedForeground },
-    footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    badges: {
-      flex: 1,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: spacing.xs,
-    },
-    platform: { ...type.footnoteMedium, color: colors.mutedForeground },
-    platformChanged: { color: colors.delay },
+    changes: { ...type.caption, color: colors.mutedForeground, flexShrink: 1 },
+    countdown: { paddingRight: spacing.md, justifyContent: 'center' },
   });
 }

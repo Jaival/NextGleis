@@ -1,7 +1,9 @@
 import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Countdown, countdownLabel } from './Countdown';
 import { LineBadge } from './LineBadge';
 import { NoticeLine } from './NoticeLine';
+import { PlatformTile } from './PlatformTile';
 import { ServicePill, serviceDescription } from './ServicePill';
 import { departureStatus } from '@/lib/delay';
 import { useT } from '@/lib/i18n';
@@ -18,9 +20,12 @@ import type { DepartureRow } from '@/types';
 // pass one stable callback and memo still skips unchanged rows.
 function DepartureListItemBase({
   row,
+  now,
   onPress,
 }: {
   row: DepartureRow;
+  // The screen's clock; see useNow.
+  now: string;
   onPress?: (row: DepartureRow) => void;
 }) {
   const theme = useTheme();
@@ -32,7 +37,6 @@ function DepartureListItemBase({
   // Disruption warnings are shown once in the board's banner; a row only
   // carries what's specific to this one service.
   const notices = row.notices?.filter((notice) => notice.severity === 'info') ?? [];
-  const platformChanged = Boolean(row.platform && row.plannedPlatform);
   const scheduled = formatTime(row.scheduledTime);
   // A delayed departure's headline time is when it will *actually* leave; the
   // scheduled one drops to a struck-through footnote beside the delta.
@@ -50,6 +54,9 @@ function DepartureListItemBase({
       : row.platform
         ? t('departure.platform', row.platform)
         : null,
+    status.kind === 'cancelled'
+      ? null
+      : countdownLabel(row.scheduledTime, row.delayMinutes, now, t),
     ...notices.map((notice) => notice.text),
   ]
     .filter(Boolean)
@@ -69,49 +76,42 @@ function DepartureListItemBase({
       accessibilityLabel={a11yLabel}
       accessibilityHint={onPress ? t('trip.openHint') : undefined}
     >
-      <LineBadge line={row.line} />
+      <PlatformTile platform={row.platform} plannedPlatform={row.plannedPlatform} kind={row.kind} />
 
       <View style={styles.middle}>
-        <Text style={styles.direction} numberOfLines={1}>
-          {row.direction || t('departure.unknownDirection')}
-        </Text>
+        <View style={styles.titleRow}>
+          <LineBadge compact line={row.line} />
+          <Text style={styles.direction} numberOfLines={2}>
+            {row.direction || t('departure.unknownDirection')}
+          </Text>
+        </View>
         <View style={styles.meta}>
+          <Text
+            style={[
+              styles.time,
+              status.kind === 'delayed' && { color: status.fg },
+              status.kind === 'cancelled' && styles.timeCancelled,
+            ]}
+          >
+            {headlineTime}
+          </Text>
+          {status.kind === 'delayed' ? (
+            <Text style={styles.scheduledStruck}>{scheduled}</Text>
+          ) : null}
+          <Text style={[styles.statusLabel, { color: status.fg }]}>{status.label}</Text>
           <ServicePill kind={row.kind} />
-          {row.platform ? (
-            <View style={[styles.platform, platformChanged && styles.platformChanged]}>
-              <Text style={[styles.platformText, platformChanged && styles.platformTextChanged]}>
-                {t('departure.platform', row.platform)}
-              </Text>
-            </View>
-          ) : null}
-          {/* The old platform stays visible, struck through, so a rider who
-              memorised it notices the move instead of reading past it. */}
-          {platformChanged && row.plannedPlatform ? (
-            <Text style={styles.plannedPlatform}>{row.plannedPlatform}</Text>
-          ) : null}
         </View>
         {notices.map((notice) => (
           <NoticeLine key={notice.text} notice={notice} />
         ))}
       </View>
 
-      <View style={styles.right}>
-        <Text
-          style={[
-            styles.time,
-            status.kind === 'delayed' && { color: status.fg },
-            status.kind === 'cancelled' && styles.timeCancelled,
-          ]}
-        >
-          {headlineTime}
-        </Text>
-        <View style={styles.statusLine}>
-          {status.kind === 'delayed' ? (
-            <Text style={styles.scheduledStruck}>{scheduled}</Text>
-          ) : null}
-          <Text style={[styles.statusLabel, { color: status.fg }]}>{status.label}</Text>
-        </View>
-      </View>
+      <Countdown
+        time={row.scheduledTime}
+        delayMinutes={row.delayMinutes}
+        now={now}
+        cancelled={status.kind === 'cancelled'}
+      />
     </Pressable>
   );
 }
@@ -120,7 +120,7 @@ function DepartureListItemBase({
 // without this every poll re-renders all of them even when nothing changed.
 export const DepartureListItem = memo(DepartureListItemBase);
 
-function createStyles({ colors, type, radii }: Theme) {
+function createStyles({ colors, type }: Theme) {
   return StyleSheet.create({
     row: {
       flexDirection: 'row',
@@ -134,28 +134,12 @@ function createStyles({ colors, type, radii }: Theme) {
     },
     rowPressed: { backgroundColor: colors.muted },
     rowCancelled: { opacity: 0.7 },
-    middle: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
-    direction: { ...type.subheadMedium, color: colors.foreground },
-    meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-    platform: {
-      backgroundColor: colors.muted,
-      borderRadius: radii.sm,
-      borderCurve: 'continuous',
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-    },
-    platformText: { ...type.micro, color: colors.mutedForeground },
-    platformChanged: { backgroundColor: colors.delaySoft },
-    platformTextChanged: { ...type.microBold, color: colors.delay },
-    plannedPlatform: {
-      ...type.micro,
-      color: colors.mutedForeground,
-      textDecorationLine: 'line-through',
-    },
-    right: { alignItems: 'flex-end', gap: 2 },
-    time: { ...type.time, color: colors.foreground },
+    middle: { flex: 1, minWidth: 0, gap: spacing.xs },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    direction: { ...type.subheadMedium, color: colors.foreground, flexShrink: 1 },
+    meta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
+    time: { ...type.timeSmall, color: colors.foreground },
     timeCancelled: { textDecorationLine: 'line-through', color: colors.mutedForeground },
-    statusLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
     scheduledStruck: {
       ...type.timeSmall,
       color: colors.mutedForeground,

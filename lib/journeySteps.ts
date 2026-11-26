@@ -1,4 +1,4 @@
-import type { JourneyLeg } from '@/types';
+import type { Journey, JourneyLeg } from '@/types';
 
 // Where the rider gets off one service and onto the next.
 export type Transfer = {
@@ -85,4 +85,38 @@ export function journeySteps(legs: readonly JourneyLeg[]): JourneyStep[] {
   pushWalks();
 
   return steps;
+}
+
+// The ride the rider is on or waiting for: the first ride whose realtime
+// arrival is still ahead. -1 once the last ride has arrived. A cancelled ride
+// is not skipped: the rider still has to decide what to do about it.
+export function currentRideIndex(steps: readonly JourneyStep[], now: string): number {
+  const nowMs = wallMs(now);
+  return steps.findIndex(
+    (step) =>
+      step.type === 'ride' && wallMs(step.leg.arrival, step.leg.arrivalDelayMinutes) > nowMs,
+  );
+}
+
+// One entry per ride, for the proportional bar on a connection card. A ride
+// without a line label keeps its segment, with an empty name.
+export function lineBarSegments(legs: readonly JourneyLeg[]): { line: string; minutes: number }[] {
+  return legs
+    .filter((leg) => !leg.walking)
+    .map((leg) => ({ line: leg.line ?? '', minutes: Math.max(1, legMinutes(leg)) }));
+}
+
+// The connection a saved route's card shows: the first one the rider can still
+// catch. Skipped: a cancelled connection, one whose first ride is cancelled or
+// that has no ride at all (a walk), and one that has already left. "Already
+// left" is judged in whole minutes, rounded down, like the countdown on the
+// card, so a train the countdown calls "now" is still shown.
+export function nextJourney(journeys: readonly Journey[], now: string): Journey | undefined {
+  return journeys.find((journey) => {
+    if (journey.cancelled) return false;
+    const firstRide = journey.legs.find((leg) => !leg.walking);
+    if (!firstRide || firstRide.cancelled) return false;
+    const ms = wallMs(journey.departure, journey.departureDelayMinutes) - wallMs(now);
+    return Math.floor(ms / 60_000) >= 0;
+  });
 }

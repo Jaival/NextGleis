@@ -20,7 +20,7 @@ import { useNavigationTheme } from '@/lib/navigationTheme';
 import { setupNetworkStatusForQueries } from '@/lib/network';
 import { queryClient } from '@/lib/queryClient';
 import { useSettingsStore } from '@/lib/settingsStore';
-import { MODERN_FONTS } from '@/lib/theme';
+import { SKIN_FONTS } from '@/lib/theme';
 import { useTheme } from '@/lib/useTheme';
 
 setupNetworkStatusForQueries();
@@ -53,7 +53,7 @@ function ErrorScreen({ onRetry }: { onRetry: () => void }) {
 }
 
 function RootLayout() {
-  const { colors, isDark, type } = useTheme();
+  const { colors, statusBarStyle, type } = useTheme();
   const { markInteractive } = useObserve();
   const navigationTheme = useNavigationTheme();
   const reducedMotion = useReducedMotion();
@@ -61,9 +61,10 @@ function RootLayout() {
   const favoritesHydrated = useFavoritesStore((s) => s.hydrated);
   const routesHydrated = useFavoriteRoutesStore((s) => s.hydrated);
   const settingsHydrated = useSettingsStore((s) => s.hydrated);
-  // The Modern style's font files. Loaded whatever the style, so switching to
-  // it in Settings is instant; a failed load leaves Modern on the system font.
-  const [fontsLoaded, fontError] = useFonts(MODERN_FONTS);
+  // The Anzeiger and Netzplan font files. Loaded whatever the skin, so
+  // switching in Settings is instant; a failed load leaves a skin on the system
+  // font.
+  const [fontsLoaded, fontError] = useFonts(SKIN_FONTS);
   const hydrated =
     favoritesHydrated && routesHydrated && settingsHydrated && (fontsLoaded || !!fontError);
 
@@ -100,14 +101,14 @@ function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  // Flat header on the screen background rather than a raised
-                  // `surface` bar: the board's filter row already draws the only
-                  // separator that region needs, and two stacked bars read as the
-                  // chrome-heavy style this design is moving away from.
-                  headerStyle: { backgroundColor: colors.background },
+                  // The sign band: the same `header` colour as SignHeader on the
+                  // tab screens, so the top of every screen reads as one family.
+                  // Flat, not a raised bar: the board's filter row already draws
+                  // the only separator that region needs.
+                  headerStyle: { backgroundColor: colors.header },
                   headerShadowVisible: false,
-                  headerTintColor: colors.foreground,
-                  headerTitleStyle: { ...type.headline, color: colors.foreground },
+                  headerTintColor: colors.headerForeground,
+                  headerTitleStyle: { ...type.headline, color: colors.headerForeground },
                   // Screen transitions stay native — never rebuilt in JS — so the
                   // interactive back gesture and platform timing come for free.
                   animation: reducedMotion ? 'fade' : 'default',
@@ -126,7 +127,7 @@ function RootLayout() {
               </Stack>
             </ObserveErrorBoundary>
           </ThemeProvider>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <StatusBar style={statusBarStyle} />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
